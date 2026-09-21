@@ -1,4 +1,5 @@
 import {
+  type BufferGeometry,
   ConeGeometry,
   Group,
   Mesh,
@@ -223,7 +224,9 @@ export interface AbilityFx {
 }
 
 interface Bit {
-  readonly mesh: Mesh;
+  // Typed to the material this module actually builds, so the fade is set
+  // without an assertion at every use.
+  readonly mesh: Mesh<BufferGeometry, MeshBasicMaterial>;
   readonly velocity: Vector3;
 }
 
@@ -265,7 +268,10 @@ export function createAbilityFx(): AbilityFx {
       depthWrite: false,
     });
     const bits = Array.from({ length: plan.count }, () => {
-      const mesh = new Mesh(geometries[plan.shape], material);
+      const mesh = new Mesh<BufferGeometry, MeshBasicMaterial>(
+        geometries[plan.shape],
+        material,
+      );
       mesh.visible = false;
       object.add(mesh);
       return { mesh, velocity: new Vector3() };
@@ -303,7 +309,7 @@ export function createAbilityFx(): AbilityFx {
       bit.mesh.position.z += bit.velocity.z * delta;
       bit.velocity.y -= BURST_GRAVITY * delta;
       bit.mesh.scale.setScalar(frame.scale);
-      (bit.mesh.material as MeshBasicMaterial).opacity = frame.opacity;
+      bit.mesh.material.opacity = frame.opacity;
       bit.mesh.visible = !frame.finished;
     }
   };
@@ -340,7 +346,7 @@ export function createAbilityFx(): AbilityFx {
       const frame = burstFrame(0, plan.size);
       for (const bit of bits) {
         bit.mesh.scale.setScalar(frame.scale);
-        (bit.mesh.material as MeshBasicMaterial).opacity = frame.opacity;
+        bit.mesh.material.opacity = frame.opacity;
       }
     },
 

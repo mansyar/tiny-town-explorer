@@ -17,14 +17,13 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/vite-env.d.ts',
         // DOM glue, manual-verified by design (workflow.md exempts scene/DOM
-        // glue from the >80% logic rule): the WebGL bootstrap, and the HUD,
-        // which the plan verifies on a real touch screen rather than in jsdom.
+        // glue from the >80% logic rule): the WebGL bootstrap, and the HUD's
+        // panel and button chrome. The HUD's pure logic (holdGate, installHint)
+        // stays measured.
         'src/main.ts',
-        'src/game/hud/**',
+        'src/game/hud/parentPanel.ts',
+        'src/game/hud/vehicleHud.ts',
       ],
-      // Per-module ≥80% thresholds arrive with the first logic modules
-      // (input/pathfinding/FSM/pacing); a global floor now would fail on
-      // scaffold code with no logic yet.
     },
   },
 });

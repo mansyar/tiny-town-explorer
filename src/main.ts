@@ -1,6 +1,5 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createModelLibrary } from './game/assets/modelLibrary';
-import { TOWN_MODELS } from './game/assets/modelRegistry';
 import { createAudioEngine, type SampledSound } from './game/audio/audioEngine';
 import { SOUND_MODELS } from './game/audio/audioRegistry';
 import { createCameraRig } from './game/camera';
@@ -124,13 +123,15 @@ async function main(): Promise<void> {
   let pendingDemo: Vec2 | undefined;
 
   /** How close a tap must land to count as aiming at the burning house. */
-  const SnapToFire = 0.9;
+  const snapToFire = 0.9;
 
   // Sound waits for a gesture. The context and its samples are prepared up
   // front so the very first tap has something to play; only `unlock` (below,
   // on the first pointerdown) makes any of it audible.
   const audio = createAudioEngine();
   void Promise.all(
+    // Object.entries widens every key to `string`; SOUND_MODELS keys are the
+    // closed SampledSound union, so the assertion restores what the record knows.
     (Object.entries(SOUND_MODELS) as [SampledSound, string][]).map(([id, url]) =>
       audio.load(id, url),
     ),
@@ -182,6 +183,8 @@ async function main(): Promise<void> {
   }
   const installed =
     window.matchMedia('(display-mode: standalone)').matches ||
+    // iOS Safari exposes `navigator.standalone`; lib.dom does not type it, so
+    // the assertion is the only way to read the flag the platform sets.
     (navigator as { readonly standalone?: boolean }).standalone === true;
   if (shouldShowHint({ installed, hintedThisSession: hinted })) {
     try {
@@ -392,7 +395,7 @@ async function main(): Promise<void> {
     if (
       snapshot.state === 'spawned' &&
       burning !== undefined &&
-      distanceBetween(point, burning) <= SnapToFire
+      distanceBetween(point, burning) <= snapToFire
     ) {
       mission.respond();
       if (fleet.activeId() !== 'fire') {
@@ -407,6 +410,9 @@ async function main(): Promise<void> {
     if (route === undefined) {
       return;
     }
+    // A fresh destination is the child driving off, so any ability still in
+    // flight ends where it is rather than playing out behind a departing car.
+    fleet.interruptBurst();
     vehicle.setPath(route);
   }
 
@@ -512,8 +518,6 @@ async function main(): Promise<void> {
     );
     pendingDemo = tap;
   }
-
-  await Promise.all(TOWN_MODELS.map((url) => library.load(url)));
 }
 
 await main();

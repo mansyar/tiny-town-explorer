@@ -66,6 +66,20 @@ export function sunFrame(elapsedSeconds: number): SunFrame {
   };
 }
 
+/**
+ * The slice of a camera the sun needs to face the player. Three's `Object3D`
+ * quaternion satisfies it structurally, so this module stays free of three's
+ * camera type.
+ */
+export interface SunFacing {
+  readonly quaternion: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+    readonly w: number;
+  };
+}
+
 export interface SunFx {
   readonly object: Object3D;
   /** Brings the sun out over a lot. */
@@ -73,7 +87,7 @@ export interface SunFx {
   hide(): void;
   isShowing(): boolean;
   /** `facing` keeps the face turned to the player; anything with a quaternion. */
-  update(deltaSeconds: number, facing?: { readonly quaternion: unknown }): void;
+  update(deltaSeconds: number, facing?: SunFacing): void;
 }
 
 export function createSunFx(): SunFx {
@@ -157,13 +171,8 @@ export function createSunFx(): SunFx {
 
       if (facing !== undefined) {
         // Face the player, keeping the sun's own turn.
-        const quaternion = facing.quaternion as {
-          readonly x: number;
-          readonly y: number;
-          readonly z: number;
-          readonly w: number;
-        };
-        object.quaternion.set(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+        const { x, y, z, w } = facing.quaternion;
+        object.quaternion.set(x, y, z, w);
         object.rotateZ(frame.turn);
       }
 

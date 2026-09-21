@@ -10,11 +10,12 @@ import type { Vec2 } from '../town/townTypes';
  * beyond the resolution window — *when* a fire appears is the pacing module's
  * job, and *where* is the town's.
  *
- *                 spawn()          respond()        arrive          last burst
- *   ┌──────┐  ─────────────►  ┌─────────┐ ────────► ┌────────┐ ────► ┌──────┐ ────► ┌──────┐
- *   │ idle │                  │ spawned │           │ driving│       │active│       │complete│
- *   └──────┘  ◄─────────────  └─────────┘ ◄──────── └────────┘ ◄──── └──────┘       └──────┘
- *                  (nothing answered it)   drives away   (hose disarms)   lingers, then idle
+ *   idle ──spawn()──► spawned ──respond()──► driving ⇄ active ──last burst──► complete
+ *     ▲                                       (arrive ⇄ drives away)              │
+ *     └───────────────────── complete lingers, then idle ─────────────────────────┘
+ *
+ * `spawned` waits indefinitely: an unanswered fire burns patiently rather than
+ * timing out, and driving away only disarms the hose, never the mission.
  */
 
 /** The car must be at least this close for the hose to be worth showing. */
