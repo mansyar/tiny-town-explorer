@@ -40,10 +40,10 @@ export const TOWN_MAP: TownMapSpec = {
   ],
   // Offsets nudge props to the kerb of the street they belong to.
   props: [
-    { kind: 'hydrant', tile: { x: 2, y: 2 }, offset: { x: 0.35, y: 0 } },
-    { kind: 'hydrant', tile: { x: 1, y: 3 }, offset: { x: -0.35, y: 0 } },
-    { kind: 'hydrant', tile: { x: 4, y: 2 }, offset: { x: 0.35, y: 0 } },
-    { kind: 'hydrant', tile: { x: 2, y: 4 }, offset: { x: 0, y: 0.35 } },
+    { kind: 'cone', tile: { x: 2, y: 2 }, offset: { x: 0.35, y: 0 } },
+    { kind: 'cone', tile: { x: 1, y: 3 }, offset: { x: -0.35, y: 0 } },
+    { kind: 'cone', tile: { x: 4, y: 2 }, offset: { x: 0.35, y: 0 } },
+    { kind: 'cone', tile: { x: 2, y: 4 }, offset: { x: 0, y: 0.35 } },
     { kind: 'powerPole', tile: { x: 1, y: 2 }, offset: { x: -0.3, y: 0 } },
     { kind: 'powerPole', tile: { x: 4, y: 3 }, offset: { x: 0.3, y: 0 } },
     { kind: 'powerPole', tile: { x: 1, y: 4 }, offset: { x: -0.3, y: 0 } },

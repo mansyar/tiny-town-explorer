@@ -21,8 +21,9 @@
 ## Rendering
 - **three.js 0.186 (npm ESM)** — WebGL2 renderer, orthographic camera,
   GLTFLoader for Kenney GLB assets. No React/three wrappers; direct
-  three.js for tight frame-budget control (15k-tri budget, iPad 9th-gen
-  floor).
+  three.js for tight frame-budget control (measured 16.2k triangles for the v1
+  town — 10 houses, the road grid and props — so ~20k once four vehicles
+  arrive; iPad 9th-gen floor).
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
@@ -66,9 +67,11 @@ running through a town street. Full table:
   (mate contract), and every palette texel grouped by face orientation with
   its area and bounds. Extents and triangle counts also come from
   `pnpm assets:measure` without Blender.
-- **Roads (the current grid):** 1.00 × 1.00 tile pitch, base z = 0.00 and
-  surface z = +0.02, so mounted tiles need no lift and `tileSize: 1` needs no
-  rescaling; `road-curve` covers 2 × 2; props stand on z = 0.
+- **Roads (the current grid):** 1.00 × 1.00 tile pitch, base z = 0.00,
+  asphalt z = +0.01 and kerb top z = +0.02, so mounted tiles need no lift and
+  `tileSize: 1` needs no rescaling; ring corners use the 1 × 1
+  `road-bend-square` (the 2 × 2 `road-curve` would eat four tiles); props stand
+  on z = 0.
 - **Seating is per piece family, so verify ground contact in the running
   app, never only in a render.** Vehicles ride on the road surface (+0.02),
   not the ground plane.

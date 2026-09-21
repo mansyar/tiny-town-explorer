@@ -21,8 +21,14 @@ export interface RoadConnections {
  */
 export type RoadShape = 'isolated' | 'end' | 'straight' | 'curve' | 'tee' | 'cross';
 
-/** Crashable prop kinds. */
-export type PropKind = 'hydrant' | 'powerPole' | 'tree';
+/**
+ * Crashable prop kinds, named for the kit art that actually exists.
+ *
+ * The spec asks for hydrants; no Kenney kit ships one, so a crashable traffic
+ * cone takes that role (chunkier, and squarely toddler-bonkable). Poles and
+ * trees come from City Kit (Roads) and City Kit (Suburban).
+ */
+export type PropKind = 'cone' | 'powerPole' | 'tree';
 
 /** World-space position on the ground plane (x = east, z = south). */
 export interface Vec2 {
@@ -91,13 +97,14 @@ export function tileKindForCharacter(character: string): TileKind | undefined {
 }
 
 /**
- * Collision radius per prop kind, in tile units so the town stays scale-free
- * when the Kenney tile size is finalized.
+ * Collision radius per prop kind, in tile units. Sizes follow the measured kit
+ * models (cone 0.25 tall, pole 0.59 across, street tree a 0.77-tall trunk), so
+ * a bonk registers at the art's own footprint.
  */
 export const PROP_COLLISION_RADIUS: Readonly<Record<PropKind, number>> = {
-  hydrant: 0.16,
-  powerPole: 0.1,
-  tree: 0.34,
+  cone: 0.13,
+  powerPole: 0.12,
+  tree: 0.16,
 };
 
 /** Unit step for each compass direction in grid space. */

@@ -1,3 +1,9 @@
+import electricityPole from '../../assets/kits/city-kit-roads/electricity-pole.glb?url';
+import roadBend from '../../assets/kits/city-kit-roads/road-bend-square.glb?url';
+import roadCrossroad from '../../assets/kits/city-kit-roads/road-crossroad.glb?url';
+import roadEnd from '../../assets/kits/city-kit-roads/road-end.glb?url';
+import roadIntersection from '../../assets/kits/city-kit-roads/road-intersection.glb?url';
+import roadStraight from '../../assets/kits/city-kit-roads/road-straight.glb?url';
 import buildingTypeA from '../../assets/kits/city-kit-suburban/building-type-a.glb?url';
 import buildingTypeB from '../../assets/kits/city-kit-suburban/building-type-b.glb?url';
 import buildingTypeC from '../../assets/kits/city-kit-suburban/building-type-c.glb?url';
@@ -9,10 +15,7 @@ import buildingTypeR from '../../assets/kits/city-kit-suburban/building-type-r.g
 import planter from '../../assets/kits/city-kit-suburban/planter.glb?url';
 import treeLarge from '../../assets/kits/city-kit-suburban/tree-large.glb?url';
 import treeSmall from '../../assets/kits/city-kit-suburban/tree-small.glb?url';
-import roadTile from '../../assets/kits/toy-car-kit/track-road-narrow.glb?url';
-import roadCornerSmall from '../../assets/kits/toy-car-kit/track-road-narrow-corner-small.glb?url';
-import roadCurve from '../../assets/kits/toy-car-kit/track-road-narrow-curve.glb?url';
-import roadStraight from '../../assets/kits/toy-car-kit/track-road-narrow-straight.glb?url';
+import cone from '../../assets/kits/toy-car-kit/item-cone.glb?url';
 import pine from '../../assets/kits/toy-car-kit/tree-pine.glb?url';
 
 /**
@@ -26,13 +29,23 @@ import pine from '../../assets/kits/toy-car-kit/tree-pine.glb?url';
  * runtime, so a typo is a build error instead of a 404 on a tablet.
  */
 
-/** Road grid pieces from the Toy Car Kit's track system. */
+/**
+ * Road grid pieces from City Kit (Roads): flat 1.00 x 1.00 x 0.02 tiles whose
+ * base sits on the ground and whose surface is 0.02 above it, so mounting needs
+ * no lift and `tileSize: 1` needs no rescaling.
+ *
+ * Orientations below were measured from the kit's own vertices (`road-straight`'s
+ * asphalt band runs along model x; `road-bend-square` turns from west to south;
+ * `road-intersection` runs east-west with its stem toward south) and are applied
+ * as yaw when the town is planned.
+ */
 export const ROAD_MODELS = {
-  /** Plain road pad covering one tile; the whole grid is paved with these. */
-  tile: roadTile,
   straight: roadStraight,
-  curve: roadCurve,
-  cornerSmall: roadCornerSmall,
+  bend: roadBend,
+  /** Three-way. Turns the east-west pair into a tee with a south, or north, stem. */
+  intersection: roadIntersection,
+  crossroad: roadCrossroad,
+  end: roadEnd,
 } as const;
 
 /** House models, one per lot (chosen in this order by house index). */
@@ -55,9 +68,25 @@ export const NATURE_MODELS = {
   planter,
 } as const;
 
-/** Every model the v1 town mounts, for warming the loader. */
+/** Crashable props: the toy cone reads at play distance where the tiny city
+ * cone does not, the pole and street tree come from the city kits. */
+export const PROP_MODELS = {
+  cone,
+  powerPole: electricityPole,
+  tree: treeLarge,
+} as const;
+
+/**
+ * Every model the v1 town mounts, for warming the loader.
+ *
+ * Deduplicated: a model can hold two roles at once (the street tree is both park
+ * greenery and a prop), and the loader should fetch each URL once.
+ */
 export const TOWN_MODELS: readonly string[] = [
-  ...Object.values(ROAD_MODELS),
-  ...BUILDING_MODELS,
-  ...Object.values(NATURE_MODELS),
+  ...new Set([
+    ...Object.values(ROAD_MODELS),
+    ...BUILDING_MODELS,
+    ...Object.values(NATURE_MODELS),
+    ...Object.values(PROP_MODELS),
+  ]),
 ];

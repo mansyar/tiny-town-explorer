@@ -34,25 +34,48 @@ running through a town street.
 
 | Quantity | Value | Source |
 | --- | --- | --- |
-| Tile pitch | **1.00 × 1.00** | `road-straight`, `road-intersection`, `road-crossroad`, `road-end`, `road-crossing`, `road-driveway-*` all 1.00 × 0.02 × 1.00 |
-| Seating | **base z = 0.00, surface z = 0.02** | every piece spans z 0.00…0.02 |
+| Tile pitch | **1.00 × 1.00** | `road-straight`, `road-intersection`, `road-crossroad`, `road-end`, `road-crossing`, `road-driveway-*` all 1.00 × 1.00 in plan |
+| Seating | **base z = 0.00, asphalt z = +0.01, kerb top z = +0.02** | distinct levels on every road piece |
 | Junction T | `road-intersection`, 1 × 1 | exactly the piece the two tees needed |
 | Junction 4-way | `road-crossroad`, 1 × 1 | available if the map grows one |
-| Bend | `road-curve`, **2 × 2** | a sweeping bend covering four tiles, x/y −1.00…1.00 |
+| Bend | `road-bend-square`, **1 × 1** | square-elbow corner that seams flush in a single tile |
 | Ground / raised tiles | `tile-low` (z 0…0.02), `tile-high` (z 0…0.25) | base at z = 0, texel `(208,192)` |
 | Props | `electricity-pole` 0.59 × 0.52 tall; `construction-cone` 0.08³; `construction-barrier`, `light-square`, `light-curved`, `traffic-light`, `road-sign-*`, `dumpster` | the spec's "poles" prop exists here |
-| Triangles | 44 (straight) / 84 (T) / 116 (4-way) / 308 (2×2 bend) / 416 (pole) | measured |
+| Triangles | 44 (straight) / 60 (square bend) / 84 (T) / 116 (4-way) / 308 (2×2 sweep) / 416 (pole) | measured |
+
+## Orientation (measured, not guessed)
+
+The recon now reports, per palette swatch, **which bounding-box edges its faces
+reach** — that list *is* a piece's orientation:
+
+| Piece | Asphalt swatch reaches | Means at yaw 0 | Tris |
+| --- | --- | --- | --- |
+| `road-straight` | west + east | band runs **east–west**, 0.60 wide, centred | 44 |
+| `road-bend-square` | west + south | elbow turning **west → south**; kerb wraps the outer north/east sides | 60 |
+| `road-intersection` | west + east + south | east–west through with a stem toward **south** | 84 |
+| `road-crossroad` | all four | 4-way | 116 |
+| `road-end` | **east** only | dead end opening **east** | 42 |
+
+Two consequences the wiring depends on:
+
+- **Yaw direction.** A positive `rotation.y` turns a model *counterclockwise*
+  on a north-up map — verified against three.js itself (yaw `+pi/2` carries
+  model-east onto world-north, i.e. `-z`). So a bend authored covering west +
+  south is yaw 0 for the (5,0) corner and each quarter turn moves the elbow one
+  corner round; the dead-end piece, authored opening east, needs yaws a quarter
+  turn away from the town's `+z`-facing helper.
+- **Corners need no map reshaping.** The measured square bend covers a single
+  tile, so the earlier worry about `road-curve` eating 2 × 2 is moot: ring
+  corners mount `road-bend-square` (60 triangles) instead of the sweeping
+  `road-curve` (308).
 
 Consequences for the wiring task:
 
 - **The town's `tileSize: 1` needs no change.** The authored 6×6 map maps 1:1
   onto these tiles, so no global kit scale, no per-family lift table: every
-  piece stands on z = 0 like the vehicles do, and vehicles ride at +0.02.
-- Triangle cost drops against the toy track (44 vs 304 per straight), so the
-  ~25k town projection in the tech-stack budget note only improves.
-- `road-curve` covering 2×2 means a curved corner occupies four tiles; the map
-  can either use `road-intersection`-style square bends or be reshaped to give
-  the curve room. Decide when wiring, with the corner tiles rendering first.
+  piece stands on z = 0. Vehicles should ride at **+0.01** (the asphalt), not
+  +0.02 (the kerb top).
+- Triangle cost drops against the toy track (44 vs 304 per straight).
 - The spec's crashable **hydrants** still have no kit model (Roads has poles,
   cones, signs, lights, dumpster). Either substitute a present prop or author
   one later; not settled here.

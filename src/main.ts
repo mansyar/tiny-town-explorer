@@ -1,9 +1,11 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
+import { createModelLibrary } from './game/assets/modelLibrary';
+import { TOWN_MODELS } from './game/assets/modelRegistry';
 import { createCameraRig } from './game/camera';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
-import { buildTown } from './game/town/townBuilder';
 import { createTownGrid } from './game/town/townGrid';
+import { mountTown } from './game/town/townRenderer';
 
 /**
  * Creates the single WebGL renderer. Antialiasing, soft shadows, and a pixel
@@ -23,7 +25,7 @@ function createRenderer(container: HTMLElement): WebGLRenderer {
   return renderer;
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const container = document.querySelector<HTMLElement>('#app');
   if (container === null) {
     throw new Error('Bootstrap failed: #app container missing from index.html');
@@ -32,11 +34,11 @@ function main(): void {
   const renderer = createRenderer(container);
   const { scene } = createScene();
   const grid = createTownGrid();
-  const town = buildTown(grid);
-  scene.add(town.group);
 
+  // Models load over the network on first visit and are then precached by the
+  // service worker. The camera opens on the primary spawn point immediately so
+  // the sky is on screen while the town arrives.
   const rig = createCameraRig(container.clientWidth / container.clientHeight);
-  // Until the car exists, the camera opens on the primary spawn point.
   rig.snapTo(grid.spawnPoints[0] ?? { x: 0, z: 0 });
 
   // ResizeObserver covers window resizes and orientation changes alike,
@@ -53,6 +55,11 @@ function main(): void {
   startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
     rig.update(delta);
   });
+
+  const library = createModelLibrary();
+  const town = await mountTown(grid, library);
+  scene.add(town.group);
+  await Promise.all(TOWN_MODELS.map((url) => library.load(url)));
 }
 
-main();
+await main();

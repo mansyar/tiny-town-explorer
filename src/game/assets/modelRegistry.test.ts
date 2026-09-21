@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BUILDING_MODELS,
   NATURE_MODELS,
+  PROP_MODELS,
   ROAD_MODELS,
   TOWN_MODELS,
 } from './modelRegistry';
@@ -29,11 +30,13 @@ describe('modelRegistry', () => {
   });
 
   it('covers every group exactly once', () => {
-    expect(TOWN_MODELS).toHaveLength(
-      Object.keys(ROAD_MODELS).length +
-        BUILDING_MODELS.length +
-        Object.keys(NATURE_MODELS).length,
-    );
+    const groups = [
+      ...Object.values(ROAD_MODELS),
+      ...BUILDING_MODELS,
+      ...Object.values(NATURE_MODELS),
+      ...Object.values(PROP_MODELS),
+    ];
+    expect(new Set(TOWN_MODELS)).toEqual(new Set(groups));
     expect(new Set(TOWN_MODELS).size).toBe(TOWN_MODELS.length);
   });
 

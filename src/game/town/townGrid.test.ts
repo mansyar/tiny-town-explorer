@@ -194,7 +194,7 @@ describe('world mapping', () => {
 describe('proximity queries', () => {
   it('finds props within a world-space radius, nearest first', () => {
     const grid = createTownGrid(TOWN_MAP);
-    const hydrant = grid.props.find((prop) => prop.kind === 'hydrant');
+    const hydrant = grid.props.find((prop) => prop.kind === 'cone');
     expect(hydrant).toBeDefined();
     if (hydrant === undefined) return;
 
@@ -218,13 +218,13 @@ describe('proximity queries', () => {
       return prop?.collisionRadius ?? 0;
     };
 
-    expect(radiusOf('tree')).toBeGreaterThan(radiusOf('hydrant'));
-    expect(radiusOf('hydrant')).toBeGreaterThan(radiusOf('powerPole'));
-    expect(radiusOf('hydrant')).toBeGreaterThan(0);
+    expect(radiusOf('tree')).toBeGreaterThan(radiusOf('cone'));
+    expect(radiusOf('cone')).toBeGreaterThan(radiusOf('powerPole'));
+    expect(radiusOf('cone')).toBeGreaterThan(0);
 
     const doubled = createTownGrid({ ...TOWN_MAP, tileSize: TOWN_MAP.tileSize * 2 });
-    const doubledHydrant = doubled.props.find((prop) => prop.kind === 'hydrant');
-    expect(doubledHydrant?.collisionRadius).toBeCloseTo(radiusOf('hydrant') * 2);
+    const doubledHydrant = doubled.props.find((prop) => prop.kind === 'cone');
+    expect(doubledHydrant?.collisionRadius).toBeCloseTo(radiusOf('cone') * 2);
   });
 
   it('places authored prop offsets relative to the tile centre', () => {
@@ -251,6 +251,12 @@ describe('proximity queries', () => {
 describe('authored map validation', () => {
   it('rejects non-square maps', () => {
     expect(() => createTownGrid({ ...BASE_SPEC, rows: ['#', '##'] })).toThrow(/square/i);
+  });
+
+  it('rejects a row that is short of the map width too', () => {
+    expect(() => createTownGrid({ ...BASE_SPEC, rows: ['###', '##'] })).toThrow(
+      /square/i,
+    );
   });
 
   it('rejects unknown map characters', () => {

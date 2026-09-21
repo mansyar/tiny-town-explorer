@@ -1,4 +1,4 @@
-"""Recon: slice the Toy Car Kit's road pieces to the numbers a new piece must match.
+"""Recon: slice the City Kit (Roads) pieces to the numbers the wiring must match.
 
 Run headless:
 
@@ -7,25 +7,25 @@ Run headless:
 Prints a JSON measurement table (and only that, on the final line) describing,
 for each reference piece:
 
-  * extents           -- where it sits in kit units, so a new piece can be
-                         seated on the same ground plane
-  * levels            -- distinct heights, which reveal the road surface
-                         thickness and any kerb/chamfer tiers
-  * end_profile       -- cross-sections approaching the run axis' ends: this is
-                         the mate contract a neighbouring straight must meet
-                         flush, including the connector tongue
-  * top_faces         -- per-face UV centroid and sampled palette color for the
-                         upward faces, i.e. the asphalt and marking texels a new
-                         piece must reuse to be pixel-identical in style
+  * extents           -- where it sits in kit units, so a mount can be seated on
+                         the ground plane instead of guessed
+  * levels            -- distinct heights, which separate road surface, kerb top
+                         and base
+  * end_profile       -- cross-sections approaching the run axis' ends, i.e. the
+                         mate contract neighbouring tiles have to meet
+  * top_faces         -- distinct palette texels on the upward faces with the
+                         area, bounds and **the bounding-box edges each one
+                         reaches**: the edge list is what reveals a piece's
+                         orientation (which way a bend turns, where a tee's stem
+                         points, which way a dead end opens), and yaw follows
+                         from it
 
-This is the skill's Phase 1 ("measure the mount"; gate 1.1 wants a written
-table before any geometry is authored). It lives in the repo so the numbers are
-reproducible rather than remembered.
+It lives in the repo so the numbers are reproducible rather than remembered: an
+orientation guessed wrong mounts roads that visibly break at the seams.
 
 Known limits: colors are sampled with the image's own colorspace (sanity only --
-the texel coordinates are the contract, since the new piece reuses the same
-palette image); overlapping kit pieces are measured per piece, so a corner's
-module is its own extent, not the pitch of an assembled grid.
+the texel coordinates are the contract); overlapping kit pieces are measured per
+piece, so a corner's module is its own extent, not the pitch of an assembled grid.
 """
 
 import json
@@ -37,15 +37,25 @@ import bpy
 KIT_DIR = os.path.join("src", "assets", "kits", "city-kit-roads")
 PIECES = [
     "road-straight",
+    "road-straight-half",
+    "road-bend",
+    "road-bend-square",
     "road-intersection",
     "road-crossroad",
     "road-curve",
+    "road-end",
+    "road-side",
+    "road-crossing",
+    "road-driveway-single",
     "tile-low",
     "tile-high",
     "electricity-pole",
+    "construction-cone",
 ]
 # Coarsening used when clustering vertices into modelling planes.
 PLANE_EPSILON = 0.01
+# Slack for "this swatch reaches that bbox edge" (kit faces are modelled flush).
+EDGE_EPSILON = 0.02
 # A face counts as "up" above this normal z, "down" below the negative one.
 TOP_NORMAL_MIN_Z = 0.9
 BOTTOM_NORMAL_MAX_Z = -0.9
@@ -144,7 +154,27 @@ def face_orientation(normal_z) -> str:
     return "side"
 
 
-def palette_samples(objects):
+def edge_reach(bounds, piece_bounds):
+    """Bounding-box edges a swatch reaches, in compass terms.
+
+    A piece's orientation lives in this list: a bend's asphalt reaches exactly
+    two adjacent edges, and which two says which corner it turns. The kit's own
+    frame is +x east and +y north, so the names transfer to world edges directly.
+    """
+    min_x, min_y, max_x, max_y = bounds
+    reached = []
+    if min_x <= piece_bounds["x"]["min"] + EDGE_EPSILON:
+        reached.append("west")
+    if max_x >= piece_bounds["x"]["max"] - EDGE_EPSILON:
+        reached.append("east")
+    if min_y <= piece_bounds["y"]["min"] + EDGE_EPSILON:
+        reached.append("south")
+    if max_y >= piece_bounds["y"]["max"] - EDGE_EPSILON:
+        reached.append("north")
+    return reached
+
+
+def palette_samples(objects, piece_bounds):
     """Distinct palette texels per face orientation, with total area.
 
     Grouped rather than listed per face: the authoring question is "which flat
@@ -186,6 +216,8 @@ def palette_samples(objects):
                 bounds[2] = corner.x if bounds[2] is None else max(bounds[2], corner.x)
                 bounds[3] = corner.y if bounds[3] is None else max(bounds[3], corner.y)
             entry["bounds"] = [round(value, 3) for value in entry["bounds"]]
+    for entry in groups["up"].values():
+        entry["reaches"] = edge_reach(entry["bounds"], piece_bounds)
     return {
         orientation: sorted(entries.values(), key=lambda entry: -entry["area"])
         for orientation, entries in groups.items()
@@ -229,19 +261,20 @@ def describe_piece(name):
     triangles = world_triangles(objects)
     points = [corner for _obj, _tri, corners in triangles for corner in corners]
     run_axis, profiles = run_planes(triangles)
+    bounds = extents(points)
     image = material_image(objects[0]) if objects else None
     return {
         "piece": name,
         "objects": [obj.name for obj in objects],
         "triangles": len(triangles),
-        "extents": extents(points),
+        "extents": bounds,
         "levels": distinct_levels(points),
         "run_axis": run_axis,
         "run_planes": profiles,
         "palette_image": None
         if image is None
         else {"name": image.name, "size": list(image.size)},
-        "top_faces": palette_samples(objects),
+        "top_faces": palette_samples(objects, bounds),
     }
 
 
