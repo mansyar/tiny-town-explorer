@@ -108,6 +108,9 @@ async function main(): Promise<void> {
     actor?.sync();
     ring.update(delta);
     fx.update(delta);
+    // The fleet ticks its own clock. A burst that is never updated never ends,
+    // which leaves the ability button dimmed and every later press ignored.
+    fleet.update(delta);
     if (hud !== undefined && fleet.isBursting() !== abilityBusy) {
       abilityBusy = fleet.isBursting();
       hud.setAbilityBusy(abilityBusy);
