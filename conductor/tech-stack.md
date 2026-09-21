@@ -29,6 +29,15 @@
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
   oscillators; CC0 samples decoded to AudioBuffers. First-tap unlock,
   master gain kid-safe cap, audiocontext unlock on first pointerdown.
+- **Audio assets are transcoded to MP3 (added 2026-09-21)** — the two CC0
+  packs behind the one-shots (Kenney Impact Sounds and Interface Sounds) ship
+  Ogg Vorbis only, and iOS Safari does not decode Ogg Vorbis, so the seven
+  clips the game uses were transcoded to mono 44.1 kHz MP3 with loudness
+  normalisation. The packs themselves are not vendored — only the clips, in
+  `src/assets/audio/`, with their provenance recorded beside them. The engine
+  loop is synthesized rather than sampled, because neither pack ships one;
+  `setEngine` drives a sawtooth's frequency from the same speed-to-rate curve
+  the plan called a `playbackRate` mapping.
 
 ## Package Management
 - **pnpm 12.4** (installed: 12.4.1) — strict, fast, disk-efficient; pinned

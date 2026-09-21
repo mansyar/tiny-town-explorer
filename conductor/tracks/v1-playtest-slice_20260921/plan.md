@@ -233,9 +233,18 @@
           jingle+cones, gulp, siren) as typed events
     - [x] Test: engine-loop pitch mapping (speed→playbackRate curve)
     - [x] Test: burst audio scheduling (1–2s one-shots, interruptible)
-- [ ] Task: AudioEngine — first-tap unlock, mute node, kid-safe gain
+- [x] Task: AudioEngine — first-tap unlock, mute node, kid-safe gain
       cap, CC0 one-shot loading, oscillator jingle (jingle note
-      scheduling covered by test above; wiring manual)
+      scheduling covered by test above; wiring manual) [549b83e]
+    - [x] Seven CC0 clips vendored from Kenney Impact + Interface Sounds and
+          transcoded Ogg → mono MP3 (iOS Safari does not decode Ogg), 23.5 KiB
+          precached; provenance in `src/assets/audio/README.md`
+    - [x] The app unlocks on the first pointerdown, plays a tap per accepted
+          tap, bonks when the motor reports one, and hums the engine note the
+          motor's speed asks for
+    - [x] Deviation recorded in tech-stack.md: the engine loop is synthesized,
+          not the sampled `playbackRate` loop the plan assumed — no engine
+          sample exists in either pack
 - [ ] Task: HUD vehicle switcher — 4 buttons ≥72px, active highlight
       (visual; manual verify with touch)
 - [ ] Task: Poof morph + ability visuals — droplets, floating cones,
