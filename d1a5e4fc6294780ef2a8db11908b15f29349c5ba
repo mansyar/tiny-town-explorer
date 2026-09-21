@@ -1,0 +1,7 @@
+Task: main.ts integration (spawn/respond/serve/update tick, serve-range distance, jingle cue scheduling).
+
+New logic module src/game/mission/orderFlow.ts with its tests written red first: orderIsOpen/orderAwaitsKid predicates, isTapOnHouse snap, and createOrderBeats - an edge reader that turns long-lived FSM states into one-shot cues. main.ts now builds the order mission, pacer, marker and beat reader, and ticks both missions in one pass: mission.update armed by a fresh distance each frame, the shared isTownBusy gate pausing both pacers (a fire that lands this frame takes the town's turn so an order that came due the same frame waits), the cone marker following FSM state, and the spawn jingle/celebration fired once per order. The ability button keeps its fire rule (hose only in reach) and stays visible during an order, since the jingle is how the kid answers.
+
+Files: src/game/mission/orderFlow.ts (new), src/game/mission/orderFlow.test.ts (new), src/main.ts.
+
+Verification: 412 tests / 34 files green (15 new), pnpm check + pnpm typecheck clean. Manual verify recorded for the Phase 4 device pass: a random house shows the bouncing cone + note with one soft jingle, the marker tracks the order through drive/serve, and the sun/confetti land on the serve.
