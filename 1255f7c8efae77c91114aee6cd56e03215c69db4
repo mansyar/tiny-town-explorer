@@ -5,3 +5,11 @@ Gate evidence (announced and run as-is, on the restored shipped tree): `pnpm che
 Docs: docs/playtest.md gains a second-track section - the AC1-AC7 table with per-AC evidence (v1's table left as that sweep's record, with a note that the counts have grown), how the desktop pass was driven (temporary 12x order-pacer clock, restored byte-for-byte), the five-minute iPad checklist for the mission, and the report-back prompts. Two issues found by the pass are written down there as known issues to watch for, both tracked outside this track: the inert `.hud-button--ability.is-hidden` CSS (v1 fire behaviour, ice-cream unaffected) and the prop-snap serve tap that can honk.
 
 Files: docs/playtest.md.
+
+Phase 5 checkpoint VERIFIED (scope: no code - this commit carries the gate evidence and docs; checkpoint 1255f7c).
+
+Automated: pnpm check clean (86 files), pnpm typecheck clean, CI=true pnpm test 421 tests / 35 files, coverage all files 82.63% statements with game/mission at 97.67% / 93.56% (orderFlow, missionFocus, serveGate, helperHand, iceCreamMission, iceCreamPacer, missionBusy, firePacer all 100% statements; main.ts the documented exempt DOM glue). The exact commands were announced before running.
+
+Manual verification: the desk half was driven by the agent in the real render loop (documented in the Phase 4 note), and the iPad sitting was run by the reviewer on 2026-09-22 against the dev server over the LAN (http://192.168.0.114:5199): the mission read and played as designed end to end - signal, jingle, drive, serve, celebrate, calm gap - with sound on and off and the ten-second helper demo. Reviewer reported it working.
+
+Findings carried forward (tracked outside this track, written into docs/playtest.md as known issues to watch for): the inert .hud-button--ability.is-hidden CSS, and the prop-snap serve tap that can honk instead of serving.
