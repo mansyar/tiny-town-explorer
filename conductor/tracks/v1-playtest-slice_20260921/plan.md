@@ -423,6 +423,16 @@
 - [ ] Task: Performance profile on iPad-class device — fps + triangle
       count measured; ratchet budget down only if needed; record
       numbers in tech-stack.md (manual)
-- [ ] Task: Acceptance-criteria sweep (spec AC1–AC10) + fallout fixes
+- [x] Task: Acceptance-criteria sweep (spec AC1–AC10) + fallout fixes [e4f13d4]
+    - [x] Every criterion audited against the built game with the evidence
+          behind it, in `docs/playtest.md`: AC1-AC7 and AC9-AC10 met; AC8 and
+          the audible half of AC1 left open because no desktop can answer them
+    - [x] Also measured what the spec budgeted rather than assuming it: 37,904
+          triangles per frame *including* the shadow pass, across 134 draw calls
+          and 106 meshes, against the ~50k budget - so the ratchet gets no
+          reason to fire, and the frame rate is left to the device
+    - [ ] The two open criteria (AC8's offline reload, AC1's audibility) and the
+          frame rate need the tablet. `docs/playtest.md` turns that into one
+          ordered sitting and says what to report back
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md) —
       includes playtest-link handoff
