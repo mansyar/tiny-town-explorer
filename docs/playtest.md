@@ -81,3 +81,82 @@ rate.
 Close it fully and open it again — do not just switch away. An open app keeps
 the old service worker until it is restarted, so a freshly deployed change can
 be invisible until then. This is normal for an offline-first app, not a bug.
+
+## The ice-cream delivery mission (track `ice-cream-delivery_20260922`)
+
+The second mission: a house orders ice cream, the kid takes the truck over and
+serves one cone. Same pillars, same shape as the fire mission — an order waits
+forever, driving away only disarms the serve, and the town runs one mission at a
+time, whichever kind.
+
+*The v1 table above is that sweep's record, so its counts read as they did
+then; the suite has grown since — see AC7 below.*
+
+### The criteria
+
+| # | Criterion | Verdict | Evidence |
+| --- | --- | --- | --- |
+| AC1 | The ordering house shows a bouncing cone + note icon, with one soft jingle cue | **Met, pending a device ear** | `orderMarker` 4 tests (the bounce rests at the base and returns every cycle, the sway never leaves ±0.09) plus the desktop pass: the marker floats over the ordered lot, bounces, and clears on serve. The cue is one synthesized jingle per order, fired off a state edge (`orderFlow`: "owes the jingle cue on the frame the order opens, and only that frame"). Audibility still needs a human ear. |
+| AC2 | The ability tap emits jingle + cones; serve arms only on the active ice-cream truck, jingled, within 1.9 units | **Met** | `serveGate` 8 tests, `iceCreamMission` 8, `orderFlow` routing 15. Desktop pass: jingled, drove off to 4.25 units → `armed: false`; drove back → `armed: true` with **no** second jingle. |
+| AC3 | Tap on the ordering house while armed → serve → confetti + cheer + linger → idle | **Met, pending a device ear** | Desktop pass: the tap while `active` + armed took the order to `complete`, cleared the marker and fired cones, confetti and the sun; the next order followed the calm gap. `iceCreamMission` pins the 2.5s linger back to `idle`. |
+| AC4 | The order waits forever; driving away disarms but keeps the order | **Met** | Desktop pass: the marker stayed over the house with the truck 4.25 units away, and an unanswered order held the town ~95s without resolving. `orderFlow` also pins "never mistakes an abandoned order for a served one". |
+| AC5 | No spawn while a mission runs (either kind), calm gap 60–90s honoured | **Met** | `missionBusy` 5 tests plus both pacers' gap rules (`firePacer` 11, `iceCreamPacer` 11). In the running app: with the fire pacer at its shipped gap and an unanswered order holding the town, no fire appeared for ~95s. |
+| AC6 | The helper hand demos once after 10s idle mid-mission, then cools down | **Met** | `helperHand` 13 tests and `missionFocus` 7 (which mission it points at). Desktop pass: the hand traced the route and its demo tap on the ordering house answered the order for real — the gesture a finger would have made. |
+| AC7 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green; logic coverage >80% | **Met** | Biome 86 files clean, `tsc --noEmit` clean, **421 tests across 35 files**. `game/mission` at 97.67% statements / 93.56% branches; `orderFlow`, `missionFocus`, `serveGate`, `helperHand`, `iceCreamMission`, `iceCreamPacer`, `missionBusy` and `firePacer` all at 100% statements. `main.ts` stays exempt DOM glue. |
+
+### How the desktop pass was driven
+
+The visual half of the pass ran in the real render loop (headless Chromium against
+the dev server), driven the way a finger drives it: real `pointerdown`s on the
+canvas for the taps and real clicks on the HUD. To reach an order in seconds
+rather than in a calm gap, the order pacer's clock was temporarily run twelve
+times fast and the fire pacer left at its shipped pace; the entry file was then
+restored byte for byte (diffed against `HEAD` — empty) and every gate re-run
+clean. Nothing shipped in this track depends on that acceleration.
+
+### The ice-cream device pass — five minutes
+
+The v1 sitting above still stands for the town, the vehicles, the parent panel
+and offline play. This is what the second mission adds.
+
+1. **Wait out a calm gap.** After the previous mission goes quiet, an order
+   arrives 60–90 seconds later. Look for the cone + note bobbing over a house —
+   and listen for one jingle as it appears.
+2. **Answer it.** Tap the marked house. The car becomes the ice-cream truck and
+   drives itself over, with the icon still bouncing.
+3. **Jingle on the way.** Tap the ability button while still travelling: you
+   should hear the jingle and the cones drop, but see no ring at the house yet.
+   Nothing may look armed until the truck is beside it.
+4. **Serve.** Beside the house the ring blooms once on the lot. Tap the house:
+   one cone changes hands with cones + confetti + the smiling sun + a cheer.
+5. **Drive off mid-order.** Start a fresh order, then tap across town instead of
+   serving. The order must stay put, and coming back must re-arm serve without
+   another jingle.
+6. **Leave it alone.** Mid-order, don't touch the screen for ten seconds: the
+   hand traces the route and taps the house once, and does not repeat inside ten
+   seconds.
+7. **Never both at once.** Play a fire mission through. No order may appear
+   until it is done and the gap has passed — and the same the other way round.
+8. **Mute and unmute.** Repeat 1 and 4 with the sound toggled off, then on: the
+   jingle, the cone handoff and the cheer should all go quiet and come back.
+
+### What to report back (ice-cream)
+
+- Anything silent that should have made a sound, and anything harsh.
+- Any serve tap that honks, or that does nothing, instead of serving.
+- Whether the cone icon reads at a glance from across the room.
+- Anything a small child would have got wrong.
+
+### Known issues to watch for
+
+Both came out of the desktop pass and are tracked outside this track:
+
+- **The hose button never hides.** `.hud-button--ability.is-hidden` has no CSS
+  rule anywhere, so the v1 fire mission's "only in reach" rule changes nothing
+  on screen. Ice-cream orders are unaffected — an open order deliberately keeps
+  the jingle button.
+- **A serve tap can honk instead of serving.** A tap snaps to any prop within
+  0.45 units *before* the 0.5-unit dead-zone check, so a tap on a marked house
+  with a cone beside it can resolve onto the cone and, when the parked truck is
+  inside 0.5 of that prop, honk rather than serve. Reproduced once and
+  intermittent; if a serve tap ever honks on the device, that is this bug.
