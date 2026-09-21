@@ -67,12 +67,28 @@
           author one when the collision phase lands
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: 13d2bad]
-- [ ] Task: Wire the kit models into the rendered town (was the implicit
-      second half of 'Render town from data') — mount roads (straight,
-      intersection, crossroad, end, driveway), houses (city-kit-suburban),
-      ground/kerb tiles and trees via the model library; vehicles from
-      `vehicle-*` ride at +0.02; reconcile the triangle budget note in
-      tech-stack.md with the measured ~25k
+- [x] Task: Wire the kit models into the rendered town (was the implicit
+      second half of 'Render town from data') [c70f12e]
+    - [x] `townLayout.ts` — pure plan (no three.js) deciding what mounts where:
+          road tile + yaw per derived shape, houses cycling the building
+          registry and capped to their lot, props keyed to their kind
+    - [x] `townRenderer.ts` — async mount, seats every model by measured
+          bounding box and fits oversized kit buildings to their lot
+    - [x] Orientation measured, not assumed: the recon tool now reports which
+          tile edges each palette swatch reaches, which pins the bend's elbow
+          (west + south), the tee's stem (south) and the dead end's opening
+          (east); three.js confirmed positive yaw is counterclockwise
+    - [x] Ground stays lawn quads — City Kit (Roads)' `tile-low` is pavement,
+          and the town wants grass under its lots; ring corners use the 1 x 1
+          `road-bend-square`, so no map reshaping for the 2 x 2 `road-curve`
+    - [x] Spec gaps taken by real kit art: the crashable hydrant becomes a
+          traffic cone (no Kenney kit ships a hydrant), documented in
+          `townTypes.ts`
+    - [x] Measured: 16,221 triangles / 79 meshes mounted, 19 models emitted and
+          precached; `tech-stack.md`'s 15k figure replaced with the measured
+          number and a ~20k projection including four vehicles
+    - [ ] Deferred: vehicles do not exist yet (VehicleSystem is Phase 5), so
+          nothing rides at the +0.01 asphalt level this task; wire them then
 - [ ] Task: Model-wiring Phase Verification & Checkpoint (Refer to
       workflow.md)
 
