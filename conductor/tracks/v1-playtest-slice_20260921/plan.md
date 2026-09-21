@@ -164,13 +164,34 @@
 
 ## Phase 4 — Collisions: Bounce & Resume
 
-- [ ] Task: TDD collision resolution (Red→Green)
-    - [ ] Test: hitboxes derived from TownGrid map data
-    - [ ] Test: circle-vs-AABB sweep along path → bonk event
-    [ ] Test: auto-resume — after bonk, car still reaches original
-          target (no stuck state)
-- [ ] Task: Squish animation, bonk sound, bounce-back offset (visual;
-      manual verify: comedic squash, no snag)
+- [x] Task: TDD collision resolution (Red→Green) [5807fdb]
+    - [x] Test: hitboxes derived from TownGrid map data — houses as boxes on the
+          same `HOUSE_LOT_FIT` cap their models are scaled to, props on the
+          radii the grid already publishes for tap snapping
+    - [x] Test: circle-vs-AABB sweep along path → bonk event — swept rather than
+          sampled, because one frame at 1.6 u/s passes clean through a cone
+    - [x] Test: auto-resume with no stuck state — a crashable prop is bumped
+          once per route and driven past (it can never block a journey), while a
+          building consumes the leg that ran into it, so the cursor only ever
+          advances; plus an integration test driving real routes around the town
+    - [x] Fix found in the browser: the bounce reversed the car's heading, so a
+          glancing corner hit fired it *into* the wall and a repeated tap walked
+          it further in. The recoil now comes from the contact geometry, and an
+          overlapping car is pushed out along the surface's shortest exit
+    - [x] Squish and bounce-back landed with the resolution itself; the bonk
+          sound moved to Phase 5 (see the next task for why)
+- [x] Task: Squish animation, bounce-back offset (visual; manual verify:
+      comedic squash, no snag) [5807fdb]
+    - [x] Delivered with the collision response: the body flattens to 25% and
+          spreads 15% over the recoil, read from the motor's bounce progress so
+          the animation cannot disagree with the motion
+    - [x] Seen on the running build (model scale `[1.105, 0.825, 1.105]`
+          mid-bonk) and pinned by tests; verified at speed with the recoil
+          temporarily held open, then both temporary changes removed
+    - [x] Scope deviation, 2026-09-21: the task named a bonk *sound*, which
+          moves to the AudioEngine task in Phase 5 — FR8 requires first-tap
+          unlock, a kid-safe master gain cap and a mute node around every
+          sound, and a bare blip now would be replaced wholesale
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Vehicles & Abilities
