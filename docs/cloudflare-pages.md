@@ -112,3 +112,27 @@ the DNS instructions. Nothing in the app depends on the hostname (`scope` and
 - **A stale build keeps serving** — close the tab and reopen it. Pages keeps a
   deployment history, so you can also roll back to an older deployment from the
   project's Deployments tab if a release is bad.
+
+## If the dashboard hands you a Worker instead
+
+Cloudflare's new-project flow can create a **Worker** rather than a Pages
+project. Everything then looks fine until the very last step: the build succeeds,
+and the *deploy* fails, because the Workers flow wants to own your Vite config —
+it tries to add `wrangler` and `@cloudflare/vite-plugin` and rewrite
+`package.json` during deploy, which dies on the frozen lockfile:
+
+```
+Error: ERR_PNPM_IGNORED_BUILDS
+  Ignored build scripts: esbuild@0.28.1, workerd@1.20260918.1
+```
+
+Read that as Cloudflare editing the repository at deploy time, not as a fault in
+the game: the `pnpm build` immediately before it passed, and the log above it
+shows every asset emitted and the service worker precaching. This app is a
+static PWA — it has no worker runtime, no bindings and no server code, so there
+is nothing for a Worker to do.
+
+Cancel that project and create a Pages project instead. There is no deploy
+command in the Pages flow, so nothing is installed at deploy time and the
+repository is never modified by a build.
+
