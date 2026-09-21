@@ -2,6 +2,7 @@ import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createModelLibrary } from './game/assets/modelLibrary';
 import { TOWN_MODELS, VEHICLE_MODELS } from './game/assets/modelRegistry';
 import { createCameraRig } from './game/camera';
+import { createTargetRing } from './game/feedback/targetRing';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
@@ -59,9 +60,14 @@ async function main(): Promise<void> {
   });
   observer.observe(container);
 
+  // The ring answers every tap, so the touch lands before the car has even
+  // turned: its bloom is the only thing that says where the car was sent.
+  const ring = createTargetRing();
+  scene.add(ring.object);
+
   // Every tap is answered: a destination becomes a route the car drives, and a
-  // tap under the car is a honk (its squish and ring land with the feedback
-  // pass). Taps that arrive while a route is running simply replace it.
+  // tap under the car is a honk (its squish and sound join the feedback pass).
+  // Taps that arrive while a route is running simply replace it.
   const router = createInputRouter({
     camera: rig.camera,
     grid,
@@ -70,9 +76,16 @@ async function main(): Promise<void> {
   renderer.domElement.addEventListener('pointerdown', (event) => {
     const rect = renderer.domElement.getBoundingClientRect();
     const command = router.tapAt(ndcFromPoint(event.clientX, event.clientY, rect));
-    if (command.kind !== 'drive' || !router.isCurrent(command)) {
+    if (command.kind === 'honk') {
+      ring.show(command.at);
       return;
     }
+    if (!router.isCurrent(command)) {
+      return;
+    }
+    // Ring before routing: a tap is answered within a frame even on the way to
+    // a destination the road network cannot reach.
+    ring.show(command.target);
     const path = findPath(grid, motor.position, command.target);
     if (path === undefined) {
       return;
@@ -84,6 +97,7 @@ async function main(): Promise<void> {
   startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
     motor.update(delta);
     actor?.sync();
+    ring.update(delta);
     // The camera eases after the car, which is the only thing that moves.
     rig.setTarget(motor.position);
     rig.update(delta);
