@@ -1,0 +1,32 @@
+PHASE 1 VERIFICATION REPORT — Project Scaffold & Toolchain
+Target commit: 4d3b0e3 (test(tools): Cover the placeholder icon generator and port it to TypeScript)
+
+Automated test command: CI=true pnpm test
+Result: 4 test files / 16 tests passing (camera 4, renderLoop 3, scene 4, icon generator 5).
+
+Supporting gates:
+- pnpm check (Biome 2.5): clean, 17 files, 0 issues.
+- pnpm typecheck (tsc 7.0.2 native): clean.
+- pnpm test:coverage (v8): 98.27% statements / 80% branches / 100% functions
+  (camera.ts 100%, renderLoop.ts 92.3%, scene.ts 100%).
+- pnpm build: clean; emits dist/sw.js, dist/workbox-*.js, dist/registerSW.js,
+  dist/manifest.webmanifest; workbox precache = 10 entries.
+
+Manual verification steps presented to the user:
+1. Preview tab at http://127.0.0.1:4173 (production build) — expect a
+   full-viewport #87CEEB sky with a centered, tilted green ground plate,
+   no text or in-game UI.
+2. Resize / switch portrait-landscape — plate stays centered and
+   correctly proportioned, never stretched or cropped.
+3. pnpm dev (http://localhost:5173) should look identical to pnpm preview.
+4. DevTools → Application: manifest "Tiny Town Explorers" (standalone,
+   orientation any, 192/512/maskable icons) plus a registered service worker.
+
+Findings caught during self-verification:
+- Canvas had no CSS width/height, so it rendered at drawing-buffer size
+  (1036x1152) inside the 691x768 viewport and cropped the scene. Fixed in
+  index.html and re-verified.
+- Service-worker precache served a stale bundle during iteration; caches
+  are cleared between builds when verifying preview output.
+
+User confirmation: "Yes — verified, continue to Phase 2."
