@@ -1,6 +1,8 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createModelLibrary } from './game/assets/modelLibrary';
 import { TOWN_MODELS, VEHICLE_MODELS } from './game/assets/modelRegistry';
+import { createAudioEngine, type SampledSound } from './game/audio/audioEngine';
+import { SOUND_MODELS } from './game/audio/audioRegistry';
 import { createCameraRig } from './game/camera';
 import { collectObstacles } from './game/collision/collision';
 import { createTargetRing } from './game/feedback/targetRing';
@@ -12,6 +14,7 @@ import { createTownGrid } from './game/town/townGrid';
 import { mountTown } from './game/town/townRenderer';
 import { createVehicleActor } from './game/vehicle/vehicleActor';
 import { createVehicleMotor, type VehicleMotor } from './game/vehicle/vehicleMotor';
+import { createVehicleSystem } from './game/vehicle/vehicleSystem';
 
 /**
  * Creates the single WebGL renderer. Antialiasing, soft shadows, and a pixel
@@ -63,10 +66,26 @@ async function main(): Promise<void> {
   const ring = createTargetRing();
   scene.add(ring.object);
 
+  // Sound waits for a gesture. The context and its samples are prepared up
+  // front so the very first tap has something to play; only `unlock` (below,
+  // on the first pointerdown) makes any of it audible.
+  const audio = createAudioEngine();
+  void Promise.all(
+    (Object.entries(SOUND_MODELS) as [SampledSound, string][]).map(([id, url]) =>
+      audio.load(id, url),
+    ),
+  );
+
+  // The fleet is not on screen yet, but its engine curve is what gives the car
+  // its voice, so the voice tracks the one vehicle that already drives.
+  const fleet = createVehicleSystem();
+
   // The car and its motor arrive only once the town has been measured, because
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
   let motor: VehicleMotor | undefined;
   let actor: Awaited<ReturnType<typeof createVehicleActor>> | undefined;
+
+  let bonks = 0;
 
   startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
     motor?.update(delta);
@@ -75,6 +94,12 @@ async function main(): Promise<void> {
     // The camera eases after the car, which is the only thing that moves.
     if (motor !== undefined) {
       rig.setTarget(motor.position);
+      // The engine note rides the speed: silent parked, chugging under way.
+      audio.setEngine(motor.isDriving() ? fleet.engineRate(motor.speed()) : 0);
+      if (motor.bonkCount() > bonks) {
+        bonks = motor.bonkCount();
+        audio.play('bonk');
+      }
     }
     rig.update(delta);
   });
@@ -101,6 +126,8 @@ async function main(): Promise<void> {
     getCarPosition: () => vehicle.position,
   });
   renderer.domElement.addEventListener('pointerdown', (event) => {
+    // The first gesture is the only thing that lets the browser start audio.
+    void audio.unlock();
     const rect = renderer.domElement.getBoundingClientRect();
     const command = router.tapAt(ndcFromPoint(event.clientX, event.clientY, rect));
     if (command.kind === 'honk') {
@@ -113,6 +140,7 @@ async function main(): Promise<void> {
     // Ring before routing: a tap is answered within a frame even on the way to
     // a destination the road network cannot reach.
     ring.show(command.target);
+    audio.play('tap');
     const path = findPath(grid, vehicle.position, command.target);
     if (path === undefined) {
       return;
