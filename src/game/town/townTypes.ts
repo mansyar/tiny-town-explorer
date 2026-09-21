@@ -117,6 +117,19 @@ export const PROP_COLLISION_RADIUS: Readonly<Record<PropKind, number>> = {
  */
 export const HOUSE_LOT_FIT = 0.86;
 
+/**
+ * Measured world-space half extents of a mounted building, along the town axes.
+ *
+ * Taken from the model's own bounding box after the renderer has fitted and
+ * turned it. The lot-fill cap above bounds only a model's widest axis, so a box
+ * built from the cap walls off the lawn on the narrower one; this is the art the
+ * car actually meets.
+ */
+export interface HouseFootprint {
+  readonly halfX: number;
+  readonly halfZ: number;
+}
+
 /** Unit step for each compass direction in grid space. */
 export const DIRECTION_STEPS: Readonly<Record<Direction, TileCoord>> = {
   north: { x: 0, y: -1 },

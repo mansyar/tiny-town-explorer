@@ -1,13 +1,14 @@
 import type { TownGrid } from '../town/townGrid';
-import { HOUSE_LOT_FIT, type Vec2 } from '../town/townTypes';
+import { HOUSE_LOT_FIT, type HouseFootprint, type Vec2 } from '../town/townTypes';
 
 /**
  * What the car can run into, and where it first touches.
  *
  * Hitboxes are *derived*, never authored twice: houses take their footprint from
- * the same lot-fill cap the renderer scales their models to, and props reuse the
- * collision radii the grid already publishes for tap snapping. A hand-written
- * table of boxes would drift from the art the first time a model changed.
+ * the building the renderer actually mounted — its measured, turned bounding box
+ * — and props reuse the collision radii the grid already publishes for tap
+ * snapping. A hand-written table of boxes would drift from the art the first time
+ * a model changed.
  *
  * Two obstacle kinds, because they mean different things to a driver:
  *
@@ -83,14 +84,28 @@ export interface Depenetration {
  * Ids come from the grid, so a bonk can be traced back to the house or prop it
  * happened to.
  */
-export function collectObstacles(grid: TownGrid): readonly Obstacle[] {
-  const half = (grid.tileSize * HOUSE_LOT_FIT) / 2;
+export function collectObstacles(
+  grid: TownGrid,
+  houseFootprints?: ReadonlyMap<string, HouseFootprint>,
+): readonly Obstacle[] {
+  // The lot cap is only a fallback for callers with no mounted art to measure
+  // (tests, headless use). It bounds a model's widest axis alone, so a box built
+  // from it would stop the car short of the wall on the narrower one.
+  const cap = (grid.tileSize * HOUSE_LOT_FIT) / 2;
   return [
-    ...grid.houses.map((house) => ({
-      id: house.id,
-      solid: true,
-      shape: { kind: 'box' as const, centre: house.position, halfX: half, halfZ: half },
-    })),
+    ...grid.houses.map((house) => {
+      const measured = houseFootprints?.get(house.id);
+      return {
+        id: house.id,
+        solid: true,
+        shape: {
+          kind: 'box' as const,
+          centre: house.position,
+          halfX: measured?.halfX ?? cap,
+          halfZ: measured?.halfZ ?? cap,
+        },
+      };
+    }),
     ...grid.props.map((prop) => ({
       id: prop.id,
       solid: false,

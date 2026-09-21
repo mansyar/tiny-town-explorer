@@ -37,6 +37,14 @@ function smallModel(name: string): Group {
   return group;
 }
 
+/** A building twice as deep as it is wide, so fitting and turning are visible. */
+function deepModel(name: string): Group {
+  const group = new Group();
+  group.name = name;
+  group.add(new Mesh(new BoxGeometry(1, 1, 2), new MeshLambertMaterial()));
+  return group;
+}
+
 /** A model with no footprint at all — a degenerate export. */
 function flatModel(name: string): Group {
   const group = new Group();
@@ -123,6 +131,42 @@ describe('mountTown', () => {
     expect(house?.scale.x).toBeCloseTo(0.43);
     expect(house?.scale.x).toBe(house?.scale.z);
     expect(road?.scale.x).toBe(1);
+
+    town.dispose();
+  });
+
+  it('publishes the mounted building’s own footprint, not the lot cap', async () => {
+    const plan: TownPlan = {
+      placements: [
+        {
+          kind: 'model',
+          name: 'house-1',
+          url: 'house.glb',
+          position: { x: 0, z: 0 },
+          yaw: 0,
+          fitWithin: 1,
+        },
+      ],
+    };
+    const town = await mountTown(grid, stubLibrary(deepModel).library, plan);
+
+    // A 1 x 2 building capped at 1 unit is 0.5 x 1 on the ground: the footprint
+    // follows the model's aspect rather than the cap on both axes.
+    const footprint = town.houseFootprints.get('house-1');
+    expect(footprint?.halfX).toBeCloseTo(0.25);
+    expect(footprint?.halfZ).toBeCloseTo(0.5);
+    // Roads and props are not buildings, so nothing is published for them.
+    expect(town.houseFootprints.has('road-0-0')).toBe(false);
+
+    town.dispose();
+  });
+
+  it('publishes one footprint per planned house', async () => {
+    const town = await mountTown(grid, stubLibrary().library);
+
+    expect([...town.houseFootprints.keys()].sort()).toEqual(
+      grid.houses.map((house) => house.id).sort(),
+    );
 
     town.dispose();
   });

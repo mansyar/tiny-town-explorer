@@ -11,7 +11,7 @@ import { createScene } from './game/scene';
 import { createTownGrid } from './game/town/townGrid';
 import { mountTown } from './game/town/townRenderer';
 import { createVehicleActor } from './game/vehicle/vehicleActor';
-import { createVehicleMotor } from './game/vehicle/vehicleMotor';
+import { createVehicleMotor, type VehicleMotor } from './game/vehicle/vehicleMotor';
 
 /**
  * Creates the single WebGL renderer. Antialiasing, soft shadows, and a pixel
@@ -42,13 +42,8 @@ async function main(): Promise<void> {
   const grid = createTownGrid();
 
   // The car starts on the street and the camera opens on it, so the sky is on
-  // screen while the models stream in. Its hitboxes come from the same authored
-  // map the town is built from, so the car cannot disagree with the art about
-  // where a wall is.
-  const motor = createVehicleMotor({ obstacles: collectObstacles(grid) });
+  // screen while the models stream in.
   const spawn = grid.spawnPoints[0] ?? { x: 0, z: 0 };
-  motor.snapTo(spawn);
-
   const rig = createCameraRig(container.clientWidth / container.clientHeight);
   rig.snapTo(spawn);
 
@@ -68,13 +63,42 @@ async function main(): Promise<void> {
   const ring = createTargetRing();
   scene.add(ring.object);
 
+  // The car and its motor arrive only once the town has been measured, because
+  // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
+  let motor: VehicleMotor | undefined;
+  let actor: Awaited<ReturnType<typeof createVehicleActor>> | undefined;
+
+  startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
+    motor?.update(delta);
+    actor?.sync();
+    ring.update(delta);
+    // The camera eases after the car, which is the only thing that moves.
+    if (motor !== undefined) {
+      rig.setTarget(motor.position);
+    }
+    rig.update(delta);
+  });
+
+  const library = createModelLibrary();
+  const town = await mountTown(grid, library);
+  scene.add(town.group);
+
+  // Hitboxes come from the same measured models the town just mounted, so the
+  // car cannot disagree with the art about where a wall is.
+  const vehicle = createVehicleMotor({
+    obstacles: collectObstacles(grid, town.houseFootprints),
+  });
+  motor = vehicle;
+  vehicle.snapTo(spawn);
+  rig.snapTo(spawn);
+
   // Every tap is answered: a destination becomes a route the car drives, and a
   // tap under the car is a honk (its squish and sound join the feedback pass).
   // Taps that arrive while a route is running simply replace it.
   const router = createInputRouter({
     camera: rig.camera,
     grid,
-    getCarPosition: () => motor.position,
+    getCarPosition: () => vehicle.position,
   });
   renderer.domElement.addEventListener('pointerdown', (event) => {
     const rect = renderer.domElement.getBoundingClientRect();
@@ -89,29 +113,14 @@ async function main(): Promise<void> {
     // Ring before routing: a tap is answered within a frame even on the way to
     // a destination the road network cannot reach.
     ring.show(command.target);
-    const path = findPath(grid, motor.position, command.target);
+    const path = findPath(grid, vehicle.position, command.target);
     if (path === undefined) {
       return;
     }
-    motor.setPath(path);
+    vehicle.setPath(path);
   });
 
-  let actor: Awaited<ReturnType<typeof createVehicleActor>> | undefined;
-  startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
-    motor.update(delta);
-    actor?.sync();
-    ring.update(delta);
-    // The camera eases after the car, which is the only thing that moves.
-    rig.setTarget(motor.position);
-    rig.update(delta);
-  });
-
-  const library = createModelLibrary();
-  const [town, car] = await Promise.all([
-    mountTown(grid, library),
-    createVehicleActor(library, VEHICLE_MODELS.truck, motor),
-  ]);
-  scene.add(town.group);
+  const car = await createVehicleActor(library, VEHICLE_MODELS.truck, vehicle);
   scene.add(car.object);
   actor = car;
   await Promise.all(TOWN_MODELS.map((url) => library.load(url)));

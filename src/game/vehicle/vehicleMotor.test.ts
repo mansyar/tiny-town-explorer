@@ -13,7 +13,9 @@ import {
   ARRIVAL_RADIUS,
   BOUNCE_BACK_DISTANCE,
   BOUNCE_DURATION,
+  CAR_HALF_LENGTH,
   CAR_RADIUS,
+  capsuleCentres,
   createVehicleMotor,
   DRIVE_SPEED,
   facingOf,
@@ -68,6 +70,20 @@ const HOUSE: Obstacle = {
 /** Headings that point along each axis, matching the town's convention. */
 const EAST = Math.PI / 2;
 const WEST = -Math.PI / 2;
+
+/** Any part of the car's capsule overlapping an obstacle, if any. */
+function capsuleOverlaps(
+  obstacles: readonly Obstacle[],
+  motor: ReturnType<typeof createVehicleMotor>,
+): Obstacle | undefined {
+  for (const circle of capsuleCentres(motor.position, motor.heading())) {
+    const hit = overlapsObstacle(obstacles, circle, CAR_RADIUS);
+    if (hit !== undefined) {
+      return hit;
+    }
+  }
+  return undefined;
+}
 
 describe('hitting things', () => {
   it('bonks a crashable prop, bounces, then still reaches the tap beyond it', () => {
@@ -144,8 +160,9 @@ describe('hitting things', () => {
     // The tap was inside a wall, so the route cannot be honoured: the car parks
     // against the wall instead of driving at it forever.
     expect(motor.isDriving()).toBe(false);
-    // East face at -1.57, so the car's centre stops at -1.57 + 0.26.
-    expect(motor.position.x).toBeCloseTo(-2 + 0.43 + CAR_RADIUS, 2);
+    // East face at -1.57. The nose leads the centre, so the car parks a full
+    // half-length out rather than a radius: -1.57 + 0.43.
+    expect(motor.position.x).toBeCloseTo(-2 + 0.43 + CAR_HALF_LENGTH, 2);
 
     const parked = motor.position.x;
     run(motor, 3);
@@ -163,8 +180,11 @@ describe('hitting things', () => {
       solid: true,
       shape: { kind: 'box', centre: { x: 2, z: 0 }, halfX: 0.43, halfZ: 0.43 },
     };
+    // The tail sits in the inflated corner the swept test cannot resolve
+    // exactly, while the body itself is clear of the house and driving away.
+    const start = { x: 1.31 - (CAR_HALF_LENGTH - CAR_RADIUS), z: 0.17 };
     const motor = createVehicleMotor({
-      position: { x: 1.31, z: 0.17 },
+      position: start,
       heading: WEST,
       obstacles: [house],
     });
@@ -174,13 +194,13 @@ describe('hitting things', () => {
     let furthestWest = motor.position.x;
     for (let frame = 0; frame < 600; frame++) {
       motor.update(1 / 120);
-      expect(overlapsObstacle([house], motor.position, CAR_RADIUS)).toBeUndefined();
+      expect(capsuleOverlaps([house], motor)).toBeUndefined();
       furthestEast = Math.max(furthestEast, motor.position.x);
       furthestWest = Math.min(furthestWest, motor.position.x);
     }
-    // The recoil went away from the wall, and never into it.
-    expect(furthestWest).toBeLessThan(1.31 - 0.05);
-    expect(furthestEast).toBeLessThanOrEqual(1.31 + 1e-9);
+    // It drove away from the wall, and never into it.
+    expect(furthestWest).toBeLessThan(start.x - 0.05);
+    expect(furthestEast).toBeLessThanOrEqual(start.x + 1e-9);
   });
 
   it('pushes itself clear when it somehow starts inside a building', () => {
@@ -200,7 +220,7 @@ describe('hitting things', () => {
 
     motor.update(1 / 60);
 
-    expect(overlapsObstacle([house], motor.position, CAR_RADIUS)).toBeUndefined();
+    expect(capsuleOverlaps([house], motor)).toBeUndefined();
     expect(motor.isBouncing()).toBe(true);
   });
 
@@ -217,9 +237,7 @@ describe('hitting things', () => {
       motor.setPath(directTo(house?.position ?? { x: 0, z: 0 }));
       for (let frame = 0; frame < 40; frame++) {
         motor.update(1 / 60);
-        expect(
-          overlapsObstacle(obstacles, motor.position, CAR_RADIUS)?.solid ?? false,
-        ).toBe(false);
+        expect(capsuleOverlaps(obstacles, motor)?.solid ?? false).toBe(false);
       }
     }
   });
@@ -270,9 +288,7 @@ describe('hitting things', () => {
       let frames = 0;
       for (; frames < 60 * 60 && motor.isDriving(); frames++) {
         motor.update(1 / 60);
-        expect(
-          overlapsObstacle(obstacles, motor.position, CAR_RADIUS)?.solid ?? false,
-        ).toBe(false);
+        expect(capsuleOverlaps(obstacles, motor)?.solid ?? false).toBe(false);
       }
 
       // Arrived rather than ground to a halt: no stuck state exists for a route

@@ -32,11 +32,26 @@ describe('collectObstacles', () => {
 
     expect(house?.shape.kind).toBe('box');
     expect(house?.shape.kind === 'box' && house.shape.centre).toEqual(authored?.position);
-    // Half of the very cap the renderer scales the model to, so the hitbox is
-    // the art's footprint and not an approximation of it.
+    // With no measurement supplied, the lot cap is the fallback; the renderer's
+    // own measured footprint is what production passes (test below).
     const expectedHalf = (grid.tileSize * HOUSE_LOT_FIT) / 2;
     expect(house?.shape.kind === 'box' && house.shape.halfX).toBeCloseTo(expectedHalf);
     expect(house?.shape.kind === 'box' && house.shape.halfZ).toBeCloseTo(expectedHalf);
+  });
+
+  it('takes the mounted art footprint when the renderer supplies one', () => {
+    const footprints = new Map([['house-1', { halfX: 0.34, halfZ: 0.43 }]]);
+    const measured = collectObstacles(grid, footprints);
+    const house = measured.find((obstacle) => obstacle.id === 'house-1');
+    const unfitted = measured.find((obstacle) => obstacle.id === 'house-2');
+    const cap = (grid.tileSize * HOUSE_LOT_FIT) / 2;
+
+    // The box follows the model's own aspect, not the cap on both axes: this is
+    // what stops the car short of a wall on a building's narrower side.
+    expect(house?.shape.kind === 'box' && house.shape.halfX).toBeCloseTo(0.34);
+    expect(house?.shape.kind === 'box' && house.shape.halfZ).toBeCloseTo(0.43);
+    // A house the measurement did not cover keeps the cap, not nothing.
+    expect(unfitted?.shape.kind === 'box' && unfitted.shape.halfX).toBeCloseTo(cap);
   });
 
   it('gives every prop the collision radius the grid already publishes', () => {

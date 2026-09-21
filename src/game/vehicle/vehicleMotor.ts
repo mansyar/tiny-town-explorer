@@ -53,9 +53,19 @@ export const ALIGN_TOLERANCE = 0.08;
 
 /**
  * Radius of the car's own footprint, in world units. Matches the kit truck's
- * 0.52 width; the vehicles are all this class of toy car.
+ * 0.525 width; the vehicles are all this class of toy car.
  */
 export const CAR_RADIUS = 0.26;
+
+/**
+ * Half the car's length, in world units: the kit truck measures 0.8625 nose to
+ * tail.
+ *
+ * The car is a *capsule*, not a circle. One circle of {@link CAR_RADIUS} covers
+ * the body's width but falls 0.17 short of the nose, so a circle-only footprint
+ * would bury the bonnet in every wall met head-on.
+ */
+export const CAR_HALF_LENGTH = 0.43;
 
 /**
  * How long a recoil lasts, in seconds. Short: a bonk is a punctuation mark, not
@@ -96,12 +106,32 @@ export function facingOf(heading: number): Vec2 {
   return { x: Math.sin(heading), z: Math.cos(heading) };
 }
 
+/**
+ * The two circle centres of a car's capsule: the shape collision sweeps.
+ *
+ * Both sit on the centre line at `CAR_HALF_LENGTH - radius` from the middle, so
+ * the capsule reaches as far forward as the body's nose and as far back as its
+ * tail.
+ */
+export function capsuleCentres(
+  at: Vec2,
+  heading: number,
+  radius = CAR_RADIUS,
+): readonly Vec2[] {
+  const offset = Math.max(0, CAR_HALF_LENGTH - radius);
+  const facing = facingOf(heading);
+  return [
+    { x: at.x + facing.x * offset, z: at.z + facing.z * offset },
+    { x: at.x - facing.x * offset, z: at.z - facing.z * offset },
+  ];
+}
+
 export interface VehicleMotorOptions {
   readonly position?: Vec2;
   readonly heading?: number;
   /** Hitboxes to sweep against; empty (the default) is a world with no walls. */
   readonly obstacles?: readonly Obstacle[];
-  /** Radius of the car's footprint, defaulting to {@link CAR_RADIUS}. */
+  /** Radius of each capsule circle, defaulting to {@link CAR_RADIUS}. */
   readonly radius?: number;
 }
 
@@ -174,16 +204,61 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
    * box squares its corners), and a recoil that starts inside a wall is a car
    * that grinds its way further in every time it is aimed there again.
    */
-  const pushClear = (impact: Impact): Vec2 => {
-    const overlap = depenetration(impact.obstacle.shape, impact.point, radius);
-    if (overlap === undefined) {
-      return impact.point;
+  const pushClear = (impact: Impact, centre: Vec2): Vec2 => {
+    // Either end of the capsule can be the part left inside a surface, so the
+    // deepest overlap is the one that moves the car clear: the bonnet on an
+    // ordinary head-on bonk, the tail when the car was already embedded.
+    let furthest = 0;
+    let clear: Vec2 = centre;
+    for (const circle of capsuleCentres(centre, heading, radius)) {
+      const overlap = depenetration(impact.obstacle.shape, circle, radius);
+      if (overlap === undefined) {
+        continue;
+      }
+      const push = overlap.distance + CONTACT_SKIN;
+      if (push > furthest) {
+        furthest = push;
+        clear = {
+          x: centre.x + overlap.normal.x * push,
+          z: centre.z + overlap.normal.z * push,
+        };
+      }
     }
-    const push = overlap.distance + CONTACT_SKIN;
-    return {
-      x: impact.point.x + overlap.normal.x * push,
-      z: impact.point.z + overlap.normal.z * push,
-    };
+    return clear;
+  };
+
+  /**
+   * First contact along this frame's motion for the whole capsule.
+   *
+   * The contact is reported with the car's own centre, not the struck circle's:
+   * the caller moves the car, and the capsule is derived from wherever it lands.
+   */
+  const sweepCapsule = (
+    toX: number,
+    toZ: number,
+  ): { readonly impact: Impact; readonly centre: Vec2 } | undefined => {
+    let best: { readonly impact: Impact; readonly centre: Vec2 } | undefined;
+    for (const circle of capsuleCentres(position, heading, radius)) {
+      const dx = circle.x - position.x;
+      const dz = circle.z - position.z;
+      const impact = sweepObstacles(
+        obstacles,
+        circle,
+        { x: toX + dx, z: toZ + dz },
+        radius,
+        passed,
+      );
+      if (impact === undefined) {
+        continue;
+      }
+      if (best === undefined || impact.time < best.impact.time) {
+        best = {
+          impact,
+          centre: { x: impact.point.x - dx, z: impact.point.z - dz },
+        };
+      }
+    }
+    return best;
   };
 
   /**
@@ -215,26 +290,23 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
     // Sweep this frame's motion: at 1.6 u/s a single frame covers far enough to
     // pass clean through a prop, so contact must be found along the way rather
     // than at the destination.
-    const impact =
-      obstacles.length === 0
-        ? undefined
-        : sweepObstacles(obstacles, position, { x: nextX, z: nextZ }, radius, passed);
-    if (impact === undefined) {
+    const hit = obstacles.length === 0 ? undefined : sweepCapsule(nextX, nextZ);
+    if (hit === undefined) {
       currentSpeed = DRIVE_SPEED;
       position.x = nextX;
       position.z = nextZ;
       return;
     }
-    collide(impact);
+    collide(hit.impact, hit.centre);
   };
 
   /** Stops on the first thing hit and recoils away from it. */
-  const collide = (impact: Impact): void => {
+  const collide = (impact: Impact, centre: Vec2): void => {
     // Land on the surface rather than wherever the car had got to, and make
     // sure it is on the outside of it: a car that grazed a corner can stop
     // fractionally overlapping, and a recoil from inside a wall is a car that
     // can never leave.
-    const pushed = pushClear(impact);
+    const pushed = pushClear(impact, centre);
     position.x = pushed.x;
     position.z = pushed.z;
     currentSpeed = 0;

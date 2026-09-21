@@ -12,6 +12,7 @@ import {
 import type { ModelLibrary } from '../assets/modelLibrary';
 import type { TownGrid } from './townGrid';
 import { type ModelPlacement, planTown, type TownPlan } from './townLayout';
+import type { HouseFootprint } from './townTypes';
 
 /**
  * Mounts a town plan: ground quads plus one instantiated kit model per
@@ -32,6 +33,13 @@ import { type ModelPlacement, planTown, type TownPlan } from './townLayout';
 /** The mounted town plus the teardown for everything it owns. */
 export interface TownMount {
   readonly group: Group;
+  /**
+   * World-space half extents of every building it mounted, keyed by house id.
+   *
+   * Published so collision can sweep the art the car actually meets: a building
+   * is capped on its widest axis alone, so its footprint is not the cap square.
+   */
+  readonly houseFootprints: ReadonlyMap<string, HouseFootprint>;
   /** Frees ground geometry/materials and empties the group. Models are owned by
    * the library that loaded them. */
   dispose(): void;
@@ -67,16 +75,26 @@ export async function mountTown(
     return material;
   };
 
+  const houseFootprints = new Map<string, HouseFootprint>();
+
   for (const placement of plan.placements) {
     if (placement.kind === 'ground') {
       group.add(mountGround(placement, groundGeometry, groundMaterial(placement.color)));
       continue;
     }
-    group.add(await mountModel(placement, library));
+    const object = await mountModel(placement, library);
+    group.add(object);
+    // Measured after fitting and turning, so the footprint is the mounted art
+    // rather than the cap code could have predicted from the lot alone.
+    if (placement.fitWithin !== undefined) {
+      const size = new Box3().setFromObject(object).getSize(new Vector3());
+      houseFootprints.set(placement.name, { halfX: size.x / 2, halfZ: size.z / 2 });
+    }
   }
 
   return {
     group,
+    houseFootprints,
     dispose(): void {
       groundGeometry.dispose();
       for (const material of groundMaterials.values()) {
