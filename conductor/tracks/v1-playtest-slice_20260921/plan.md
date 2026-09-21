@@ -19,8 +19,8 @@
 - [x] Task: Configure Biome 2.5 + Vitest 5 (biome.json, vitest.config.ts) [23e1871]
 - [x] Task: vite-plugin-pwa skeleton — manifest (standalone, orientation
       any, 192/512 placeholder icons), autoUpdate registration [3c41783]
-- [ ] Task: Render-loop smoke test — three.js scene boots, empty town
-      ground renders in dev and preview builds
+- [x] Task: Render-loop smoke test — three.js scene boots, empty town
+      ground renders in dev and preview builds [d6df284]
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 — Town Data, World & Camera
