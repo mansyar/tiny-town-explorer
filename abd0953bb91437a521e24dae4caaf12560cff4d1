@@ -1,0 +1,49 @@
+Task: Render town from data — Kenney track tiles as road grid, houses on lots, park corner, hydrants/poles (visual; manual verify: layout matches authored map, no z-fighting)
+
+Summary of changes:
+- src/game/town/townBuilder.ts: buildTown(grid) walks the map and returns
+  { group, dispose }. Per tile it emits a ground decal (lot green / lighter
+  park green) plus, for roads, a road surface and one lane marking per
+  connected neighbour — so the derived track-piece shape is legible. Houses
+  are body + 4-sided roof cone + door on the local +z wall, rotated by
+  yawForDirection(facing) so the authored facing is visible and testable.
+  Props are hydrant (barrel + cap), power pole (post + crossbar), and tree
+  (trunk + cone foliage), placed from the map's kerbside offsets. All
+  meshes are named (road-x-y, house-id-body, hydrant-1-barrel...) for
+  debugging. Geometry is shared (one unit plane/box/cylinder/cone) and
+  scaled per instance; materials are cached per colour.
+- src/game/scene.ts: the scene is now a stage only (sky, fog, daylight) —
+  the town owns the ground. Daylight has a shadow-casting sun (1024 map,
+  +-8 unit ortho shadow frustum, normal bias) and a shadow cleanup path.
+- src/main.ts: enables shadow mapping (PCFShadowMap) and mounts the built
+  town into the scene.
+- src/game/camera.ts: temporary whole-town framing (VIEW_HEIGHT 9) and a
+  closer camera position, since orthographic framing ignores distance but
+  fog and depth precision do not. The CameraRig task replaces this.
+- src/game/scene.test.ts, src/game/town/townBuilder.test.ts: 10 new tests
+  (48 total) covering tile/house/prop placement against the authored map,
+  lane markings per road connection, single shared geometry per kind,
+  facing yaws, shadow flags, and teardown.
+
+Verification (visual task — manual verification per workflow.md):
+- Automated: pnpm check clean, pnpm typecheck clean, CI=true pnpm test
+  → 6 files / 48 tests; coverage 99.2% statements (scene 100%,
+  townBuilder 99%).
+- Manual, production preview build (port 4173, SW cache cleared first):
+  the rendered town matches the authored map — perimeter ring road with
+  white lane markings plus the north-south cross street at x3, ten houses
+  on their lots with doors facing their road, the lighter park corner with
+  two trees, four kerbside hydrants and three power poles. Two bugs were
+  found and fixed by looking: (1) the whole frame was fog-washed because
+  the ortho camera sat ~36 units from town centre while fog was ranged for
+  the old 240-unit ground — camera moved to ~10 units and fog re-ranged;
+  (2) three 0.186 removed PCFSoftShadowMap (console warning) — switched to
+  PCFShadowMap.
+- Z-fighting: verified clean layering of ground (y=0), road (y=0.02) and
+  markings (y=0.035) with no speckling at any zoom in the preview.
+- Shadows verified by temporarily lowering the sun: house, tree, pole and
+  hydrant shadows all appear; final sun angle (12,10,9) chosen for the
+  toy-diorama look with hemisphere fill at 1.1.
+
+Follow-ups: real Kenney models replace the primitive stand-ins in the asset
+pipeline task, and the CameraRig replaces the whole-town framing.
