@@ -1,0 +1,36 @@
+TASK: Expanding target ring + drive feel polish (Phase 3)
+
+ACCEPTANCE
+- A tap blooms a ring within a frame: at the resolved destination for a drive,
+  and at the car for a dead-zone honk, so no touch is silent.
+- Pulse: radius 0.12 -> 0.55 world units over 0.45s, ease-out growth (most of
+  the expansion lands in the first quarter, so the tap reads instantly),
+  linear fade, hidden when finished. Drawn at y = 0.03, above the +0.02
+  asphalt, so it never z-fights with the road it marks.
+- One ring, not a pool: the newest tap restarts the pulse, so a mash cannot
+  litter the street with stale rings. The mesh is a unit ring that is scaled,
+  so a pulse allocates nothing after construction.
+- Drive feel verified by watching it drive: the car turns in place to its
+  heading, then holds a constant 1.6 u/s on the line, including through both
+  junctions and both bends, and a mid-route tap replaces the route.
+
+TEST-FIRST
+- ringFrame (pure) is pinned: starts small and opaque, ends at full radius and
+  zero opacity, monotonic growth and fade, fastest expansion first, and both
+  negative and over-long elapsed times clamp.
+
+VERIFICATION METHOD (worth recording)
+- A 0.45s pulse is easy to miss between tool round-trips, so the ring was
+  verified in two steps: first slowed to a 4s pulse (with the pulse timing
+  sampled live over 6 seconds to confirm the curve), then restored and
+  re-verified at the real speed by holding a tap loop open so a young, opaque
+  ring was guaranteed on screen. Temporary changes (the slowed constant and a
+  debug hook) were removed before committing; `grep -n TEMP` is clean.
+- One genuine visual finding: a tap outside the town is clamped to the map
+  edge, so its ring sits half over the edge of the world. The marker is
+  accurate — that IS the destination the car drives to — but it reads as
+  "go where there is no ground". Left as-is; noted for the polish pass.
+
+COVERAGE
+- targetRing.ts 100% statements/branches/functions/lines; 191 tests across 17
+  files; biome clean, tsc --noEmit clean, build clean.
