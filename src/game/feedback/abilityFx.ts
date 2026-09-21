@@ -25,7 +25,7 @@ import type { Vec2 } from '../town/townTypes';
  */
 
 /** Kinds of burst this module can throw. */
-export type BurstKind = 'cones' | 'gulp' | 'poof' | 'spray';
+export type BurstKind = 'cones' | 'confetti' | 'gulp' | 'poof' | 'spray';
 
 /** How long a burst of bits lives. Long enough to read, short enough to not linger. */
 export const BURST_SECONDS = 0.7;
@@ -109,6 +109,16 @@ export const BURST_PLANS: Readonly<Record<BurstKind, BurstPlan>> = {
     fan: Math.PI * 2,
     forward: 0,
     size: 1.5,
+  },
+  confetti: {
+    count: 22,
+    shape: 'star',
+    color: 0xffc94d,
+    speed: 2.2,
+    lift: 2.6,
+    fan: Math.PI * 2,
+    forward: 0,
+    size: 1,
   },
 };
 
