@@ -193,7 +193,26 @@
           moves to the AudioEngine task in Phase 5 — FR8 requires first-tap
           unlock, a kid-safe master gain cap and a mute node around every
           sound, and a bare blip now would be replaced wholesale
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Correction (2026-09-21, found in phase verification) — match house
+      hitboxes to the mounted art [ee538c2]
+    - [x] Reason: the box was built from the lot-fill cap on both axes, but the
+          cap bounds only a model's *widest* axis, so the car stopped up to 0.18
+          units short of a wall on the narrower one (measured: house-2 art half
+          0.268 against a 0.43 hitbox)
+    - [x] Fix: the renderer publishes each mounted building's measured, turned
+          bounding box; `collectObstacles` builds the box from it, falling back
+          to the lot cap only when no measurement is supplied
+    - [x] Second, deeper bug surfaced by the first: the car's own footprint was a
+          single 0.26 circle, right for its 0.525 width but 0.17 short of its
+          0.8625 nose, so an honest house box let the bonnet sink into the wall.
+          The motor now sweeps and depenetrates a two-circle capsule
+    - [x] Tests: the renderer publishes one footprint per house with the model's
+          own aspect; collision uses the measurement and keeps the cap when none
+          is supplied; the motor stops nose-first and clears itself when embedded
+    - [x] The kerb props needed no re-seating: re-measured against the art boxes,
+          each is bonked before the house behind it on every approach, so they
+          stay crashable
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 — Vehicles & Abilities
 
