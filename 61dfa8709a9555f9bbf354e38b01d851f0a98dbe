@@ -1,0 +1,5 @@
+Fleet art sourced: three Kenney CC0 Car Kit vehicles packed (firetruck, garbage-truck, police) and one authored ice-cream truck (scripts/blender-ice-cream-truck.py, 25 parts, 66.3 KiB packed, all GLB gates pass, palette.py --match exit 0 at tolerance 48).
+
+Contract recorded in kit-mount-measurements.md: stands on its origin (min y = 0), faces glTF +z like the kit vehicles (Blender's importer maps glTF +z onto Blender -y, so the assembly is turned 180 degrees before export), 1.840 x 2.780 x 3.440, 25-node name contract, 9 palette texels.
+
+Reworked once against the reviewer's reference: first cut read as a box truck; now a forward-control van with a two-tone pink/cream body, yellow roof stripe, grille with headlights over a bumper, blue-hubbed wheels, serving hatch with awning and menu board, and a point-down waffle cone with vanilla swirl and cherry seated on the roof. The reference's lettering and its person are deliberately not reproduced (zero text in-game).
