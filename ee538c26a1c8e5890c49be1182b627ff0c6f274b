@@ -1,0 +1,1 @@
+Phase 4 correction (found in phase verification): house hitboxes now come from the mounted art instead of the lot cap, and the car is swept as a capsule so its nose reaches the wall. Browser evidence: car nose -0.2321 vs house-2 east wall -0.2318 (gap -0.0003); cap-based stop was 0.191 (gap 0.163). Tests 18 files / 232 passing; biome clean; tsc clean.
