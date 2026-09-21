@@ -396,9 +396,21 @@
     - [x] The placeholder generator and its five tests are gone with the
           `icons:generate` script, so nothing invites regenerating placeholders
           over the real icons. Suite now 361 tests across 28 files
-- [ ] Task: Cloudflare Pages runbook (docs/cloudflare-pages.md): git
+- [x] Task: Cloudflare Pages runbook (docs/cloudflare-pages.md): git
       connect steps, build command `pnpm build`, output `dist`; first
-      deploy verified (manual)
+      deploy verified (manual) [6dcd0f3]
+    - [x] Written for someone with the account, not for me: connect-to-git
+          steps, the settings that matter (production branch, no framework
+          preset, `pnpm build` into `dist`, `NODE_VERSION` 24, and
+          `PNPM_VERSION` as the fallback), what to check on the tablet once it
+          is live, custom domains, and the failure modes worth knowing
+    - [x] Also records the production-build check to run before deploying -
+          `pnpm build && pnpm preview`, then offline - because the service
+          worker only exists in built output, so a passing dev server proves
+          nothing about the deployed site. Run here: `precache 42 entries` at
+          3.3 MiB
+    - [ ] The deploy itself is the reviewer's step (hence the "(manual)" above):
+          it needs a Cloudflare account and the repo on a git host
 - [ ] Task: Offline verification — load once, airplane-mode reload
       fully playable (manual)
 - [ ] Task: Performance profile on iPad-class device — fps + triangle
