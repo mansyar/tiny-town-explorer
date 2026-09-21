@@ -7,7 +7,7 @@
 
 ## Phase 1 — Project Scaffold & Toolchain
 
-- [ ] Task: Initialize Vite 8 + TypeScript 7 strict project with pnpm 12.4
+- [x] Task: Initialize Vite 8 + TypeScript 7 strict project with pnpm 12.4 [e12ea79]
     - [ ] package.json with `packageManager` field (corepack), deps:
           three, vite, vite-plugin-pwa, vitest, @biomejs/biome
     - [ ] tsconfig strict, vite.config.ts, index.html shell (touch-action
