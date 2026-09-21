@@ -245,6 +245,17 @@
     - [x] Deviation recorded in tech-stack.md: the engine loop is synthesized,
           not the sampled `playbackRate` loop the plan assumed — no engine
           sample exists in either pack
+- [x] Task: Amendment (2026-09-21, sound polish) — replace the synthesized
+      engine and add the missing horn [c86d605]
+    - [x] Swap the sawtooth for a real motor loop: neither vendored Kenney pack
+          ships an engine sample, so the car's voice now comes from a third CC0
+          source (OpenGameArt *Some sounds* by Ziph — synthesized and built to be
+          pitch-bent by rpm). 4 s mono 44.1 kHz PCM at 345 KiB, kept as WAV
+          because MP3 padding would gap the loop point; the sub-bullet above is
+          superseded and `setEngine` now maps the motor's rate onto the loop's
+          `playbackRate` as the plan originally read
+    - [x] Give the dead-zone honk a sound — a two-note beep-beep, its schedule a
+          pure tested function like the jingle and the siren
 - [ ] Task: HUD vehicle switcher — 4 buttons ≥72px, active highlight
       (visual; manual verify with touch)
 - [ ] Task: Poof morph + ability visuals — droplets, floating cones,
