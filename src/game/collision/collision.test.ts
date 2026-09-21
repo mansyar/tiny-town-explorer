@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createTownGrid } from '../town/townGrid';
 import { TOWN_MAP } from '../town/townMap';
-import { PROP_COLLISION_RADIUS } from '../town/townTypes';
+import { HOUSE_LOT_FIT, PROP_COLLISION_RADIUS } from '../town/townTypes';
 import {
   collectObstacles,
   depenetration,
@@ -32,10 +32,11 @@ describe('collectObstacles', () => {
 
     expect(house?.shape.kind).toBe('box');
     expect(house?.shape.kind === 'box' && house.shape.centre).toEqual(authored?.position);
-    // A house may fill most of its lot, never all of it: the fit cap is what
-    // the renderer scales the model to, so the hitbox covers the art.
-    expect(house?.shape.kind === 'box' && house.shape.halfX).toBeGreaterThan(0.35);
-    expect(house?.shape.kind === 'box' && house.shape.halfX).toBeLessThan(0.5);
+    // Half of the very cap the renderer scales the model to, so the hitbox is
+    // the art's footprint and not an approximation of it.
+    const expectedHalf = (grid.tileSize * HOUSE_LOT_FIT) / 2;
+    expect(house?.shape.kind === 'box' && house.shape.halfX).toBeCloseTo(expectedHalf);
+    expect(house?.shape.kind === 'box' && house.shape.halfZ).toBeCloseTo(expectedHalf);
   });
 
   it('gives every prop the collision radius the grid already publishes', () => {

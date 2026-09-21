@@ -4,7 +4,7 @@ import { createTownGrid } from './townGrid';
 import type { ModelPlacement } from './townLayout';
 import { planTown, roadPlacementFor, yawForDirection } from './townLayout';
 import { TOWN_MAP } from './townMap';
-import type { RoadConnections } from './townTypes';
+import { HOUSE_LOT_FIT, type RoadConnections } from './townTypes';
 
 const grid = createTownGrid(TOWN_MAP);
 const plan = planTown(grid);
@@ -148,7 +148,10 @@ describe('planTown — houses and props', () => {
   it('caps house footprints to their lot and varies the models', () => {
     const houses = grid.houses.map((house) => models(house.id));
     for (const house of houses) {
-      expect(house?.fitWithin).toBeCloseTo(grid.tileSize * 0.86);
+      // The cap the art is scaled to. The collision module derives its hitboxes
+      // from this same constant, which is what stops a wall and its hitbox from
+      // drifting apart.
+      expect(house?.fitWithin).toBeCloseTo(grid.tileSize * HOUSE_LOT_FIT);
     }
     expect(new Set(houses.map((house) => house?.url)).size).toBeGreaterThan(3);
   });
