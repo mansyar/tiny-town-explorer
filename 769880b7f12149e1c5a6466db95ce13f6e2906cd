@@ -1,0 +1,30 @@
+TASK: TDD InputRouter (plan: v1-playtest-slice, Phase 3)
+
+RED → GREEN
+- src/game/input/inputRouter.test.ts written first (16 tests), confirmed failing
+  on a missing module, then src/game/input/inputRouter.ts implemented to pass.
+
+WHAT SHIPPED (src/game/input/inputRouter.ts)
+- tapAt(NdcPoint) -> TapCommand: projects the tap onto the ground plane, snaps it
+  to a crashable prop within PROP_SNAP_RADIUS (0.45), then classifies the result
+  as a `drive` destination or a `honk` inside DEAD_ZONE_RADIUS (0.5).
+- latest() / isCurrent(command): the supersession contract for mash safety.
+- ndcFromPoint(clientX, clientY, rect): the DOM→NDC mapping kept out of the
+  pointer listener so the flip and rect offset are unit-tested.
+
+DECISIONS WORTH KNOWING
+- The dead zone is judged on the *resolved* target, so tapping a prop under the
+  car's nose honks (there is nowhere to go) — documented in the module.
+- A honk carries a sequence id but does not supersede: a tap that means feedback
+  must not abandon the destination the kid actually chose.
+- The router syncs the camera matrices before raycasting, because a tap can land
+  between frames (or before the first frame), when the ray's basis is stale.
+- The raycast is infinite by construction: a camera aimed at the horizon yields
+  no intersection, which answers with a honk rather than nothing.
+- Not wired to a pointer listener yet: the consumer (VehicleMotor + target ring)
+  arrives later in Phase 3, and until then nothing calls the router. No
+  main.ts change, so there is no dead code path in the app.
+
+VERIFICATION
+- pnpm check clean; pnpm typecheck clean; 132 tests passing (13 files).
+- Coverage: inputRouter.ts 100% statements, branches, functions and lines.
