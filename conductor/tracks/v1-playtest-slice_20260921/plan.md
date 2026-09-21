@@ -33,9 +33,9 @@
 - [x] Task: Render town from data — Kenney track tiles as road grid,
       houses on lots, park corner, hydrants/poles (visual; manual verify:
       layout matches authored map, no z-fighting) [abd0953]
-- [ ] Task: CameraRig — orthographic ~45° tilt, medium framing (car ≈15%
+- [x] Task: CameraRig — orthographic ~45° tilt, medium framing (car ≈15%
       of viewport height), smooth follow, frustum refit on any
-      orientation/resize (manual verify on portrait + landscape)
+      orientation/resize (manual verify on portrait + landscape) [3151a39]
 - [ ] Task: Asset pipeline — download/commit Kenney Toy Car Kit + City
       Kit (Suburban) GLBs, GLTF loader with shared material setup,
       measure initial triangle count (start ~50k budget)
