@@ -1,14 +1,18 @@
 import { OrthographicCamera } from 'three';
 
 /**
- * Vertical world extent the camera shows. The Phase 2 CameraRig refines the
- * framing (car ≈15–20% of viewport height); this smoke-test value simply
- * shows the empty ground comfortably.
+ * Vertical world extent the camera shows. Sized here to frame the whole 6x6
+ * town for layout verification; the CameraRig task replaces this with
+ * car-following framing (car ≈15–20% of viewport height).
  */
-export const VIEW_HEIGHT = 48;
+export const VIEW_HEIGHT = 9;
 
-/** Fixed ~45°-ish tilt from above the town center. */
-const CAMERA_POSITION = { x: 18, y: 24, z: 18 } as const;
+/**
+ * Fixed ~45° tilt from above the town center. Orthographic framing ignores
+ * this distance, but fog and depth precision do not — so the camera stays
+ * close to the town it is watching.
+ */
+const CAMERA_POSITION = { x: 5, y: 7, z: 5 } as const;
 
 /** Creates the fixed orthographic town camera used until the CameraRig lands. */
 export function createCamera(aspect: number): OrthographicCamera {

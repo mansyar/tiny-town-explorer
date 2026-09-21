@@ -1,22 +1,18 @@
 import {
-  BufferGeometry,
+  BoxGeometry,
   Color,
   DirectionalLight,
   Fog,
   HemisphereLight,
-  Material,
   Mesh,
+  MeshLambertMaterial,
 } from 'three';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createTownScene, SKY_COLOR } from './scene';
+import { describe, expect, it, vi } from 'vitest';
+import { createScene, SKY_COLOR } from './scene';
 
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-describe('createTownScene', () => {
+describe('createScene', () => {
   it('paints the sky background and matching fog', () => {
-    const { scene, dispose } = createTownScene();
+    const { scene, dispose } = createScene();
 
     expect(scene.background).toBeInstanceOf(Color);
     if (scene.background instanceof Color) {
@@ -31,22 +27,8 @@ describe('createTownScene', () => {
     dispose();
   });
 
-  it('adds a flat, shadow-receiving ground plane at the origin', () => {
-    const { scene, dispose } = createTownScene();
-
-    const ground = scene.getObjectByName('ground');
-    expect(ground).toBeInstanceOf(Mesh);
-    if (ground instanceof Mesh) {
-      expect(ground.rotation.x).toBeCloseTo(-Math.PI / 2);
-      expect(ground.position.y).toBeCloseTo(0);
-      expect(ground.receiveShadow).toBe(true);
-    }
-
-    dispose();
-  });
-
-  it('adds hemisphere bounce plus a warm sun from above', () => {
-    const { scene, dispose } = createTownScene();
+  it('adds hemisphere bounce plus a shadow-casting sun from above', () => {
+    const { scene, dispose } = createScene();
 
     expect(scene.getObjectByName('hemisphereLight')).toBeInstanceOf(HemisphereLight);
 
@@ -54,20 +36,53 @@ describe('createTownScene', () => {
     expect(sun).toBeInstanceOf(DirectionalLight);
     if (sun instanceof DirectionalLight) {
       expect(sun.position.y).toBeGreaterThan(0);
+      expect(sun.castShadow).toBe(true);
+      // Shadow frustum must cover the whole town so no house drops its shadow.
+      expect(sun.shadow.camera.right).toBeGreaterThanOrEqual(6);
+      expect(sun.shadow.camera.left).toBeLessThanOrEqual(-6);
     }
 
     dispose();
   });
 
-  it('dispose frees geometries and materials, then empties the scene', () => {
-    const geometrySpy = vi.spyOn(BufferGeometry.prototype, 'dispose');
-    const materialSpy = vi.spyOn(Material.prototype, 'dispose');
-    const { scene, dispose } = createTownScene();
+  it('starts as an empty stage: the town supplies its own geometry', () => {
+    const { scene, dispose } = createScene();
+
+    expect(scene.children).toHaveLength(1);
+    expect(scene.getObjectByName('lights')).toBeDefined();
+    expect(scene.getObjectByName('ground')).toBeUndefined();
+
+    dispose();
+  });
+
+  it('dispose empties the scene graph', () => {
+    const { scene, dispose } = createScene();
 
     dispose();
 
-    expect(geometrySpy).toHaveBeenCalled();
-    expect(materialSpy).toHaveBeenCalled();
+    expect(scene.children).toHaveLength(0);
+  });
+
+  it('dispose frees every mesh mounted on the stage, single or multi-material', () => {
+    const { scene, dispose } = createScene();
+    const geometry = new BoxGeometry(1, 1, 1);
+    const single = new MeshLambertMaterial({ color: 0xffffff });
+    const multi = [
+      new MeshLambertMaterial({ color: 0xff0000 }),
+      new MeshLambertMaterial({ color: 0x00ff00 }),
+    ];
+    const geometrySpy = vi.spyOn(geometry, 'dispose');
+    const singleSpy = vi.spyOn(single, 'dispose');
+    const multiSpies = multi.map((material) => vi.spyOn(material, 'dispose'));
+    scene.add(new Mesh(geometry, single), new Mesh(geometry, multi));
+
+    dispose();
+
+    expect(geometrySpy).toHaveBeenCalledTimes(2);
+    expect(singleSpy).toHaveBeenCalledTimes(1);
+    for (const spy of multiSpies) {
+      expect(spy).toHaveBeenCalledTimes(1);
+    }
     expect(scene.children).toHaveLength(0);
   });
 });
