@@ -13,6 +13,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "verbatimModuleSyntax": true,
+    // The scripts in scripts/ are executed directly by Node 24's type
+    // stripping, whose ESM resolver requires the explicit .ts extension.
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,

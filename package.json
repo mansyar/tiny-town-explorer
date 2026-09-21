@@ -15,6 +15,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
+    "assets:measure": "node scripts/measure-assets.ts src/assets/kits",
     "icons:generate": "node scripts/generate-placeholder-icons.ts",
     "test": "vitest run",
     "test:watch": "vitest",
