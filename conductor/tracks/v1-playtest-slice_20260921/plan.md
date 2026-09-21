@@ -163,7 +163,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: a59a747]
 
-## Phase 4 — Collisions: Bounce & Resume
+## Phase 4 — Collisions: Bounce & Resume [checkpoint: ee538c2]
 
 - [x] Task: TDD collision resolution (Red→Green) [5807fdb]
     - [x] Test: hitboxes derived from TownGrid map data — houses as boxes on the
@@ -212,7 +212,8 @@
     - [x] The kerb props needed no re-seating: re-measured against the art boxes,
           each is bonked before the house behind it on every approach, so they
           stay crashable
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: ee538c2]
 
 ## Phase 5 — Vehicles & Abilities
 
