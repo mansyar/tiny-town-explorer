@@ -16,9 +16,8 @@ export default defineConfig({
       exclude: [
         'src/**/*.test.ts',
         'src/vite-env.d.ts',
-        // Bootstrap and visual/scene glue are manual-verified, not covered.
+        // The DOM/WebGL bootstrap is manual-verified, not covered.
         'src/main.ts',
-        'src/game/scene.ts',
       ],
       // Per-module ≥80% thresholds arrive with the first logic modules
       // (input/pathfinding/FSM/pacing); a global floor now would fail on

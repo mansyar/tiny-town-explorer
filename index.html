@@ -33,6 +33,10 @@
       }
       #app canvas {
         display: block;
+        /* The renderer only sizes the drawing buffer; CSS sizing is what
+           keeps the canvas matched to the viewport on every orientation. */
+        width: 100%;
+        height: 100%;
       }
     </style>
   </head>
