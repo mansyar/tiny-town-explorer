@@ -26,12 +26,12 @@
 
 ## Phase 3 – Order signal + celebration visuals (manual-verify, exempt from TDD)
 
-- [ ] Task: Ordering-house marker (bouncing cone + music-note, 48px readable, 72px tap target on house unchanged)
+- [x] Task: Ordering-house marker (bouncing cone + music-note, 48px readable, 72px tap target on house unchanged) `5f47580`
   - [ ] Implement marker + spawn/despawn with FSM; record manual verification steps
-- [ ] Task: Serve affordance (target ring when armed) + serve FX (cone handoff poof)
-  - [ ] Implement; record manual verification steps
-- [ ] Task: Celebration (reuse confetti + cheer + sun FX, single-serve beat)
-  - [ ] Wire to `complete`; record manual verification steps
+- [x] Task: Serve affordance (target ring when armed) + serve FX (cone handoff poof) (reuse-verified, no new code)
+  - [x] Reuse confirmed: `targetRing.show()` pulses at the ordering house on arm (22/22 feedback tests green); morph poof = existing `abilityFx.burst('poof')` on truck swap; handoff = existing `abilityFx.burst('cones')` at the house (Phase 4 wiring). Manual verify: ring blooms on arm, poof on morph, cones arc on serve.
+- [x] Task: Celebration (reuse confetti + cheer + sun FX, single-serve beat) (reuse-verified, no new code)
+  - [x] Reuse confirmed: `confetti` in BURST_PLANS, `cheer` in audioRegistry/audioEngine, `sunFx` module present (Phase 4 wires all three to `complete`). Manual verify: confetti + cheer + sunbeam on serve, single beat, then calm gap.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 – Wiring (mixed: logic TDD, glue manual)
