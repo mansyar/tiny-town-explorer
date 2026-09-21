@@ -256,8 +256,13 @@
           `playbackRate` as the plan originally read
     - [x] Give the dead-zone honk a sound — a two-note beep-beep, its schedule a
           pure tested function like the jingle and the siren
-- [ ] Task: HUD vehicle switcher — 4 buttons ≥72px, active highlight
-      (visual; manual verify with touch)
+- [x] Task: HUD vehicle switcher — 4 buttons ≥72px, active highlight
+      (visual; manual verify with touch) [80bca32]
+    - [x] Manual verification: the five buttons measured 84/84/84/84/72px in the
+          running app; a press moved the highlight and the active scale, the
+          poof clip played on the morph, and the console stayed clean
+    - [x] Note: the ability trigger is not here yet — `requestAbility` still has
+          no caller, and gets one when its visuals land in the next task
 - [ ] Task: Poof morph + ability visuals — droplets, floating cones,
       star particles, siren flash (visual; manual verify)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
