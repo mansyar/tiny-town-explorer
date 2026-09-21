@@ -24,6 +24,17 @@ const ICONS: Readonly<Record<VehicleId, string>> = {
     '<path d="M12 2.2l2.9 6 6.6.9-4.8 4.6 1.2 6.5-5.9-3.1-5.9 3.1 1.2-6.5L2.5 9.1l6.6-.9z"/>',
 };
 
+/** What the ability button does for each vehicle, in the same icon language. */
+const ABILITY_ICONS: Readonly<Record<VehicleId, string>> = {
+  fire: '<path d="M12 2.4c3.6 4.6 5.6 7.4 5.6 10.2a5.6 5.6 0 0 1-11.2 0c0-2.8 2-5.6 5.6-10.2z"/>',
+  iceCream:
+    '<path d="M7.4 10.4h9.2L12 21.4z"/><circle cx="12" cy="6.6" r="4.2"/><circle cx="8.8" cy="9.6" r="2.6"/><circle cx="15.2" cy="9.6" r="2.6"/>',
+  garbage:
+    '<path d="M10.6 2.6h2.8v9.2h3.4L12 18.2 7.2 11.8h3.4z"/><rect x="6" y="19.4" width="12" height="2.4" rx="1.2"/>',
+  police:
+    '<path d="M8.4 4.6h7.2l1.3 2.8H20v2.4h-2.1l-.4 1a6 6 0 0 1 .9 3.2v4.6H5.6v-4.6c0-1.2.4-2.3 1-3.2l-.5-1H4V6.8h3.2z"/><path d="M1.6 7.4a7 7 0 0 0 0 10.4M22.4 7.4a7 7 0 0 1 0 10.4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.2"/>',
+};
+
 const MUTE_ON =
   '<path d="M3.6 9.2h3.8L12.6 5v14l-5.2-4.2H3.6z"/><path d="M15.4 9.4l6 5.6M21.4 9.4l-6 5.6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.2"/>';
 const MUTE_OFF =
@@ -32,6 +43,8 @@ const MUTE_OFF =
 export interface VehicleHudOptions {
   /** A kid picked a vehicle. */
   readonly onSelect: (id: VehicleId) => void;
+  /** A kid pressed the ability button. */
+  readonly onAbility: () => void;
   /** The mute was toggled; the engine applies it. */
   readonly onMute: (muted: boolean) => void;
 }
@@ -40,6 +53,10 @@ export interface VehicleHud {
   readonly element: HTMLElement;
   /** Light up the vehicle the kid is driving. */
   setActive(id: VehicleId): void;
+  /** Point the ability button at the active vehicle's trick. */
+  setAbility(id: VehicleId): void;
+  /** Dim the ability button while its one-shot is running. */
+  setAbilityBusy(busy: boolean): void;
   setMuted(muted: boolean): void;
   dispose(): void;
 }
@@ -75,6 +92,16 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
     buttons.set(id, button);
   }
 
+  // The ability is the only button that *does* something rather than choosing
+  // something, so it is the biggest and it wears the active vehicle's colour.
+  const abilityButton = document.createElement('button');
+  abilityButton.type = 'button';
+  abilityButton.className = 'hud-button hud-button--ability';
+  abilityButton.setAttribute('aria-label', 'the vehicle does its thing');
+  abilityButton.append(icon(ABILITY_ICONS[VEHICLE_IDS[0]]));
+  abilityButton.addEventListener('click', () => options.onAbility());
+  element.append(abilityButton);
+
   const muteButton = document.createElement('button');
   muteButton.type = 'button';
   muteButton.className = 'hud-button hud-button--mute';
@@ -97,6 +124,15 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
         button.classList.toggle('is-active', vehicle === id);
         button.setAttribute('aria-pressed', String(vehicle === id));
       }
+    },
+    setAbility(id): void {
+      for (const vehicle of VEHICLE_IDS) {
+        abilityButton.classList.toggle(`hud-button--${vehicle}`, vehicle === id);
+      }
+      abilityButton.replaceChildren(icon(ABILITY_ICONS[id]));
+    },
+    setAbilityBusy(busy): void {
+      abilityButton.classList.toggle('is-busy', busy);
     },
     setMuted(next): void {
       muted = next;

@@ -98,6 +98,18 @@
       .hud-button--police {
         background: #3f6fc4;
       }
+      .hud-button--ability {
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        height: 96px;
+        pointer-events: auto;
+        position: absolute;
+        right: calc(104px + env(safe-area-inset-right));
+        width: 96px;
+      }
+      .hud-button--ability.is-busy {
+        opacity: 0.45;
+        transform: scale(0.94);
+      }
       .hud-button--mute {
         background: #5e6a78;
         bottom: calc(20px + env(safe-area-inset-bottom));

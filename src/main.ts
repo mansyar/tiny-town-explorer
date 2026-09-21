@@ -5,8 +5,9 @@ import { createAudioEngine, type SampledSound } from './game/audio/audioEngine';
 import { SOUND_MODELS } from './game/audio/audioRegistry';
 import { createCameraRig } from './game/camera';
 import { collectObstacles } from './game/collision/collision';
+import { createAbilityFx } from './game/feedback/abilityFx';
 import { createTargetRing } from './game/feedback/targetRing';
-import { createVehicleHud } from './game/hud/vehicleHud';
+import { createVehicleHud, type VehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
@@ -70,6 +71,11 @@ async function main(): Promise<void> {
   const ring = createTargetRing();
   scene.add(ring.object);
 
+  // Ability bursts and the morph puff: brief, chunky, and gone before a child
+  // looks twice.
+  const fx = createAbilityFx();
+  scene.add(fx.object);
+
   // Sound waits for a gesture. The context and its samples are prepared up
   // front so the very first tap has something to play; only `unlock` (below,
   // on the first pointerdown) makes any of it audible.
@@ -94,11 +100,18 @@ async function main(): Promise<void> {
   let actor: Awaited<ReturnType<typeof createVehicleActor>> | undefined;
 
   let bonks = 0;
+  let hud: VehicleHud | undefined;
+  let abilityBusy = false;
 
   startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
     motor?.update(delta);
     actor?.sync();
     ring.update(delta);
+    fx.update(delta);
+    if (hud !== undefined && fleet.isBursting() !== abilityBusy) {
+      abilityBusy = fleet.isBursting();
+      hud.setAbilityBusy(abilityBusy);
+    }
     // The camera eases after the car, which is the only thing that moves.
     if (motor !== undefined) {
       rig.setTarget(motor.position);
@@ -179,19 +192,46 @@ async function main(): Promise<void> {
     }
     actor = next;
     scene.add(next.object);
+    fx.burst('poof', vehicle.position, vehicle.heading());
     audio.play('poof');
   };
 
-  const hud = createVehicleHud({
+  const hudControls = createVehicleHud({
     onSelect: (id) => {
       fleet.setActive(id);
-      hud.setActive(id);
+      hudControls.setActive(id);
+      hudControls.setAbility(id);
       void swapVehicle(id);
+    },
+    onAbility: () => {
+      const events = fleet.requestAbility();
+      if (events.length === 0) {
+        return;
+      }
+      audio.playAbility(events);
+      for (const event of events) {
+        switch (event.kind) {
+          case 'spray':
+          case 'cones':
+          case 'gulp':
+            fx.burst(event.kind, vehicle.position, vehicle.heading());
+            break;
+          case 'siren':
+            fx.flash(vehicle.position);
+            break;
+          default:
+            // The ice-cream jingle is heard rather than seen; its cones are
+            // their own event and burst above.
+            break;
+        }
+      }
     },
     onMute: (muted) => audio.setMuted(muted),
   });
-  document.body.append(hud.element);
-  hud.setActive(fleet.activeId());
+  hud = hudControls;
+  document.body.append(hudControls.element);
+  hudControls.setActive(fleet.activeId());
+  hudControls.setAbility(fleet.activeId());
   await Promise.all(TOWN_MODELS.map((url) => library.load(url)));
 }
 
