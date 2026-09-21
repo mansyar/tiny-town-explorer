@@ -17,8 +17,8 @@
           Vite 8); if deviation, STOP → update tech-stack.md with dated
           note (workflow rule 7)
 - [x] Task: Configure Biome 2.5 + Vitest 5 (biome.json, vitest.config.ts) [23e1871]
-- [ ] Task: vite-plugin-pwa skeleton — manifest (standalone, orientation
-      any, 192/512 placeholder icons), autoUpdate registration
+- [x] Task: vite-plugin-pwa skeleton — manifest (standalone, orientation
+      any, 192/512 placeholder icons), autoUpdate registration [3c41783]
 - [ ] Task: Render-loop smoke test — three.js scene boots, empty town
       ground renders in dev and preview builds
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
