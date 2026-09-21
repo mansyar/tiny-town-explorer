@@ -1,0 +1,53 @@
+PHASE 2 VERIFICATION — Town Data, World & Camera
+Checkpoint recorded by the conductor phase-verification protocol (workflow.md).
+
+AUTOMATED VERIFICATION (announced and run as-is)
+- pnpm check           -> clean, 33 files, 0 issues
+- pnpm typecheck       -> clean (tsc 7.0.2)
+- CI=true pnpm test    -> 11 files, 102 tests passing
+- CI=true pnpm test:coverage -> 99.4% statements, 91.7% branches,
+  100% functions (camera/scene/townMap/townTypes/modelRegistry 100%;
+  townGrid 100% stmts; townBuilder 99.1%; renderLoop 92.3%)
+- pnpm build           -> clean; workbox precache 10 entries, 535 KiB
+
+Coverage step: every code file changed in this phase has a test file.
+townMap.ts and townTypes.ts are data/types modules exercised through the
+town tests (both report 100% statements). The one branch found missing
+during this protocol pass — modelLibrary's "material samples no palette"
+early return — was covered in 13d2bad before checkpointing.
+
+MANUAL VERIFICATION PRESENTED TO THE USER
+1. Preview tab (http://127.0.0.1:4173, serving the current bundle
+   index-A0-F9hDn.js; verified canvas 691x768 CSS / 1036x1152 buffer and
+   zero console errors).
+2. Expected: full-viewport #87CEEB sky, the 6x6 town centred on a green
+   plate, grey ring road with white lane dashes on all four sides, a
+   north-south cross street right of centre, a two-tile park with two
+   pine trees in the north-west quadrant, ten pastel houses each with a
+   door facing its street, red hydrants and brown power poles, soft
+   daylight with readable cast shadows.
+3. Layout check: park top-left, cross street vertical at the third
+   column — i.e. the authored map in townMap.ts rendered faithfully.
+4. Orientation check: portrait <-> landscape keeps the town centred and
+   uncropped with a constant vertical extent.
+5. Optional: pnpm dev on :5173 to compare the dev build; DevTools ->
+   Application for the "Tiny Town" manifest and registered worker (with
+   the stale-bundle caveat that the service worker caches old builds).
+
+USER CONFIRMATION
+Confirmed: "Confirm (Recommended)" — Phase 2 accepted as meeting
+expectations.
+
+DECISIONS CARRIED OUT OF THIS CHECKPOINT
+- The Toy Car Kit has no T-junction or cross piece, and the metrics show
+  its road system is a 4.4-unit toy-track module (straight 1.00 x 0.30 x
+  4.40) rather than a 1-unit tile grid. The user chose to author a new
+  T-junction piece in Blender (threejs-blender-asset skill) using the Toy
+  Car Kit as the style reference, instead of composing junctions from
+  existing pieces or adding a third kit. Plan amended accordingly.
+- Triangle budget discrepancy left open by design: tech-stack.md records
+  15k, the plan says ~50k, and the measured projection for a fully
+  model-backed town is ~25k. To be reconciled with a dated note when the
+  models are wired, not silently rewritten.
+- Unwired models: the town still renders placeholder geometry; mounting
+  the committed Kenney models is the next task.
