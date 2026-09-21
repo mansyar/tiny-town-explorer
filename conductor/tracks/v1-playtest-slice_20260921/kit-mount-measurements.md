@@ -96,3 +96,89 @@ Each kit keeps its own palette image, and packing namespaces the texture per kit
 (`city-kit-roads/colormap`, `city-kit-suburban/colormap`,
 `toy-car-kit/colormap`), so all three share one uploaded texture each and can
 never be mixed up.
+
+## The vehicle fleet's frame and scale (Phase 5)
+
+The v1 fleet is not one kit. Three of the four service vehicles come from
+**Car Kit** (`src/assets/kits/car-kit/`); the Toy Car Kit supplies the slice's
+stand-in `vehicle-truck`. Their authored frames differ, and a difference like
+this is invisible in a render but decides whether a car drives cab-first and on
+its wheels, so both were sliced out of the committed GLBs:
+
+| Model | Extents (x, y, z) | Ground | Facing |
+| --- | --- | --- | --- |
+| `car-kit/firetruck` | 1.50 × 1.70 × 3.40 | `min y = 0.000` | **+z** — `grill` at z = +1.58, `wheel-front-*` at +0.96, `wheel-back-*` at −0.66 |
+| `car-kit/garbage-truck` | 1.60 × 1.60 × 3.45 | `min y = 0.000` | **+z** — `wheel-front-*` at +1.11, `wheel-back-*` at −0.51 |
+| `car-kit/police` | 1.50 × 1.30 × 3.10 | `min y = 0.000` | **+z** — `grill` at +1.43, `wheel-front-*` at +0.81, `wheel-back-*` at −0.81 |
+| `toy-car-kit/vehicle-truck` | 0.525 × 0.525 × 0.863 | `min y = 0.000` | **−z** — `wheel-fl`/`wheel-fr` at −0.244, `wheel-bl`/`wheel-br` at +0.256 |
+
+Three consequences, each measured rather than assumed:
+
+1. **Car Kit art is authored about 4× the town's scale.** Every Car Kit vehicle is
+   3.1–3.45 long against the Toy Car Kit truck's 0.863. On a 1.00 tile pitch that
+   is three and a half tiles of vehicle, so the Car Kit family is scaled at mount
+   time rather than re-authored.
+2. **Car Kit art faces +z; the Toy Car Kit faces −z.** `+z` is the car's nose
+   (`headingFor`/`facingOf`), so Car Kit models mount at yaw 0 and the Toy Car
+   Kit's truck at π — which is all `MODEL_FACING_YAW` ever meant.
+3. **Both kits stand on their origin** (`min y = 0.000`), so the actor's existing
+   seating step is already correct for the fleet.
+
+### The fleet's fit
+
+The car's footprint is a fixed contract: a capsule `CAR_RADIUS` = 0.26 wide
+(0.525 measured) by `CAR_HALF_LENGTH` = 0.43 long (0.863 measured). A kit model
+is fitted to it — scaled uniformly to **0.86 long**, the largest size that still
+keeps the nose inside the capsule. `car-kit/firetruck` at that fit is
+0.380 × 0.430 × 0.860: narrower than the old truck, but never longer than the
+collision shape that stops it, so it cannot clip a wall.
+
+### The Car Kit palette is a gradient atlas
+
+`car-kit/colormap.png` is **512 × 512** — sixteen 32-pixel columns by sixteen
+32-pixel rows of cells — and each cell holds a *vertical gradient* rather than
+one flat swatch (the City Kits' flat swatches are a different format). A colour
+is therefore a *point*, not a cell, so the authored ice-cream truck pins each
+material to an explicit texel sampled from this image and verified in the render.
+
+| Material | Colour | Sampled at (px) |
+| --- | --- | --- |
+| Body (pink lower) | `#FF8AAE` | (495, 391) |
+| Trim (cream upper, bumper, roof cap) | `#F6F6F9` | (431, 262) |
+| Accent (awning, cherry) | `#E1473E` | (175, 470) |
+| Glass (windows) | `#C2DDFA` | (48, 16) |
+| Hub (blue wheel centres) | `#A0A8C9` | (336, 272) |
+| Tyre / grille | `#36363A` | (175, 383) |
+| Cone (waffle) | `#DBA33D` | (431, 472) |
+| Yellow (roof band, headlights) | `#FFE44B` | (112, 400) |
+| Vanilla (soft-serve swirl) | `#FDE4C7` | (144, 144) |
+
+### The authored ice-cream truck (Phase 5)
+
+No Kenney kit ships an ice-cream truck, so that one fleet member is authored by
+`scripts/blender-ice-cream-truck.py` (Blender 5.2, headless, deterministic) and
+packed into `src/assets/kits/car-kit/` with `--kit=car-kit` so it shares the kit's
+palette atlas.
+
+| Model | Extents (x, y, z) | Ground | Facing | Nodes | Packed |
+| --- | --- | --- | --- | --- | --- |
+| `car-kit/ice-cream-truck` | 1.840 x 2.780 x 3.440 | `min y = 0.000` | +z | 25 | 66.3 KiB |
+
+Axis convention, measured rather than assumed: Blender's glTF importer maps
+glTF +Z onto Blender -Y, and the kit's own firetruck confirms it (its grill sits
+at Blender y = -1.575, its front wheels at -1.56, its rear wheels at +0.06). The
+recipe therefore authors the truck nose-forward at +Y, where it is easy to read,
+and turns the finished assembly 180 degrees about Z before export, so the shipped
+GLB faces glTF +Z exactly like the kit's vehicles and mounts at the same yaw.
+
+Node-name contract (one node each, `getObjectByName`-safe):
+`ice_cream_body_lower`, `ice_cream_body_upper`, `ice_cream_roof_band`,
+`ice_cream_roof_cap`, `ice_cream_windshield`, `ice_cream_cab_window_left`,
+`ice_cream_cab_window_right`, `ice_cream_serving_window`, `ice_cream_awning`,
+`ice_cream_menu`, `ice_cream_grille`, `ice_cream_headlight_left`,
+`ice_cream_headlight_right`, `ice_cream_bumper`, `ice_cream_roof_cone`,
+`ice_cream_roof_scoop`, `ice_cream_roof_cherry`, `ice_cream_wheel_front_left`,
+`ice_cream_wheel_front_right`, `ice_cream_wheel_back_left`,
+`ice_cream_wheel_back_right`, `ice_cream_hub_front_left`,
+`ice_cream_hub_front_right`, `ice_cream_hub_back_left`,
+`ice_cream_hub_back_right`.

@@ -1,3 +1,7 @@
+import carKitFiretruck from '../../assets/kits/car-kit/firetruck.glb?url';
+import carKitGarbageTruck from '../../assets/kits/car-kit/garbage-truck.glb?url';
+import carKitIceCreamTruck from '../../assets/kits/car-kit/ice-cream-truck.glb?url';
+import carKitPolice from '../../assets/kits/car-kit/police.glb?url';
 import electricityPole from '../../assets/kits/city-kit-roads/electricity-pole.glb?url';
 import roadBend from '../../assets/kits/city-kit-roads/road-bend-square.glb?url';
 import roadCrossroad from '../../assets/kits/city-kit-roads/road-crossroad.glb?url';
@@ -78,14 +82,21 @@ export const PROP_MODELS = {
 } as const;
 
 /**
- * The car the kid drives.
+ * The v1 fleet's models.
  *
- * The v1 fleet (fire, ice cream, garbage, police) belongs to the vehicle
- * system, and the Toy Car Kit ships racers, an SUV and trucks but no service
- * vehicles — so the toy truck drives the slice for now and the fleet's art is
- * sourced in that phase.
+ * The Toy Car Kit ships racers, an SUV and trucks but no service vehicles, so
+ * the three that do have Kenney art come from the Car Kit. No kit ships an
+ * ice-cream truck, so that one is authored in Blender
+ * (`scripts/blender-ice-cream-truck.py`) to the Car Kit's palette and scale.
+ *
+ * `truck` is the Toy Car Kit box truck the slice has driven so far; the vehicle
+ * system puts the four service vehicles in the HUD instead.
  */
 export const VEHICLE_MODELS = {
+  firetruck: carKitFiretruck,
+  garbageTruck: carKitGarbageTruck,
+  iceCreamTruck: carKitIceCreamTruck,
+  police: carKitPolice,
   truck: vehicleTruck,
 } as const;
 
