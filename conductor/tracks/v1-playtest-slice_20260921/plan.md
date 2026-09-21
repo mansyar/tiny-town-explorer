@@ -25,7 +25,7 @@
 
 ## Phase 2 — Town Data, World & Camera
 
-- [ ] Task: TDD TownGrid module (Red→Green)
+- [x] Task: TDD TownGrid module (Red→Green) [b1532b2]
     - [ ] Test: typed map constants parse into tile grid, lots, props,
           spawn points from a single hand-authored 6×6 layout
     - [ ] Test: adjacency queries (tile neighbors, lot lookup by point,
