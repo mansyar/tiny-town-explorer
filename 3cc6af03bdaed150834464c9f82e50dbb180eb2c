@@ -1,0 +1,74 @@
+TASK: Asset pipeline — Kenney kits committed, GLTF loading with shared
+materials, initial triangle count measured (plan Phase 2, Task 2.4)
+
+WHAT CHANGED
+- Vendored both kits' GLBs as packed, self-contained models:
+  src/assets/kits/toy-car-kit (157 models) and city-kit-suburban (40),
+  plus each kit's LICENSE.txt and a provenance README (version, source
+  URL, download date, re-pack instructions).
+- scripts/glb.ts: shared GLB container read/write (JSON+BIN chunks,
+  4-byte chunk alignment, header length recomputed).
+- scripts/pack-glb-assets.ts: embeds Kenney's external palette reference
+  into the BIN chunk and namespaces the texture name per kit.
+- scripts/measure-assets.ts: dependency-free measurement of triangles,
+  materials, images and true world-space bounds (accessor min/max walked
+  through the node hierarchy with three's matrix math).
+- src/game/assets/modelRegistry.ts: the only place that decides which
+  models ship; `?url` imports so unreferenced kit art never reaches the
+  bundle.
+- src/game/assets/modelLibrary.ts: fetch-once templates, clone-based
+  instancing (shared geometry/material), palette dedupe by name, shadow
+  flags, and teardown.
+- package.json: `assets:measure`; tsconfig: allowImportingTsExtensions
+  (Node 24 type stripping requires explicit .ts in script imports).
+
+WHY
+Kenney ships each GLB pointing at an external Textures/colormap.png. A
+bundler cannot honour that reference — the sibling PNG is not emitted and
+the hashed URL has no such neighbour — so every model would 404 in a
+production build. Packing also makes each model one precacheable file and
+lets all models in a kit share a single uploaded texture: both kits name
+their palette "colormap", so names are namespaced to keep a runtime cache
+from handing one kit's palette to the other kit's models.
+
+MEASURED — the budget this task was asked to establish
+- Toy Car Kit 1.2: 157 models, 44,294 triangles, 3.91 MiB (packed 5.22).
+- City Kit (Suburban) 2.0: 40 models, 30,035 triangles, 2.49 MiB (packed
+  2.94). Committed total: 197 models, 74,329 triangles, 8.16 MiB.
+- One palette texture per kit (colormap), so 197 models share 2 textures.
+- Vehicles ~1,050-1,270 triangles each, 0.52 x 0.45 x 0.88 units.
+- Track: plain road tile 1.00 x 0.30 x 1.00; straight 1.00 x 0.30 x 4.40;
+  curve 3.00 x 4.40; corner-small 2.70 x 2.70 — i.e. the Toy Car Kit's
+  road system is a 4.4-unit toy-track module, not a 1-unit tile grid.
+- Suburban buildings 770-2,062 triangles, 1.0-1.8 units wide; trees
+  42-98 triangles.
+- Projected v1 town (10 houses + road grid + trees/props + 4 vehicles)
+  lands near 25k triangles, which is above the 15k figure recorded in
+  tech-stack.md and below the plan's stated ~50k starting budget. The
+  discrepancy is flagged for the phase checkpoint rather than resolved
+  here, since it changes a documented target.
+
+VERIFICATION
+- pnpm check: clean (33 files).
+- pnpm typecheck: clean (tsc 7.0.2).
+- CI=true pnpm test: 11 files, 101 tests passing (24 new: GLB container
+  round-trip and malformed inputs, packing incl. byte-level round-trip of
+  embedded palettes / alignment / idempotence / rejection of external
+  buffers, measurement incl. hierarchy-aware bounds, library caching /
+  clone sharing / palette dedupe / retry-after-failure, registry guard
+  that every registered URL resolves to a committed file).
+- pnpm build: clean.
+- Post-pack audit: 197/197 images embedded, 0 external references, exactly
+  two namespaced palette names, triangle totals identical before/after.
+
+KNOWN GAPS (carried to the phase checkpoint, not solved here)
+- The Toy Car Kit has straights and corners but no T-junction or
+  crossroads piece, and the authored map needs two tees where the cross
+  street meets the ring road.
+- No hydrant or power-pole model exists in either kit, but the spec's
+  crashable props are hydrants and poles.
+- The four mission vehicles (spray / jingle / gulp / siren) have no
+  counterpart in these kits; they need the Kenney Car Kit or equivalent.
+- Nothing mounts a model yet, so the end-to-end browser path (fetch ->
+  parse -> palette -> shadow) is covered by unit tests and the registry
+  guard only; wiring the town to the kits lands with the next task.
