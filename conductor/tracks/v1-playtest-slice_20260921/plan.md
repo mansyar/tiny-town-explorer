@@ -298,10 +298,14 @@
           the proximity guard, so both landed in this module; proximity arrives
           as a distance rather than an event, so one `update` arms the hose when
           the car is close and disarms it when the kid drives away. 13 tests.
-- [ ] Task: TDD fire pacing (Red→Green)
-    - [ ] Test: calm-gap spawn timer (60–90s randomized)
-    - [ ] Test: next house ≥2 houses from previous (map-aware choice)
-    - [ ] Test: no spawn while mission active
+- [x] Task: TDD fire pacing (Red→Green) [8b575c2]
+    - [x] Test: calm-gap spawn timer (60–90s randomized)
+    - [x] Test: next house ≥2 houses from previous (map-aware choice)
+    - [x] Test: no spawn while mission active
+    - [x] Note: the town arrives as plain ids and positions rather than a
+          `TownGrid`, so the pacer stays pure; "≥2 houses" is enforced as two
+          world units (the tile pitch is 1.0) and the pause while a mission runs
+          gives the next fire a fresh calm gap. 11 tests.
 - [ ] Task: TDD helper-hand idle logic (Red→Green): 10s inactivity
       mid-mission → single demo-tap event + ≥10s cooldown
 - [ ] Task: Fire visuals — smoke puffs, flame mesh shrinking per burst,
