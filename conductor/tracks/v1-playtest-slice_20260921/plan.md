@@ -346,8 +346,12 @@
 
 ## Phase 7 — HUD, Parent Panel & Polish
 
-- [ ] Task: TDD hold-gate logic (Red→Green): 3s continuous hold → open
-      event; release early → cancel; repeat fires only once
+- [x] Task: TDD hold-gate logic (Red→Green): 3s continuous hold → open
+      event; release early → cancel; repeat fires only once [e3e1117]
+    - [x] Note: the open signal comes back once per completed hold rather than
+          every frame of a long press, since the caller opens a panel on it; a
+          second finger cannot restart the count, and releasing arms a fresh
+          hold. 12 tests.
 - [ ] Task: Parent panel UI — textless toggles (SFX, music, helper
       hand), attribution behind gate (visual; manual verify)
 - [ ] Task: Mute button + add-to-home-screen animated hint, one-time
