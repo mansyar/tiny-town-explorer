@@ -109,11 +109,18 @@
           horizon answers with a honk rather than nothing
     - [ ] Not wired to a pointer listener yet: the consumer (VehicleMotor +
           target ring) comes later in this phase, so no dead code in `main.ts`
-- [ ] Task: TDD Pathfinder (Red→Green)
-    - [ ] Test: tile adjacency/BFS route over road grid
-    - [ ] Test: nearest-road-point snap for grass taps
-    [ ] Test: road-hop-then-grass path composition (waypoints + grass
-          leg)
+- [x] Task: TDD Pathfinder (Red→Green) [95e0cdc]
+    - [x] Test: tile adjacency/BFS route over road grid — shortest *hops*, so a
+          route cuts through the middle rather than going round the ring
+    - [x] Test: nearest-road-point snap for grass taps — by road tile centre,
+          matching the grid's own `worldToTile` rounding
+    - [x] Test: road-hop-then-grass path composition (waypoints + grass
+          leg) — waypoints at tile centres keep the car on the 0.60 asphalt
+          through corners; the destination stays the raw tap point
+    - [x] Extra: the authored map is pinned as fully connected (every road tile
+          routes from the spawn point), and every waypoint lands on a road
+    - [ ] Note: the pathfinder is pure and unwired; the motor and target ring
+          consume it in the next two tasks
 - [ ] Task: VehicleMotor waypoint follower — rotate-then-drive, constant
       speed, arrival radius (logic; extend TDD tests: arrival, rotation
       easing determinism)
