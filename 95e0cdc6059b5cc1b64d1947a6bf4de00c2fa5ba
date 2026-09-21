@@ -1,0 +1,33 @@
+TASK: TDD Pathfinder (plan: v1-playtest-slice, Phase 3)
+
+RED → GREEN
+- src/game/path/pathfinder.test.ts written first (16 tests), confirmed failing
+  on a missing module, then src/game/path/pathfinder.ts implemented to pass.
+
+WHAT SHIPPED (src/game/path/pathfinder.ts, pure — no three.js)
+- nearestRoadTile(grid, point): closest road tile by centre distance, matching
+  the grid's own worldToTile rounding, so snapping and tile lookup never
+  disagree. Ties keep row-major order for reproducible routes.
+- roadRoute(grid, from, to): shortest-hop BFS over grid.roadNeighbours,
+  inclusive of both ends; undefined for non-road ends or disconnected networks.
+- findPath(grid, from, to): the composition the vehicle consumes — road tile
+  centres as waypoints, then the exact tap point as the final cross-country leg.
+
+DECISIONS WORTH KNOWING
+- Waypoints sit at tile centres rather than at road-edge crossing points: the
+  asphalt band is 0.60 wide inside a 1.00 tile, so centre-line waypoints keep a
+  car on the road through a corner without any lateral offset table.
+- The destination stays the raw tap point even when the tap lands on a road, and
+  the route still ends at that tile's centre; the motor's arrival radius (next
+  task) is what absorbs the final nudge.
+- Both the car and the tap snap to the network, so a car left on a lawn after a
+  bonk still routes, and the first waypoint then lies beyond a grass leg.
+- Unreachable returns undefined rather than a straight-line guess: driving
+  through houses would look broken, and the town's network is verified
+  connected.
+- The integration test asserts every road tile on the authored map reaches from
+  the spawn point, turning "the map is fully drivable" into a pinned invariant.
+
+VERIFICATION
+- pnpm check clean; pnpm typecheck clean; 148 tests passing (14 files).
+- Coverage: pathfinder.ts 100% statements, branches, functions and lines.
