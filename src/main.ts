@@ -18,6 +18,7 @@ import {
   distanceBetween,
   type MissionSnapshot,
 } from './game/mission/missionManager';
+import { createSunFx } from './game/mission/sunFx';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
@@ -103,6 +104,9 @@ async function main(): Promise<void> {
   scene.add(fire.object);
   const helperTrace = createHelperTrace();
   scene.add(helperTrace.object);
+  // The town's own applause: a smiling sun that comes out when a fire is out.
+  const sun = createSunFx();
+  scene.add(sun.object);
 
   // Bursts the fire started with, for the flame's size; one celebration per
   // fire; whether the ability button is on screen; the demo tap the hand owes.
@@ -263,6 +267,7 @@ async function main(): Promise<void> {
     fx.update(delta);
     fire.update(delta);
     helperTrace.update(delta);
+    sun.update(delta, rig.camera);
     // The fleet ticks its own clock. A burst that is never updated never ends,
     // which leaves the ability button dimmed and every later press ignored.
     fleet.update(delta);
@@ -375,7 +380,9 @@ async function main(): Promise<void> {
 
     if (snapshot.state === 'complete' && !celebrated) {
       celebrated = true;
-      fx.burst('confetti', firePoint() ?? carPosition, 0);
+      const where = firePoint() ?? carPosition;
+      fx.burst('confetti', where, 0);
+      sun.show(where);
       audio.play('cheer');
     }
 
@@ -407,6 +414,7 @@ async function main(): Promise<void> {
     fireTotal = mission.snapshot().burstsLeft;
     fire.setBursts(fireTotal, fireTotal);
     celebrated = false;
+    sun.hide();
     audio.play('chime');
     return true;
   }
