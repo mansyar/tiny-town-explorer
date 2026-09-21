@@ -48,6 +48,7 @@
           City Kit (Roads) decision below (`kit-mount-measurements.md`)
 - [x] Task: Adopt City Kit (Roads) for the road grid (plan amendment,
       2026-09-21, replacing the planned Blender-authored T-junction)
+      [23d24af]
     - [x] Downloaded, packed and committed all 95 models (palette embedded
           under `city-kit-roads/colormap`, 2.8 MiB); licence + provenance
           recorded in `src/assets/kits/README.md`
