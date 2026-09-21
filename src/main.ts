@@ -23,10 +23,11 @@ import { createHelperTrace } from './game/mission/helperTrace';
 import { createIceCreamMission } from './game/mission/iceCreamMission';
 import { createIceCreamPacer } from './game/mission/iceCreamPacer';
 import { isTownBusy } from './game/mission/missionBusy';
+import { missionFocus } from './game/mission/missionFocus';
 import {
   createMissionManager,
   distanceBetween,
-  type MissionSnapshot,
+  fireAwaitsKid,
 } from './game/mission/missionManager';
 import {
   createOrderBeats,
@@ -541,7 +542,7 @@ async function main(): Promise<void> {
     tickPacers(delta);
     tickFireMission(carPosition);
     tickOrderMission(carPosition);
-    tickHelperHand(delta, carPosition, mission.snapshot());
+    tickHelperHand(delta, carPosition);
 
     // A trace, and the demo tap it announced, belong only to a mission that
     // still needs the kid; when the town goes quiet, both are dropped.
@@ -588,7 +589,7 @@ async function main(): Promise<void> {
     // burning the ability button *is* the hose button, so it only exists once
     // the car is close enough to use it. An open order keeps the button: its
     // jingle is how the kid answers one, wherever the truck happens to be.
-    const showAbility = snapshot.state !== 'spawned' && snapshot.state !== 'driving';
+    const showAbility = !fireAwaitsKid(snapshot.state);
     if (showAbility !== abilityVisible) {
       abilityVisible = showAbility;
       hud?.setAbilityVisible(showAbility);
@@ -686,21 +687,29 @@ async function main(): Promise<void> {
   }
 
   /**
-   * The hand helps while the fire is still waiting on the kid; once the hose is
-   * in reach the kid has arrived and needs no help. Its trace runs first and the
-   * poke at the end is the demo tap itself.
+   * The hand helps while a mission is still waiting on the kid; once the hose
+   * (or the serve) is in reach the kid has arrived and needs no help. Its trace
+   * runs first and the poke at the end is the demo tap itself, which is the same
+   * destination tap a finger would have made - so the demo answers whichever
+   * mission is waiting.
    */
-  function tickHelperHand(
-    delta: number,
-    carPosition: Vec2,
-    snapshot: MissionSnapshot,
-  ): void {
-    const awaiting = snapshot.state === 'spawned' || snapshot.state === 'driving';
-    const destination = firePoint();
-    if (destination === undefined) {
-      return;
-    }
-    const tap = hand.update(delta, { missionActive: awaiting, destination });
+  function tickHelperHand(delta: number, carPosition: Vec2): void {
+    // Whichever mission is still waiting on the kid is what the hand points at;
+    // the choice itself is `missionFocus`, so it is testable without a hand.
+    const focus = missionFocus({
+      fireState: mission.snapshot().state,
+      fireAt: firePoint(),
+      orderState: orders.snapshot().state,
+      orderAt: orderPoint(),
+      carPosition,
+    });
+    // The hand is ticked even when the town is quiet, with nothing to point at:
+    // between missions its patience resets, so a new one always gets the full
+    // ten seconds rather than inheriting a count from an empty street.
+    const tap = hand.update(delta, {
+      missionActive: focus.awaiting,
+      destination: focus.destination,
+    });
     if (tap === undefined) {
       return;
     }

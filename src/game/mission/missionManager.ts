@@ -43,6 +43,15 @@ export interface MissionManagerOptions {
   readonly random?: () => number;
 }
 
+/**
+ * Whether the fire is still waiting on the kid: lit, or being driven towards.
+ * The window in which the helper hand may point at the burning house - shared
+ * with the hand's own focus rule rather than restated there.
+ */
+export function fireAwaitsKid(state: MissionState): boolean {
+  return state === 'spawned' || state === 'driving';
+}
+
 export interface MissionManager {
   snapshot(): MissionSnapshot;
   /** Whether the hose button should be showing for a car this far away. */

@@ -4,6 +4,7 @@ import {
   BURSTS_MIN,
   COMPLETE_LINGER_SECONDS,
   createMissionManager,
+  fireAwaitsKid,
   HOSE_RANGE,
 } from './missionManager';
 
@@ -178,5 +179,36 @@ describe('putting the fire out', () => {
     tick(mission, 0.2, 5);
     expect(mission.snapshot().state).toBe('complete');
     expect(mission.isHoseReady(0)).toBe(false);
+  });
+});
+
+describe('waiting on the kid', () => {
+  it('holds from the moment the fire is lit until the car arrives', () => {
+    const mission = createMissionManager();
+    expect(fireAwaitsKid(mission.snapshot().state)).toBe(false);
+
+    mission.spawn('house-1');
+    expect(fireAwaitsKid(mission.snapshot().state)).toBe(true);
+
+    mission.respond();
+    mission.update(1 / 60, 99);
+    expect(fireAwaitsKid(mission.snapshot().state)).toBe(true);
+
+    mission.update(1 / 60, HOSE_RANGE - 0.1);
+    expect(fireAwaitsKid(mission.snapshot().state)).toBe(false);
+  });
+
+  it('lets go while the fire celebrates, and again once the town is idle', () => {
+    const mission = createMissionManager({ random: fixedRandom(0) });
+    mission.spawn('house-1');
+    mission.respond();
+    mission.update(1 / 60, 0);
+    for (let burst = 0; burst < BURSTS_MIN; burst += 1) {
+      mission.spray();
+    }
+    expect(fireAwaitsKid(mission.snapshot().state)).toBe(false);
+
+    tick(mission, COMPLETE_LINGER_SECONDS + 0.5, 0);
+    expect(fireAwaitsKid(mission.snapshot().state)).toBe(false);
   });
 });
