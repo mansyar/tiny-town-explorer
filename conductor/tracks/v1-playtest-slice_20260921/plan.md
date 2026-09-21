@@ -107,8 +107,9 @@
           the camera's focus, screen-right lands camera-right (not mirrored),
           taps beyond the frustum stay finite, and a camera aimed at the
           horizon answers with a honk rather than nothing
-    - [ ] Not wired to a pointer listener yet: the consumer (VehicleMotor +
-          target ring) comes later in this phase, so no dead code in `main.ts`
+    - [x] Wired to the pointer listener in `main.ts` once the motor landed; a
+          tap outside the town now clamps to its edge (`TownGrid.bounds`), so
+          no tap can send the car off the map
 - [x] Task: TDD Pathfinder (Red→Green) [95e0cdc]
     - [x] Test: tile adjacency/BFS route over road grid — shortest *hops*, so a
           route cuts through the middle rather than going round the ring
@@ -119,11 +120,27 @@
           through corners; the destination stays the raw tap point
     - [x] Extra: the authored map is pinned as fully connected (every road tile
           routes from the spawn point), and every waypoint lands on a road
-    - [ ] Note: the pathfinder is pure and unwired; the motor and target ring
-          consume it in the next two tasks
-- [ ] Task: VehicleMotor waypoint follower — rotate-then-drive, constant
+    - [x] Wired: `main.ts` calls `findPath` per tap and hands the route to the
+          motor; the target ring is the last consumer outstanding
+- [x] Task: VehicleMotor waypoint follower — rotate-then-drive, constant
       speed, arrival radius (logic; extend TDD tests: arrival, rotation
-      easing determinism)
+      easing determinism) [a6283ca]
+    - [x] Test: arrive-and-stop, waypoint cursor advance, supersession mid-route
+    - [x] Test: rotate-then-drive holds the line — a 20° alignment tolerance
+          left the car on an arc (≈1.3cm off) and transiently overshooting its
+          heading, so the tolerance is one frame of turning instead
+    - [x] Test: the kit's vehicles are authored facing −z (a truck's taller
+          cargo half sits along +z) while town models face +z, so the model
+          takes a half turn inside its holder or it drives cab-last
+    - [x] Wire the phase's modules in `main.ts`: pointerdown → tapAt →
+          isCurrent → findPath → setPath, with the rig following the car
+    - [x] Fix found in the browser, not in a test: a tap outside the town
+          resolved into the void and drove the car off the map. The grid now
+          exposes its footprint and the router lands such taps on the edge —
+          which is ring road all the way round, so they end on a street
+    - [ ] The final stretch to a tap still crosses lots unopposed (a car can
+          pass between or through houses): obstacle-aware pathing per FR3 and
+          building hitboxes per FR4 arrive with the collision phase
 - [ ] Task: Expanding target ring + drive feel polish (visual; manual
       verify: instant ring, smooth turn, constant speed)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
