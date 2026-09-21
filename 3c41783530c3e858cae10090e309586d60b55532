@@ -1,0 +1,24 @@
+Task: vite-plugin-pwa skeleton — manifest (standalone, orientation any, 192/512 placeholder icons), autoUpdate registration
+
+Summary of changes:
+- Configured VitePWA in vite.config.ts: registerType autoUpdate with
+  auto-injected registration, includeAssets icons/*.png, standalone
+  manifest (theme/background #87CEEB, orientation any, scope/start_url /)
+  with 192/512/maskable-512 icons, workbox globPatterns covering
+  js/css/html/json/png/svg/ico/glb/gltf/bin/mp3/ogg/wav and a 6 MiB
+  per-file cache cap; dev SW stays disabled.
+- Added scripts/generate-placeholder-icons.mjs — dependency-free PNG
+  encoder (CRC32 + zlib deflate) drawing the sky/sun/clouds/road
+  placeholder; writes icon-192, icon-512, maskable-512 into public/icons/.
+- Added `icons:generate` package script, icon + apple-touch-icon links in
+  index.html, and src/vite-env.d.ts ambient references.
+
+Verification:
+- Generated icons validated: correct PNG signature, 192x192 / 512x512,
+  8-bit RGBA.
+- `pnpm build` emits dist/sw.js, dist/workbox-*.js, dist/registerSW.js,
+  dist/manifest.webmanifest; precache = 10 entries (8.24 KiB).
+- Confirmed registerSW.js is injected into dist/index.html, the manifest
+  carries all three icons, and all three icon paths are in the precache
+  list.
+- `pnpm check` clean (10 files).
