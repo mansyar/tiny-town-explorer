@@ -1,0 +1,9 @@
+{
+  "id": "v1-playtest-slice_20260921",
+  "type": "MVP",
+  "status": "new",
+  "created": "2026-09-21T00:00:00Z",
+  "description": "Initial implementation of the v1 playtest slice: complete, deployable Tiny Town Explorers v1 per conductor/product.md — scaffold, town grid, tap-to-move, collisions, vehicles, fire mission, HUD, PWA, Cloudflare Pages.",
+  "spec": "spec.md",
+  "plan": "plan.md"
+}
