@@ -1,1 +1,9 @@
-Phase 4 correction (found in phase verification): house hitboxes now come from the mounted art instead of the lot cap, and the car is swept as a capsule so its nose reaches the wall. Browser evidence: car nose -0.2321 vs house-2 east wall -0.2318 (gap -0.0003); cap-based stop was 0.191 (gap 0.163). Tests 18 files / 232 passing; biome clean; tsc clean.
+Phase 4 correction (found in phase verification): house hitboxes now come from the mounted art instead of the lot cap, and the car is swept as a capsule so its nose reaches the wall. Browser evidence: car nose -0.2321 vs house-2 east wall -0.2318 (gap -0.0003); the cap-based stop was 0.191 (gap 0.163). Tests 18 files / 232 passing; biome clean; tsc clean.
+
+Phase 4 — Collisions: Bounce & Resume: verification report (2026-09-21).
+
+Automated: pnpm check clean (47 files); pnpm typecheck clean; CI=true pnpm test 18 files / 232 tests passing; coverage 99.84% statements, with collision.ts, vehicleActor.ts and vehicleMotor.ts at 100% statements/branches/functions/lines.
+
+Phase scope (git diff --name-only a59a747 HEAD, 11 files): every changed code file has tests; townTypes.ts is types/constants only and main.ts is excluded from coverage as the manual-verified bootstrap.
+
+Manual, in the browser on the running build: bonk a cone -> squash to 0.75/1.15 at the peak, bounce, auto-resume; bonk house-2 -> the car parks with its nose exactly on the wall and recoils cleanly; a fresh tap after a bonk drives on and arrives; console clean.
