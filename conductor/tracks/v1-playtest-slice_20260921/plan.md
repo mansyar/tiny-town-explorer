@@ -452,3 +452,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) —
       includes playtest-link handoff
       [checkpoint: ac6b52f]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions f5dbc85
