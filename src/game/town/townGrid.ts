@@ -36,6 +36,18 @@ export interface TownProp {
 }
 
 /**
+ * The town's footprint on the ground plane, as `minX`/`maxX`/`minZ`/`maxZ`
+ * world coordinates. Reaches the *outer edges* of the corner tiles, so it is the
+ * whole playable area rather than the span between tile centres.
+ */
+export interface TownBounds {
+  readonly minX: number;
+  readonly maxX: number;
+  readonly minZ: number;
+  readonly maxZ: number;
+}
+
+/**
  * Read-only view of the authored town with every query the gameplay systems
  * need: tile lookup, road adjacency and piece shapes, world/grid mapping,
  * and house/prop lookups. Pure logic — no three.js, no DOM.
@@ -52,6 +64,8 @@ export interface TownGrid {
   readonly parkTiles: readonly TileCoord[];
   /** World-space spawn positions, in authored order. */
   readonly spawnPoints: readonly Vec2[];
+  /** Outer edges of the town's tiles: the extent of the playable world. */
+  readonly bounds: TownBounds;
   tileAt(tile: TileCoord): TileKind | undefined;
   isRoad(tile: TileCoord): boolean;
   /** In-bounds four-way neighbours. */
@@ -62,6 +76,8 @@ export interface TownGrid {
   roadShape(tile: TileCoord): RoadShape | undefined;
   tileToWorld(tile: TileCoord): Vec2;
   worldToTile(point: Vec2): TileCoord;
+  /** Nearest point to `point` that lies inside {@link bounds}. */
+  clampToBounds(point: Vec2): Vec2;
   houseById(id: string): TownHouse | undefined;
   houseAt(point: Vec2): TownHouse | undefined;
   /** Props within `radius` world units of `point`, nearest first. */
@@ -148,6 +164,16 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
 
   const parkTiles = collectTiles(tiles, 'park');
 
+  // Tiles are centred on their coordinates, so the footprint starts half a tile
+  // beyond the outermost centres — the town's real edge, not the centre line.
+  const reach = ((size - 1) / 2 + 0.5) * spec.tileSize;
+  const bounds: TownBounds = { minX: -reach, maxX: reach, minZ: -reach, maxZ: reach };
+
+  const clampToBounds = (point: Vec2): Vec2 => ({
+    x: Math.min(Math.max(point.x, bounds.minX), bounds.maxX),
+    z: Math.min(Math.max(point.z, bounds.minZ), bounds.maxZ),
+  });
+
   const houseAt = (point: Vec2): TownHouse | undefined => {
     const tile = worldToTile(point);
     return houses.find((house) => house.tile.x === tile.x && house.tile.y === tile.y);
@@ -172,6 +198,7 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
     props,
     parkTiles,
     spawnPoints: spec.spawnPoints.map(tileToWorld),
+    bounds,
     tileAt,
     isRoad,
     neighbours,
@@ -180,6 +207,7 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
     roadShape,
     tileToWorld,
     worldToTile,
+    clampToBounds,
     houseById: (id) => houses.find((house) => house.id === id),
     houseAt,
     propsWithin,

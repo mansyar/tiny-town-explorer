@@ -7,6 +7,7 @@ import {
   PROP_MODELS,
   ROAD_MODELS,
   TOWN_MODELS,
+  VEHICLE_MODELS,
 } from './modelRegistry';
 
 /**
@@ -35,6 +36,7 @@ describe('modelRegistry', () => {
       ...BUILDING_MODELS,
       ...Object.values(NATURE_MODELS),
       ...Object.values(PROP_MODELS),
+      ...Object.values(VEHICLE_MODELS),
     ];
     expect(new Set(TOWN_MODELS)).toEqual(new Set(groups));
     expect(new Set(TOWN_MODELS).size).toBe(TOWN_MODELS.length);

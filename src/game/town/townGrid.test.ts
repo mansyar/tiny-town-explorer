@@ -27,6 +27,40 @@ const SHAPE_CASES: ReadonlyArray<{
   { expected: 'cross', rows: ['.#.', '###', '.#.'], tile: { x: 1, y: 1 } },
 ];
 
+describe('town bounds', () => {
+  it('spans the outer edges of the corner tiles, not their centres', () => {
+    // A 3x3 town has its centres at ±1, so its footprint reaches ±1.5.
+    expect(createTownGrid(BASE_SPEC).bounds).toEqual({
+      minX: -1.5,
+      maxX: 1.5,
+      minZ: -1.5,
+      maxZ: 1.5,
+    });
+  });
+
+  it('scales the footprint with the tile size', () => {
+    const grid = createTownGrid({ ...BASE_SPEC, tileSize: 2 });
+
+    expect(grid.bounds.maxX).toBe(3);
+    expect(grid.bounds.maxZ).toBe(3);
+  });
+
+  it('pulls a point outside the town onto its nearest edge', () => {
+    const grid = createTownGrid(BASE_SPEC);
+
+    expect(grid.clampToBounds({ x: 9, z: -9 })).toEqual({ x: 1.5, z: -1.5 });
+    // One axis outside is enough to be clamped, the other keeps its value.
+    expect(grid.clampToBounds({ x: 0.25, z: 40 })).toEqual({ x: 0.25, z: 1.5 });
+  });
+
+  it('leaves a point already inside the town alone', () => {
+    const grid = createTownGrid(BASE_SPEC);
+    const point = { x: -0.4, z: 0.9 };
+
+    expect(grid.clampToBounds(point)).toEqual(point);
+  });
+});
+
 describe('createTownGrid — authored map parsing', () => {
   it('parses the 6x6 layout into tile kinds', () => {
     const grid = createTownGrid(TOWN_MAP);

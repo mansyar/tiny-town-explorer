@@ -15,6 +15,9 @@ import type { Vec2 } from '../town/townTypes';
  *
  * - **Infinite ground-plane raycast.** Any tap anywhere on screen resolves to a
  *   ground point, so a touch never falls on empty space.
+ * - **The town is the world.** A tap beyond the town's edge lands on that edge,
+ *   so the car is never sent off the map — the ground outside is empty sky, and
+ *   a car standing in it is a lost car.
  * - **Newest tap wins.** Every tap that means a destination supersedes the one
  *   before it; a honk is feedback, so it never cancels a route in progress.
  */
@@ -53,7 +56,7 @@ export interface DriveCommand {
   readonly kind: 'drive';
   /** Monotonic per router; the newest id is the one that counts. */
   readonly id: number;
-  /** World-space point on the ground plane. */
+  /** World-space point on the ground plane, always inside the town's bounds. */
   readonly target: Vec2;
   /** Set when the tap snapped to a crashable prop. */
   readonly propId?: string;
@@ -143,8 +146,9 @@ export function createInputRouter({
         return honkAt(car);
       }
 
-      const prop = grid.propsWithin(ground, PROP_SNAP_RADIUS)[0];
-      const target = prop === undefined ? ground : { ...prop.position };
+      const landed = grid.clampToBounds(ground);
+      const prop = grid.propsWithin(landed, PROP_SNAP_RADIUS)[0];
+      const target = prop === undefined ? landed : { ...prop.position };
       if (distance(target, car) <= DEAD_ZONE_RADIUS) {
         return honkAt(car);
       }

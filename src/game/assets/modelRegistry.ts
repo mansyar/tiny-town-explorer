@@ -17,6 +17,7 @@ import treeLarge from '../../assets/kits/city-kit-suburban/tree-large.glb?url';
 import treeSmall from '../../assets/kits/city-kit-suburban/tree-small.glb?url';
 import cone from '../../assets/kits/toy-car-kit/item-cone.glb?url';
 import pine from '../../assets/kits/toy-car-kit/tree-pine.glb?url';
+import vehicleTruck from '../../assets/kits/toy-car-kit/vehicle-truck.glb?url';
 
 /**
  * The kit models the town mounts, named by the role they play.
@@ -77,6 +78,18 @@ export const PROP_MODELS = {
 } as const;
 
 /**
+ * The car the kid drives.
+ *
+ * The v1 fleet (fire, ice cream, garbage, police) belongs to the vehicle
+ * system, and the Toy Car Kit ships racers, an SUV and trucks but no service
+ * vehicles — so the toy truck drives the slice for now and the fleet's art is
+ * sourced in that phase.
+ */
+export const VEHICLE_MODELS = {
+  truck: vehicleTruck,
+} as const;
+
+/**
  * Every model the v1 town mounts, for warming the loader.
  *
  * Deduplicated: a model can hold two roles at once (the street tree is both park
@@ -88,5 +101,6 @@ export const TOWN_MODELS: readonly string[] = [
     ...BUILDING_MODELS,
     ...Object.values(NATURE_MODELS),
     ...Object.values(PROP_MODELS),
+    ...Object.values(VEHICLE_MODELS),
   ]),
 ];

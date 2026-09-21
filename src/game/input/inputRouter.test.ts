@@ -147,6 +147,29 @@ describe('ground-plane projection', () => {
   });
 });
 
+describe('the town is the whole world', () => {
+  it('lands a tap outside the town on its edge, instead of driving into the void', () => {
+    // TEST_MAP is 5x5, so the town reaches ±2.5 while the tap resolves to
+    // (6, -6) — well out over the empty ground beyond it.
+    const rig = harness();
+
+    const command = rig.tapWorld({ x: 6, z: -6 });
+
+    expect(command.kind).toBe('drive');
+    expect(command.kind === 'drive' && command.target).toEqual({ x: 2.5, z: -2.5 });
+  });
+
+  it('leaves a tap inside the town exactly where it landed', () => {
+    const rig = harness();
+
+    const command = rig.tapWorld({ x: 1.75, z: 0.5 });
+
+    expect(command.kind).toBe('drive');
+    expect(command.kind === 'drive' && command.target.x).toBeCloseTo(1.75, 3);
+    expect(command.kind === 'drive' && command.target.z).toBeCloseTo(0.5, 3);
+  });
+});
+
 describe('dead-zone honk', () => {
   it('honks instead of driving when the tap lands under the car', () => {
     const rig = harness({ x: 0, z: 2 });
@@ -165,13 +188,15 @@ describe('dead-zone honk', () => {
   });
 
   it('drives when the tap clears the dead zone', () => {
+    // Sideways, because the car sits 0.5 from the town's own southern edge.
     const rig = harness({ x: 0, z: 2 });
     rig.moveCarTo({ x: 0, z: 2 });
 
-    const command = rig.tapWorld({ x: 0, z: 2 + DEAD_ZONE_RADIUS + 0.1 });
+    const command = rig.tapWorld({ x: DEAD_ZONE_RADIUS + 0.1, z: 2 });
 
     expect(command.kind).toBe('drive');
-    expect(rig.router.latest()?.target.z).toBeCloseTo(2.6, 2);
+    expect(rig.router.latest()?.target.x).toBeCloseTo(0.6, 2);
+    expect(rig.router.latest()?.target.z).toBeCloseTo(2, 3);
   });
 
   it('judges the dead zone on the snapped target, so tapping a prop under the car honks', () => {
