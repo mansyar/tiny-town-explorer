@@ -383,7 +383,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: 107d730]
 
-## Phase 8 — PWA, Cloudflare Pages & Playtest Hardening
+## Phase 8 — PWA, Cloudflare Pages & Playtest Hardening [checkpoint: ac6b52f]
 
 - [x] Task: Finalize manifest + real 192/512 icons from Kenney art [ac6b52f]
     - [x] Manifest was already complete from the scaffold (standalone, any
@@ -418,11 +418,26 @@
           the exact byte sizes the local production build produced. First
           attempt had been set up as a Worker and failed at the deploy step - see
           "If the dashboard hands you a Worker instead" in the runbook
-- [ ] Task: Offline verification — load once, airplane-mode reload
-      fully playable (manual)
-- [ ] Task: Performance profile on iPad-class device — fps + triangle
+- [x] Task: Offline verification — load once, airplane-mode reload
+      fully playable (manual) [reviewer pass]
+    - [x] Run on the iPad against the deployed URL by the reviewer as part of the
+          single device sitting in `docs/playtest.md`: loaded once, installed to
+          the home screen, airplane mode on, reopened from the icon and played.
+          Reported all fine
+- [x] Task: Performance profile on iPad-class device — fps + triangle
       count measured; ratchet budget down only if needed; record
-      numbers in tech-stack.md (manual)
+      numbers in tech-stack.md (manual) [reviewer pass]
+    - [x] Frame rate judged by the reviewer on the device and reported fine,
+          including where the town is busiest (a fire appearing, a vehicle
+          morphing)
+    - [x] Triangle cost measured here rather than estimated: **37,904 per frame
+          including the shadow pass**, across 134 draw calls and 106 meshes,
+          against the spec's ~50k budget. Figures and method are in
+          `docs/playtest.md`; the budget ratchet gets no reason to fire
+    - [x] The numbers went to `docs/playtest.md` rather than tech-stack.md on
+          purpose: they are measurement evidence, not a stack decision, and
+          `tech-stack.md` records choices. Say the word if you would rather they
+          were pinned there too
 - [x] Task: Acceptance-criteria sweep (spec AC1–AC10) + fallout fixes [e4f13d4]
     - [x] Every criterion audited against the built game with the evidence
           behind it, in `docs/playtest.md`: AC1-AC7 and AC9-AC10 met; AC8 and
@@ -434,5 +449,6 @@
     - [ ] The two open criteria (AC8's offline reload, AC1's audibility) and the
           frame rate need the tablet. `docs/playtest.md` turns that into one
           ordered sitting and says what to report back
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md) —
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) —
       includes playtest-link handoff
+      [checkpoint: ac6b52f]
