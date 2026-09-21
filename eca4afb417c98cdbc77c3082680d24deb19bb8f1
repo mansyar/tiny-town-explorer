@@ -1,0 +1,1 @@
+HelperHand landed as pure patience: 13 tests, 311 total. 10s idle mid-mission -> one demo tap point, cooldown == the idle count restarting, noteActivity resets, nothing accumulates outside a mission, the parent toggle clears a partial count. Task 3 of Phase 6; the trace animation and the route it suggests are the caller's (next task).
