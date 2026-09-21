@@ -274,6 +274,15 @@
     - [x] Iterated once on looks: the hose was 14 large slow droplets that read
           as a blob, now 20 smaller faster ones; cones and the puff got their own
           bit size once they proved too small against the bodywork
+- [x] Task: Correction (2026-09-21, found in phase verification) — the ability
+      burst never ended, so the button stayed dim [e18b398]
+    - [x] Reason: `VehicleSystem` owns a burst clock and `update` is what expires
+          it, but the render loop never called `fleet.update`, so the hose's
+          1.5s burst was still "in flight" for good — the button stayed dim and
+          every later press returned no events
+    - [x] Fix: tick the fleet in the render loop beside the motor, ring and fx
+    - [x] Verified in the browser with a sample over time: the button flares for
+          about 1.4s, clears, and fires again on the next press
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 — Fire Mission (FSM, Pacing, Effects)
