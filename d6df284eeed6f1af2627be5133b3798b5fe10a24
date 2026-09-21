@@ -1,0 +1,37 @@
+Task: Render-loop smoke test — three.js scene boots, empty town ground renders in dev and preview builds
+
+Summary of changes:
+- src/game/scene.ts: createTownScene() builds sky background (#87CEEB),
+  matching fog, a flat shadow-receiving ground plate, hemisphere bounce plus
+  a warm directional sun; dispose() frees geometries/materials and empties
+  the graph. Scene type is renderer-free so it is unit-testable.
+- src/game/camera.ts: createCamera()/updateCameraFrustum() give a fixed
+  orthographic camera tilting down on the town and keep a constant vertical
+  world extent across any viewport aspect (portrait/landscape safe).
+- src/game/renderLoop.ts: startRenderLoop() schedules rAF frames, reports
+  {delta, elapsed} to an optional hook, and returns a stop function.
+  Uses three's Timer (not the deprecated Clock) and connects to the Page
+  Visibility API so it never emits a huge delta after backgrounding.
+- src/main.ts: bootstrap — renderer (antialias, DPR capped at 2), scene,
+  camera, ResizeObserver-driven resize, loop start.
+- index.html: canvas given CSS width/height:100% (it was rendering at
+  buffer resolution, overflowing the viewport — caught in preview).
+- vitest.config.ts: coverage now includes the scene module (main.ts, the
+  DOM/WebGL glue, remains excluded).
+- Added @types/three 0.186.0 (three ships no bundled types).
+
+Verification (visual task — manual verification recorded per workflow.md):
+- Automated: `pnpm check` clean, `pnpm typecheck` clean,
+  `CI=true pnpm test` → 3 files / 11 tests passing (scene graph, frustum
+  fitting, frame scheduling incl. cancellation).
+- Manual, preview build (`pnpm preview`, port 4173, production bundle):
+  full-viewport sky background with the green town plate centered and
+  correctly proportioned; canvas CSS 691x768 with 1036x1152 buffer at DPR
+  1.5; zero console/network errors; service-worker cache cleared between
+  builds so the fresh bundle was exercised.
+- Manual, dev build (`pnpm dev`, port 5199): index plus every source module
+  (main/scene/camera/renderLoop) transformed and served with HTTP 200.
+- Confirmed the resize path by observing container-driven buffer sizing.
+
+Follow-ups for Phase 2: shadows, real Kenney assets, and the CameraRig
+framing (car ≈15-20% of viewport height) replace the smoke-test framing.
