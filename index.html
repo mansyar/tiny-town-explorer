@@ -110,6 +110,11 @@
         opacity: 0.45;
         transform: scale(0.94);
       }
+      /* While a fire burns the ability button *is* the hose button, so it only
+         appears once the car is close enough for the water to reach. */
+      .hud-button--ability.is-hidden {
+        display: none;
+      }
       .hud-button--mute {
         background: #5e6a78;
         bottom: calc(20px + env(safe-area-inset-bottom));

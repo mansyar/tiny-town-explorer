@@ -57,6 +57,8 @@ export interface VehicleHud {
   setAbility(id: VehicleId): void;
   /** Dim the ability button while its one-shot is running. */
   setAbilityBusy(busy: boolean): void;
+  /** Show or hide the ability button; it doubles as the hose button. */
+  setAbilityVisible(visible: boolean): void;
   setMuted(muted: boolean): void;
   dispose(): void;
 }
@@ -133,6 +135,9 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
     },
     setAbilityBusy(busy): void {
       abilityButton.classList.toggle('is-busy', busy);
+    },
+    setAbilityVisible(visible): void {
+      abilityButton.classList.toggle('is-hidden', !visible);
     },
     setMuted(next): void {
       muted = next;
