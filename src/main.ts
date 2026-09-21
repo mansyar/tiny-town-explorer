@@ -649,10 +649,16 @@ async function main(): Promise<void> {
       audio.playAbility([{ kind: 'jingle' }]);
     }
     if (beats.served) {
+      // Two pairs, both complete: the cone handoff is the `cones` burst the
+      // free-play ability throws, with the same one-shot it sounds for `cones`
+      // there, and the win is confetti plus the sun plus a cheer - the exact
+      // celebration a doused fire gets. Nothing here is heard without being
+      // seen, and nothing is seen without being heard.
       const where = orderPoint() ?? carPosition;
       fx.burst('confetti', where, 0);
       fx.burst('cones', where, 0);
       sun.show(where);
+      audio.play('drop');
       audio.play('cheer');
     }
   }
