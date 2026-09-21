@@ -18,7 +18,7 @@
 
 ## Phase 2 – Serve-gating rules (TDD)
 
-- [ ] Task: Jingle-then-serve gating
+- [x] Task: Jingle-then-serve gating `8d35c7e`
   - [ ] Write failing tests (serve available only when: ice-cream truck active + jingled since spawn + within serve range; morphing away abandons jingle; re-jingle re-arms)
   - [ ] Implement to pass (vehicle/mission glue, reuses `iceCream` cast `jingle` + `cones`, burst untouched since `seconds: 0`)
   - [ ] Refactor + coverage
