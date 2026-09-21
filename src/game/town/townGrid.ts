@@ -13,7 +13,7 @@ import {
   DIRECTION_STEPS,
   DIRECTIONS,
   PROP_COLLISION_RADIUS,
-  TILE_CHARACTERS,
+  tileKindForCharacter,
 } from './townTypes';
 
 /** A house placed in the world. */
@@ -195,7 +195,7 @@ function parseTiles(spec: TownMapSpec): readonly (readonly TileKind[])[] {
       );
     }
     return [...row].map((character) => {
-      const kind = TILE_CHARACTERS[character];
+      const kind = tileKindForCharacter(character);
       if (kind === undefined) {
         throw new Error(`Unknown town map character '${character}' at row ${y}`);
       }

@@ -1,0 +1,208 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/dev-dist",
+      "!**/coverage",
+      "!**/*.md",
+      "!**/.freebuff"
+    ]
+  },
+
+  // Formatter settings come from conductor/code_styleguides/typescript.md
+  // (single quotes, explicit semicolons) and html-css.md (2-space indent,
+  // no tabs, no trailing whitespace, LF).
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    // Neither guide sets a column limit; 90 keeps authored town/map tables
+    // and test titles readable without forcing wraps.
+    "lineWidth": 90,
+    "lineEnding": "lf"
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+
+      // --- typescript.md: language features ---
+      "style": {
+        // "Use ES6 modules. Do not use namespace."
+        "noNamespace": "error",
+        // "Use named exports. Do not use default exports."
+        "noDefaultExport": "error",
+        // "Mark properties never reassigned outside the constructor readonly."
+        // checkAllProperties covers members written without an explicit
+        // public/protected/private modifier (the style this guide prefers).
+        "useReadonlyClassProperties": {
+          "level": "error",
+          "options": { "checkAllProperties": true }
+        },
+        // "Never use the public modifier"; also enforces private/protected.
+        "useConsistentMemberAccessibility": {
+          "level": "error",
+          "options": { "accessibility": "noPublic" }
+        },
+        // Naming: UpperCamelCase types, lowerCamelCase values, CONSTANT_CASE
+        // constants. Biome's default conventions already encode this rule set.
+        "useNamingConvention": "error",
+        // "Use T[] for simple types" (see README/guide: Array<T> only reads
+        // better for complex unions; shorthand is the enforced default here).
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": { "syntax": "shorthand" }
+        },
+        // Type-only import/export syntax pairs with tsconfig verbatimModuleSyntax.
+        "useImportType": "error",
+        "useExportType": "error",
+        // "Always use const or let; const by default."
+        "useConst": "error",
+        // "Avoid non-nullability assertions (y!)."
+        "noNonNullAssertion": "error"
+      },
+
+      // --- typescript.md: disallowed features ---
+      "suspicious": {
+        // "Avoid any. Prefer unknown or a more specific type."
+        "noExplicitAny": "error",
+        "noImplicitAnyLet": "error",
+        // "Do not use const enum. Use plain enum instead."
+        "noConstEnum": "error",
+        // "var is forbidden."
+        "noVar": "error",
+        // "Always use === and !==."
+        "noDoubleEquals": "error"
+      },
+      "security": {
+        // "eval() and Function(...string) are forbidden."
+        "noGlobalEval": "error"
+      },
+      "correctness": {
+        // JSDoc hygiene for the "/** */ plus no redundant @param types" rule;
+        // the "no types in @param/@return" half has no Biome rule (see gap
+        // notes in the commit/plan record).
+        "useSingleJsDocAsterisk": "error"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "warn",
+        // html-css.md: "Avoid using !important."
+        "noImportantStyles": "error"
+      },
+
+      // "Prefer function declarations for named functions. Use arrow functions
+      // for anonymous functions/callbacks." Nursery: experimental but directly
+      // encodes the guide rule; arrow functions stay allowed for callbacks.
+      "nursery": {
+        "useConsistentFunctionStyle": {
+          "level": "error",
+          "options": { "style": "declaration", "allowArrowFunctions": true }
+        }
+      }
+    }
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on",
+        // Deliberately OFF: html-css.md requires alphabetical declaration
+        // order, but Biome's CSS property sorter enforces a *semantic* order
+        // (layout, then box, then typography...). Enabling it would actively
+        // reorder declarations against the guide, so alphabetical ordering
+        // stays a review-time convention (and the sorter's shorthand-aware
+        // reordering is a semantics risk worth avoiding anyway).
+        "useSortedProperties": "off"
+      }
+    }
+  },
+
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always",
+      "trailingCommas": "all",
+      "arrowParentheses": "always"
+    }
+  },
+
+  "json": {
+    "formatter": {
+      "enabled": true
+    }
+  },
+
+  // html-css.md: "Use single quotes for attribute selectors and property values."
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "quoteStyle": "single"
+    }
+  },
+
+  "html": {
+    "formatter": {
+      "enabled": true,
+      // The guide indents block children, including <style> content.
+      "indentScriptAndStyle": true
+    }
+  },
+
+  "overrides": [
+    {
+      // Vite requires a default export from its config files, which the
+      // named-exports-only rule cannot accommodate.
+      "includes": ["vite.config.ts", "vitest.config.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      // The Web App Manifest field names are spec-mandated snake_case
+      // (short_name, theme_color, background_color, start_url), so the
+      // camelCase naming rule cannot apply to this file.
+      "includes": ["vite.config.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": "off"
+          }
+        }
+      }
+    }
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// Guide rules that no Biome rule can enforce. These stay review-time
+// conventions, verified in code review rather than by `pnpm check`:
+//
+// conductor/code_styleguides/typescript.md
+//   - Do not use `#private` class fields; use the `private` modifier.
+//   - Avoid type assertions (`x as T`) and non-null assertions, and justify
+//     any that remain.
+//   - Do not instantiate String/Boolean/Number wrapper objects.
+//   - Do not restate types in JSDoc `@param`/`@return` blocks.
+//   - Ban `Function(...string)`: security/noGlobalEval only covers `eval()`.
+//
+// conductor/code_styleguides/html-css.md
+//   - Alphabetize declarations within a CSS rule: Biome's CSS sorter enforces
+//     a semantic order instead, so it is disabled (see the assist section).
+//   - Use lowercase for all HTML/CSS code, avoid ID selectors for styling,
+//     use hyphenated class names, omit units on zero values, keep leading
+//     zeros on decimals, prefer 3-character hex, and load embedded resources
+//     over HTTPS only.
+// ---------------------------------------------------------------------------

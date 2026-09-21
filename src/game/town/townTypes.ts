@@ -70,15 +70,25 @@ export interface TownMapSpec {
 }
 
 /**
- * Character mapping used by the authored row strings: `#` road, `L` (or `.`)
- * house lot, `P` park.
+ * Resolves one character of an authored row string: `#` road, `L` (or `.`)
+ * house lot, `P` park. Anything else is an authoring error.
+ *
+ * A switch rather than a lookup object because the map characters are data,
+ * not identifiers that the naming convention should police.
  */
-export const TILE_CHARACTERS: Readonly<Record<string, TileKind>> = {
-  '#': 'road',
-  L: 'lot',
-  '.': 'lot',
-  P: 'park',
-};
+export function tileKindForCharacter(character: string): TileKind | undefined {
+  switch (character) {
+    case '#':
+      return 'road';
+    case 'L':
+    case '.':
+      return 'lot';
+    case 'P':
+      return 'park';
+    default:
+      return undefined;
+  }
+}
 
 /**
  * Collision radius per prop kind, in tile units so the town stays scale-free

@@ -1,47 +1,51 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8">
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
-    />
-    <meta name="theme-color" content="#87CEEB" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    >
+    <meta name="theme-color" content="#87ceeb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <title>Tiny Town Explorers</title>
+    <!--
+      Styling hangs off a class rather than the #app id (html-css.md: avoid ID
+      selectors for styling); the id stays as the bootstrap hook for main.ts.
+    -->
     <style>
       html,
       body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-        background: #87ceeb;
-        touch-action: none;
-        overscroll-behavior: none;
-        -webkit-user-select: none;
-        user-select: none;
         -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        background: #87ceeb;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
+        padding: 0;
+        touch-action: none;
+        user-select: none;
       }
-      #app {
-        position: fixed;
+      .stage {
         inset: 0;
+        position: fixed;
       }
-      #app canvas {
+      .stage canvas {
         display: block;
         /* The renderer only sizes the drawing buffer; CSS sizing is what
            keeps the canvas matched to the viewport on every orientation. */
-        width: 100%;
         height: 100%;
+        width: 100%;
       }
     </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app" class="stage"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
