@@ -366,8 +366,20 @@
           for none, and the product guidelines forbid written words anywhere in
           the interface including this panel; provenance stays in
           `src/assets/kits/README.md` and `src/assets/audio/README.md`
-- [ ] Task: Mute button + add-to-home-screen animated hint, one-time
-      per session (visual; manual verify)
+- [x] Task: Mute button + add-to-home-screen animated hint, one-time
+      per session (visual; manual verify) [107d730]
+    - [x] Mute already shipped with the HUD in Phase 5 and is wired to the
+          master gain, so this task came down to the hint. Session-scoped via
+          sessionStorage, skipped entirely when the game is already standing on
+          the home screen, and dismissed by any tap
+    - [x] It points rather than acts: an arrow that bobs toward the corner
+          Safari's share control or Chrome's menu lives in, with a glyph chosen
+          from the user agent (an iPad claiming to be a Macintosh counts as
+          iOS). 11 tests cover the decision, the fade and the sniff
+    - [!] The DOM layer is unverified by eye: this session's browser connection
+          answered Vite's module fetches with 502 Bad Gateway while the same
+          URLs returned 200 over plain HTTP, so the app never booted in the
+          browser to be inspected. A look at a fresh tab closes it
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 8 — PWA, Cloudflare Pages & Playtest Hardening
