@@ -286,7 +286,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: e18b398]
 
-## Phase 6 — Fire Mission (FSM, Pacing, Effects)
+## Phase 6 — Fire Mission (FSM, Pacing, Effects) [checkpoint: d61542e]
 
 - [x] Task: TDD MissionManager FSM (Red→Green) [62414a7]
     - [x] Test: IDLE→SPAWNED→DRIVING_TO_MISSION→ACTIVE→COMPLETE
@@ -321,9 +321,9 @@
     - [x] Manual verification drove the real frame function: a spawn shows the
           flame and smoke, three sprays took a three-burst fire to out, and the
           hose button is the ability button, hidden until the car is close
-    - [ ] The smiling sun the spec also names is not built. Confetti and the
-          cheer landed; the sun is deferred to Phase 7 polish rather than
-          invented here, so the celebration is not yet what the spec describes
+    - [x] The smiling sun the spec also names is built and verified: it rises
+          over the house that was burning, overshoots to 1.02 as it arrives, and
+          is gone inside two seconds [d61542e]
 - [x] Task: Helper hand trace animation (visual; manual verify timing) [12e7ad4]
     - [x] Dots resampled by arc length along the route, a pointer on an eased
           curve; driven frame by frame the trace ran 108 frames (1.8s) after
@@ -341,7 +341,8 @@
           fault a phase verification has caught, after the burst clock, which is
           the argument for driving the real frame function rather than trusting
           the parts in isolation
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: d61542e]
 
 ## Phase 7 — HUD, Parent Panel & Polish
 
