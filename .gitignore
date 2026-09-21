@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dev-dist/
+*.tsbuildinfo
+
+# Test output
+coverage/
+
+# Local tooling
+.vite/
+*.local
+
+# OS cruft
+.DS_Store
+Thumbs.db
