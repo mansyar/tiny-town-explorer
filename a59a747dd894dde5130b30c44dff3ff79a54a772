@@ -34,3 +34,66 @@ VERIFICATION METHOD (worth recording)
 COVERAGE
 - targetRing.ts 100% statements/branches/functions/lines; 191 tests across 17
   files; biome clean, tsc --noEmit clean, build clean.
+
+================================================================
+PHASE VERIFICATION REPORT — Phase 3: Input & Tap-to-Move
+Checkpoint commit: a59a747 (feat(feedback): Bloom a ring where the tap landed)
+Scope: all code changed since the previous checkpoint c70f12e (Model-wiring)
+Protocol: conductor/workflow.md, Phase Completion Verification & Checkpointing
+
+AUTOMATED
+- Command: pnpm check && pnpm typecheck && CI=true pnpm test:coverage && pnpm build
+- pnpm check      : clean, 45 files (biome 2.5)
+- pnpm typecheck  : clean (tsc 7.0.2 --noEmit, strict)
+- tests           : 191 passed / 191, 17 files
+- pnpm build      : clean, precache 30 entries (1,932.96 KiB), 19 GLBs emitted
+- coverage        : 99.8% stmts, 95.95% branch, 100% funcs, 99.79% lines
+  in-scope modules: inputRouter 100 | pathfinder 100 | vehicleMotor 100 |
+  vehicleActor 100 | targetRing 100 | townGrid 100 stmts | modelRegistry 100
+
+SCOPE COVERAGE CHECK (git diff --name-only c70f12e HEAD)
+- Code files changed: modelRegistry.ts, targetRing.ts, inputRouter.ts,
+  pathfinder.ts, townGrid.ts, vehicleActor.ts, vehicleMotor.ts -- each has a
+  co-located *.test.ts.
+- src/main.ts has no test file by design: it is the DOM/WebGL bootstrap,
+  excluded from coverage in vitest.config.ts and covered by the manual steps
+  below (workflow: visual/scene code is manual-verified).
+
+MANUAL VERIFICATION STEPS (given to the user, frontend change)
+1. Look at the Preview tab (already live on the current bundle).
+2. Confirm the kit truck stands on the street with the camera opening on it.
+3. Tap a street point a few tiles away: confirm an expanding warm-white ring
+   blooms where the tap landed, then the truck turns on the spot to face it and
+   drives at a steady pace, staying on the asphalt through the bends and
+   junction, camera easing after it.
+4. Tap again mid-drive: confirm the ring restarts at the new spot and the truck
+   turns toward it without stuttering (newest tap wins).
+5. Tap right next to the truck (within ~half a tile): confirm the ring blooms on
+   the truck and it does not move (dead-zone honk, no destination ring).
+6. Tap a cone, pole or tree: confirm the ring snaps onto that prop.
+7. Tap the blue sky outside town: confirm the ring lands on the street at the
+   town's edge and the truck drives there and stops on the road -- it must never
+   drive off into the blue (the bug found and fixed this phase).
+8. Resize portrait <-> landscape: confirm the town stays centred with the same
+   vertical extent, never cropped or stretched.
+9. Optional: pnpm dev -> http://localhost:5173 to compare the dev build.
+
+MANUAL VERIFICATION RESULT
+- Steps 2, 3, 4, 7 exercised during implementation with real pointer events on
+  the running build: the truck routed through the cross street and the ring
+  road, a mid-route tap superseded the route, and an out-of-town tap clamped to
+  the edge instead of leaving the map.
+- Step 3 (the ring itself) confirmed by the user watching the live preview:
+  "i see the pulse".
+- Steps 5, 6, 8 were verified by their automated coverage for the logic side
+  (dead-zone classification, prop snapping, frustum refit) and remain available
+  for the user to repeat by hand.
+- User confirmation: "Confirmed -- checkpoint Phase 3".
+
+KNOWN LIMITATIONS CARRIED FORWARD (recorded in plan.md)
+- Buildings have no collision yet, so the final stretch to a tap on a lawn can
+  pass between houses: FR3's obstacle-aware pathing and FR4's hitboxes arrive
+  with Phase 4.
+- A tap outside town shows its ring half over the edge of the world, since that
+  really is the clamped destination.
+- The dead-zone honk has no sound or squish yet (Phase 4: squish, bonk, bounce).
