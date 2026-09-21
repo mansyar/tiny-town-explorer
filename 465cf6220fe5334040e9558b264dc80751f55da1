@@ -5,3 +5,24 @@ The spawn cue landed with the tick wiring in d1a5e4f: the synthesized ice-cream 
 Files: src/main.ts.
 
 Verification: 421 tests / 35 files green (audioEngine's 16 scheduling/cap tests unchanged and passing), pnpm check + typecheck clean. Manual verify for the device pass: the order's jingle is audible exactly once as the cone icon appears; serve gives cones + drop then confetti + cheer + sun; mute silences all of it and unmute restores it; no cue is louder than a fire's cheer.
+
+Phase 4 checkpoint VERIFIED (scope: 5f47580..465cf62 - src/main.ts, orderFlow.ts/.test.ts, missionFocus.ts/.test.ts, missionManager.ts/.test.ts; commit 465cf62).
+
+Automated: pnpm check clean (86 files), pnpm typecheck clean, CI=true pnpm test 421 tests / 35 files green (was 397/33; +24 new: orderFlow 15, missionFocus 7, fireAwaitsKid 2). Coverage: orderFlow 100%, missionFocus 100%, missionManager 97.8%, all files 82.6% statements - logic modules above the >80% bar, main.ts exempt as DOM glue per vitest.config.
+
+Manual verification plan and result - driver: the agent, in the running app (pnpm dev on http://localhost:5199, Chromium preview tab). The shipped 60-90s calm gap was temporarily accelerated (x12) to reach an order in seconds and the fire pacer left at its shipped pace; src/main.ts was then restored byte-for-byte and diffed against HEAD (empty), with all gates re-run clean.
+
+Observed, in the real render loop:
+1. Order appears with the bouncing cone + note marker over the ordered lot; marker tracks the order and is cleared on serve.
+2. Helper hand traced the route and demo-tapped the ordering house after the idle window; that tap answered the order for real (fleet morphed to the ice-cream truck, car drove over) - the demo path is the same gesture a finger makes.
+3. Tap on the ordering house while spawned -> respond + morph + drive (state spawned -> driving/active).
+4. Range gate: jingled, drove off, state driving at 4.25 units from the house -> armed false. Drove back -> state active and armed true WITHOUT a second jingle (the latch survives the trip; driving away disarms but never cancels the order).
+5. Serve: tap on the ordering house while active + armed -> state complete, marker cleared, celebration fired (confetti + cones + sun + cheer/drop). A second order followed the calm gap afterwards.
+6. FR5 in the wiring: with the fire pacer at its shipped 60-90s gap and an unanswered order holding the town, the fire stayed idle for ~95s - it never got its turn (also AC4's patient-forever).
+7. Not verifiable here: audibility. Headless Chromium has no gesture-authorized audio, so the jingle/drop/cheer cues need a human ear (desktop + device). Their wiring is the unchanged, tested engine path.
+
+User confirmation: the reviewer confirmed the phase on 2026-09-22 (asked with the explicit yes/no step of conductor/workflow.md).
+
+Findings carried forward (not fixed in this track, both reported to the user):
+1. Pre-existing: .hud-button--ability.is-hidden has no CSS rule anywhere, so the fire mission's "hose button only in reach" never actually hides the button. The ice-cream path is unaffected (an open order deliberately keeps the jingle button).
+2. Risk: inputRouter snaps a tap to any prop within PROP_SNAP_RADIUS (0.45) and only then applies the 0.5 dead-zone honk, so a tap on a marked house can resolve onto a nearby cone and honk instead of serving when the parked truck is within 0.5 of that prop. Reproduced once, intermittent; needs a deliberate repro and a fix (e.g. let a mission house win over prop snapping).
