@@ -1,0 +1,7 @@
+Task: Full gates (pnpm check, pnpm typecheck, CI=true pnpm test, coverage >80% logic) + Update docs/playtest.md with AC1-AC7 results. One commit, because the gates produce no code: this is the commit that records them.
+
+Gate evidence (announced and run as-is, on the restored shipped tree): `pnpm check` -> Biome clean, 86 files; `pnpm typecheck` -> tsc --noEmit clean; `CI=true pnpm test` -> 421 tests / 35 files passed; `CI=true pnpm test:coverage` -> all files 82.63% statements / 83.6% branches, game/mission 97.67% / 93.56%, with orderFlow, missionFocus, serveGate, helperHand, iceCreamMission, iceCreamPacer, missionBusy and firePacer at 100% statements. main.ts remains exempt DOM glue per vitest.config.ts.
+
+Docs: docs/playtest.md gains a second-track section - the AC1-AC7 table with per-AC evidence (v1's table left as that sweep's record, with a note that the counts have grown), how the desktop pass was driven (temporary 12x order-pacer clock, restored byte-for-byte), the five-minute iPad checklist for the mission, and the report-back prompts. Two issues found by the pass are written down there as known issues to watch for, both tracked outside this track: the inert `.hud-button--ability.is-hidden` CSS (v1 fire behaviour, ice-cream unaffected) and the prop-snap serve tap that can honk.
+
+Files: docs/playtest.md.
