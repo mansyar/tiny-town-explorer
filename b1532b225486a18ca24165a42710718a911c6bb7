@@ -1,0 +1,32 @@
+Task: TDD TownGrid module (Red→Green)
+
+Summary of changes:
+- src/game/town/townTypes.ts: town vocabulary — TileKind (road/lot/park),
+  Direction + deterministic DIRECTIONS order, RoadConnections, RoadShape
+  (isolated/end/straight/curve/tee/cross), PropKind (hydrant/powerPole/tree),
+  Vec2/TileCoord/TileOffset, TownMapSpec, TILE_CHARACTERS ('#' road, 'L'/'.'
+  lot, 'P' park), PROP_COLLISION_RADIUS (tile-relative so the town stays
+  scale-free), DIRECTION_STEPS.
+- src/game/town/townMap.ts: the authored 6x6 town — ring road plus one
+  north-south cross street at x3, a 2-tile park corner, 10 house lots (every
+  one on a street), 9 kerbside props, 4 road spawn points.
+- src/game/town/townGrid.ts: createTownGrid(spec = TOWN_MAP) returning a pure
+  query surface — tileAt/isRoad, neighbours/roadNeighbours/roadConnections,
+  derived roadShape, tileToWorld/worldToTile (town centred on the origin),
+  houseById/houseAt, propsWithin (nearest-first), parkTiles, spawnPoints.
+  Malformed authored maps (non-square rows, unknown characters) throw at
+  construction.
+- src/game/town/townGrid.test.ts: 23 tests — map parsing and tile counts,
+  house/prop/spawn derivation, data integrity (lots on streets, facings aimed
+  at roads, road network fully connected via flood fill), adjacency queries,
+  all six road shapes from table-driven 3x3 maps, world mapping round-trips,
+  house-by-point lookup, proximity ordering, tile-scaled collision radii,
+  offset placement, and validation errors.
+
+TDD: tests written first and confirmed failing (module-not-found) before
+implementation; 16 pre-existing tests stayed green throughout.
+
+Verification:
+- CI=true pnpm test → 5 files / 39 tests passing (23 new).
+- pnpm check clean (21 files, 0 warnings); pnpm typecheck clean.
+- Coverage: game/town at 100% statements / 93.9% branches (project 99.3%).
