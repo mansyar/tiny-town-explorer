@@ -306,8 +306,12 @@
           `TownGrid`, so the pacer stays pure; "≥2 houses" is enforced as two
           world units (the tile pitch is 1.0) and the pause while a mission runs
           gives the next fire a fresh calm gap. 11 tests.
-- [ ] Task: TDD helper-hand idle logic (Red→Green): 10s inactivity
-      mid-mission → single demo-tap event + ≥10s cooldown
+- [x] Task: TDD helper-hand idle logic (Red→Green): 10s inactivity
+      mid-mission → single demo-tap event + ≥10s cooldown [eca4afb]
+    - [x] Note: the cooldown is the idle count restarting, so a touch re-earns
+          the help rather than resetting a separate timer; nothing accumulates
+          outside a mission and the parent toggle drops a half-finished count.
+          13 tests.
 - [ ] Task: Fire visuals — smoke puffs, flame mesh shrinking per burst,
       confetti + smiling sun, alarm chime, hose button (visual; manual
       verify full mission on tablet)
