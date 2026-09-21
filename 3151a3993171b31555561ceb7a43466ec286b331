@@ -1,0 +1,34 @@
+Task: CameraRig — orthographic ~45° tilt, medium framing (car ≈15% of viewport height), smooth follow, frustum refit on any orientation/resize (manual verify on portrait + landscape)
+
+Summary of changes:
+- src/game/camera.ts: replaced createCamera/updateCameraFrustum with
+  createCameraRig(aspect) returning { camera, focus, setTarget, snapTo,
+  update, resize }. Framing constants are derived, not tuned by hand:
+  CAR_LENGTH 0.9 / CAR_VIEW_SHARE 0.17 => VIEW_HEIGHT ≈ 5.3 world units, so
+  the car will occupy the spec'd 15-20% of viewport height once vehicles
+  exist. Fixed ~45° tilt via equal vertical/horizontal camera offset;
+  follow uses exponential smoothing (tau = 0.35s) so a given elapsed time
+  produces the same travel regardless of frame rate; zero/negative deltas
+  are ignored; resize refits the frustum with a square fallback for a
+  degenerate (zero-size/hidden) container.
+- src/main.ts: builds the rig, opens on the primary spawn point (the camera
+  focus is real map data even before the car exists), refits on
+  ResizeObserver, and advances the rig from the render loop's frame delta.
+- src/game/camera.test.ts: rewritten as 12 tests, written first and
+  confirmed failing (module-not-found) before implementation: framing share
+  equals the spec range, constant vertical extent across landscape/portrait,
+  35-55° tilt, focus projects to viewport centre while following, eased
+  (non-snapping) start, >95% of the gap closed in 1.5s, frame-rate
+  independence, degenerate-aspect fallback, and instant snapTo.
+
+Verification:
+- Automated: pnpm check clean, pnpm typecheck clean, CI=true pnpm test
+  → 6 files / 57 tests; camera.ts at 100% statements and branches
+  (project 99.3%).
+- Manual, production preview: landscape shows medium framing centred on the
+  spawn point with neighbouring houses and the cross street readable.
+- Manual, portrait: emulated a 520x900 container (canvas CSS 520x900,
+  drawing buffer 780x1350 at DPR 1.5) — the frustum refit kept the vertical
+  world extent identical and narrowed the horizontal extent, exactly as the
+  any-orientation rule requires.
+- No console output in either orientation.
