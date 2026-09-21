@@ -80,7 +80,9 @@ export function createModelLibrary(options: ModelLibraryOptions = {}): ModelLibr
   const templates = new Map<string, Promise<Object3D>>();
   const texturesByName = new Map<string, Texture>();
   const ownedGeometry = new Set<BufferGeometry>();
-  const ownedMaterials = new Set<Material>(); /**
+  const ownedMaterials = new Set<Material>();
+
+  /**
    * Repoints one material's palette at the instance already seen for that
    * name, releasing a duplicate so it never reaches the GPU. The first texture
    * with a given name becomes the shared one.

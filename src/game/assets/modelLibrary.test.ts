@@ -1,6 +1,7 @@
 import {
   BoxGeometry,
   Group,
+  Material,
   Mesh,
   MeshStandardMaterial,
   type Object3D,
@@ -148,6 +149,15 @@ describe('createModelLibrary', () => {
     await library.load('b.glb');
 
     expect(mapOf(second.model)).toBe(second.texture);
+  });
+
+  it('leaves materials that sample no texture alone', async () => {
+    const group = new Group();
+    group.add(new Mesh(new BoxGeometry(1, 1, 1), new Material()));
+    const stub = stubSource({ 'a.glb': group });
+    const library = createModelLibrary({ source: stub.source });
+
+    await expect(library.load('a.glb')).resolves.toBe(group);
   });
 
   it('retries a failed load instead of caching the failure', async () => {
