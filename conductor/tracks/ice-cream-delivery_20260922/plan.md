@@ -50,8 +50,8 @@
 
 - [x] Task: Full gates (`pnpm check`, `pnpm typecheck`, `CI=true pnpm test`, coverage >80% logic) `1255f7c`
   - [x] Biome 86 files clean, `tsc --noEmit` clean, 421 tests / 35 files; `game/mission` 97.67% statements / 93.56% branches (orderFlow, missionFocus, serveGate, helperHand, iceCreamMission, iceCreamPacer, missionBusy, firePacer all 100% statements); `main.ts` exempt DOM glue
-- [~] Task: Device pass (signal → jingle → drive → serve → celebrate → calm gap; fire ⇄ ice-cream never overlap; 10s helper demo)
+- [x] Task: Device pass (signal → jingle → drive → serve → celebrate → calm gap; fire ⇄ ice-cream never overlap; 10s helper demo) `1255f7c`
   - [x] Desktop half driven in the real render loop (marker → hand demo tap → respond/morph → jingle latch + range gate → serve → next order; fire held off ~95s while an order held the town)
-  - [ ] iPad sitting: signal → jingle → drive → serve → celebrate → calm gap, sound on/off, 10s helper demo (steps in `docs/playtest.md`)
+  - [x] iPad sitting run by the reviewer on 2026-09-22 against the dev server over the LAN and reported working (signal → jingle → drive → serve → celebrate → calm gap, sound on/off, 10s helper demo — steps in `docs/playtest.md`)
 - [x] Task: Update `docs/playtest.md` with AC1–AC7 results `1255f7c`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `1255f7c`]
