@@ -1,0 +1,1 @@
+HoldGate landed as pure logic: 12 tests, 355 total. 3s continuous hold -> one open signal per hold (never per frame), release cancels, the ring fills evenly, a second press cannot restart the count. Task 1 of Phase 7.
