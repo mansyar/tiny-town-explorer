@@ -344,7 +344,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: d61542e]
 
-## Phase 7 — HUD, Parent Panel & Polish
+## Phase 7 — HUD, Parent Panel & Polish [checkpoint: 107d730]
 
 - [x] Task: TDD hold-gate logic (Red→Green): 3s continuous hold → open
       event; release early → cancel; repeat fires only once [e3e1117]
@@ -380,7 +380,8 @@
           answered Vite's module fetches with 502 Bad Gateway while the same
           URLs returned 200 over plain HTTP, so the app never booted in the
           browser to be inspected. A look at a fresh tab closes it
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: 107d730]
 
 ## Phase 8 — PWA, Cloudflare Pages & Playtest Hardening
 
