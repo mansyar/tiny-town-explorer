@@ -288,12 +288,16 @@
 
 ## Phase 6 — Fire Mission (FSM, Pacing, Effects)
 
-- [ ] Task: TDD MissionManager FSM (Red→Green)
-    - [ ] Test: IDLE→SPAWNED→DRIVING_TO_MISSION→ACTIVE→COMPLETE
+- [x] Task: TDD MissionManager FSM (Red→Green) [62414a7]
+    - [x] Test: IDLE→SPAWNED→DRIVING_TO_MISSION→ACTIVE→COMPLETE
           transitions and illegal-transition guards
-    - [ ] Test: tap-to-swap morph trigger; proximity-reveal guard for
+    - [x] Test: tap-to-swap morph trigger; proximity-reveal guard for
           hose button
-    - [ ] Test: burst counter (3–4 taps → extinguished)
+    - [x] Test: burst counter (3–4 taps → extinguished)
+    - [x] Note: `respond()` is the tap-to-swap trigger and `isHoseReady()`
+          the proximity guard, so both landed in this module; proximity arrives
+          as a distance rather than an event, so one `update` arms the hose when
+          the car is close and disarms it when the kid drives away. 13 tests.
 - [ ] Task: TDD fire pacing (Red→Green)
     - [ ] Test: calm-gap spawn timer (60–90s randomized)
     - [ ] Test: next house ≥2 houses from previous (map-aware choice)
