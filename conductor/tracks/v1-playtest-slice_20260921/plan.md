@@ -217,6 +217,16 @@
 
 ## Phase 5 — Vehicles & Abilities
 
+- [x] Task: Source the fleet's art — three from the Car Kit, one authored [61dfa87]
+    - [x] Vendor the CC0 Car Kit (fire truck, garbage truck, police car) behind
+          the existing pack pipeline and register the three in VEHICLE_MODELS
+    - [x] Author the ice-cream truck in Blender
+          (`scripts/blender-ice-cream-truck.py`) to the Car Kit's measured
+          contract: 66.3 KiB packed, every GLB gate passes, palette matches
+    - [x] Rework it against the reviewer's reference — a forward-control van,
+          pink under cream with a yellow roof stripe, grille and headlights over
+          a bumper, blue-hubbed wheels, and a point-down waffle cone with a
+          vanilla swirl and a cherry seated on the roof
 - [ ] Task: TDD VehicleSystem (Red→Green)
     - [ ] Test: four-vehicle registry, active-vehicle switching state
     - [ ] Test: per-vehicle ability one-shot dispatch (spray burst,
