@@ -1,5 +1,5 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
-import { createCamera, updateCameraFrustum } from './game/camera';
+import { createCameraRig } from './game/camera';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
 import { buildTown } from './game/town/townBuilder';
@@ -31,9 +31,13 @@ function main(): void {
 
   const renderer = createRenderer(container);
   const { scene } = createScene();
-  const town = buildTown(createTownGrid());
+  const grid = createTownGrid();
+  const town = buildTown(grid);
   scene.add(town.group);
-  const camera = createCamera(container.clientWidth / container.clientHeight);
+
+  const rig = createCameraRig(container.clientWidth / container.clientHeight);
+  // Until the car exists, the camera opens on the primary spawn point.
+  rig.snapTo(grid.spawnPoints[0] ?? { x: 0, z: 0 });
 
   // ResizeObserver covers window resizes and orientation changes alike,
   // including the initial layout pass.
@@ -42,11 +46,13 @@ function main(): void {
     const height = container.clientHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height, false);
-    updateCameraFrustum(camera, width / height);
+    rig.resize(width / height);
   });
   observer.observe(container);
 
-  startRenderLoop(renderer, scene, camera);
+  startRenderLoop(renderer, scene, rig.camera, ({ delta }) => {
+    rig.update(delta);
+  });
 }
 
 main();
