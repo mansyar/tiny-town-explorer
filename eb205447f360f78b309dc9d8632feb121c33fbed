@@ -1,0 +1,7 @@
+Task: Helper-hand reuse (10s idle -> trace + demo tap on the ordering house, cooldown >=10s).
+
+New pure module src/game/mission/missionFocus.ts with tests first (9 cases): picks the mission still waiting on the kid, so the hand's existing 10s/repeat/cooldown behaviour now covers orders too. The per-mission "waiting" rule is shared, not restated - fireAwaitsKid was added to missionManager (with tests) beside orderAwaitsKid in orderFlow - so the hand cannot disagree with a mission about when the kid has arrived. main.ts's tickHelperHand now calls missionFocus and hands the same demo tap into tapAt, which routes it through the normal answer path (respond, then drive) and traces the route first. Behaviour fix worth noting: the hand is ticked every frame, including while the town is quiet, which is what helperHand's own docs describe ("the next fire starts with a full ten seconds of patience") and what the old early-return skipped.
+
+Files: src/game/mission/missionFocus.ts (new), src/game/mission/missionFocus.test.ts (new), src/game/mission/missionManager.ts, src/game/mission/missionManager.test.ts, src/main.ts.
+
+Verification: 421 tests / 35 files green, pnpm check + typecheck clean. Manual verify for the device pass: stand still with an order on screen and the hand traces to the ordering house then taps it once; it does not repeat inside 10s.
