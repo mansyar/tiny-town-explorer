@@ -1,0 +1,55 @@
+TASK: Wire the kit models into the rendered town (plan: v1-playtest-slice)
+
+WHAT SHIPPED
+- src/game/town/townLayout.ts — pure, three.js-free plan: ground quads, one road
+  model per road tile with the yaw for its derived shape, houses cycling the
+  building registry and capped to their lot, props keyed to their kind.
+- src/game/town/townRenderer.ts — async mount: instantiates each placement from
+  the model library, seats every model on the ground by measured bounding box,
+  and fits oversized kit buildings to their lot. Owns teardown.
+- src/game/assets/modelRegistry.ts — role-named URLs (roads/houses/nature/props)
+  with `?url` imports, so only models actually mounted are built and precached
+  (19 emitted; the rest of the 292 committed kit models cost nothing).
+- src/game/town/townBuilder.ts (+ test) deleted — the placeholder geometry the
+  kit models replace.
+- main.ts mounts the town and warms the loader behind the first paint.
+
+ORIENTATION (measured, not assumed)
+scripts/blender-analyze-kit.py now reports, per palette swatch, which
+bounding-box edges its faces reach; that list is a piece's orientation:
+- road-straight: asphalt reaches west+east → band runs east-west, 0.60 wide.
+- road-bend-square: asphalt reaches west+south → elbow at yaw 0 is the (5,0)
+  corner; kerb wraps the outer north/east sides.
+- road-intersection: west+east+south → east-west through with a south stem.
+- road-end: east only → opens east, so its yaws sit a quarter turn off the
+  town's `+z`-facing helper.
+Positive rotation.y was verified against three.js itself (yaw +pi/2 carries
+model-east onto world-north), which is what the bend/corner yaws depend on.
+
+SEATING / GROUND
+- Roads: base z = 0, asphalt z = +0.01, kerb top z = +0.02 → no lift, tileSize 1
+  needs no rescaling; the 1x1 square bend is used for ring corners, so no map
+  reshaping for the 2x2 road-curve.
+- Ground tiles stay lawn-coloured quads (City Kit Roads' tile-low is pavement,
+  and the town wants grass under its lots); one shared plane, laid flat per mesh.
+- Kit pieces the spec has no art for: the crashable hydrant becomes a traffic
+  cone (props/spec gap recorded in the plan as outstanding).
+
+MEASURED
+- Mounted town: 16,221 triangles / 79 meshes (10 houses, ring + cross road,
+  21 lawn tiles, tree/cone/pole props). tech-stack.md's 15k figure replaced with
+  the measured number and the ~20k projection including four vehicles.
+- Every mounted piece measured at its expected size: road tiles 1.00 x 1.00 x
+  0.02 seated at y=0, houses capped at 0.86 of a lot, pole 0.58 x 0.52.
+
+VERIFICATION
+- pnpm check clean; pnpm typecheck clean (tsc 7.0.2); 116 tests passing;
+  coverage 99.7% stmts / 100% funcs (townRenderer 100% across the board,
+  townLayout 100% stmts).
+- pnpm build clean; precache 29 entries / 1.8 MiB; 19 GLBs emitted.
+- Manual, in the Preview tab: whole-town view confirms a continuous ring road,
+  the cross street splitting the interior into a wide west block and a narrow
+  east strip, park with two pines in the north-west, houses on their lots facing
+  their streets, cones/poles seated on the ground; then the NE and SW corners
+  framed at play distance confirm both bends and both tees turn correctly with
+  no seam breaks. Console and network clean (all 19 models load).
