@@ -1,0 +1,43 @@
+TASK: TDD collision resolution (Phase 4)
+
+ACCEPTANCE
+- Hitboxes derived from map data: houses become boxes at their lot centres sized
+  by the same HOUSE_LOT_FIT (0.86) cap the renderer scales their models to, and
+  props reuse TownGrid's published collision radii. Ids come from the grid, so a
+  bonk is traceable to the house or prop it happened to.
+- Swept, not sampled: one frame at 1.6 u/s covers enough ground to pass clean
+  through a prop, so contact is found along the motion segment. The sweep stops
+  a CONTACT_SKIN (1mm) short so the next frame does not start in contact.
+- Circle-vs-circle is solved exactly (quadratic); circle-vs-box is a slab test
+  against the radius-inflated box, which squares the corners and can stop the
+  car up to ~0.1*radius early on a diagonal — erring early, so the car is never
+  seen inside a wall.
+- Crashable props are bumped once per route and then driven past; buildings
+  consume the leg that ran into them. The route cursor only ever advances, so a
+  stuck state is impossible by construction.
+- The body flattens to 25% and spreads to 15% over the recoil, read from the
+  motor's bounce progress, so the animation cannot disagree with the motion.
+
+TWO REAL DEFECTS FOUND BY VERIFYING IN THE BROWSER (both now pinned by tests)
+1. Recoil direction. The bounce originally reversed the car's heading. A car
+   that stopped fractionally inside the inflated box (a square corner) bounced
+   exactly the wrong way — into the wall — and repeating the tap walked it
+   further in each time. Live, 12 bonks in 1.4s ended with the car standing
+   inside a house's hitbox. The recoil now comes from the contact geometry, and
+   a car found overlapping is pushed out along the surface's shortest exit.
+   Re-verified live: 28 mashed re-targets of the same house, no penetration.
+2. Test expectations, twice: an arrival asserted within 5mm when the motor
+   stops at ARRIVAL_RADIUS (0.25), and a start position that turned out to be
+   already overlapping a house's corner.
+
+COVERAGE
+- collision.ts, vehicleMotor.ts, vehicleActor.ts: 100% statements, branches,
+  functions and lines. 229 tests across 18 files; biome clean, tsc clean.
+- Also removed as unreachable rather than covered: a `?? 0` on a variable the
+  caller guarantees, a division the sweep's pull-back makes unnecessary, and a
+  ternary arm proven dead by the guard above it.
+
+DEFERRED (with a reason, not silently)
+- Bonk audio is the AudioEngine's (Phase 5): FR8 requires first-tap unlock, a
+  kid-safe master gain cap and a mute node around every sound, so a bare blip
+  now would be thrown away. The event is available as motor.bonkCount().
