@@ -36,9 +36,13 @@
 - [x] Task: CameraRig — orthographic ~45° tilt, medium framing (car ≈15%
       of viewport height), smooth follow, frustum refit on any
       orientation/resize (manual verify on portrait + landscape) [3151a39]
-- [ ] Task: Asset pipeline — download/commit Kenney Toy Car Kit + City
+- [x] Task: Asset pipeline — download/commit Kenney Toy Car Kit + City
       Kit (Suburban) GLBs, GLTF loader with shared material setup,
-      measure initial triangle count (start ~50k budget)
+      measure initial triangle count (start ~50k budget) [3cc6af0]
+    - [x] Measured: 197 models / 74,329 tris committed (8.16 MiB); town
+          projection ~25k tris (see note: contradicts tech-stack 15k)
+    - [ ] Gap: Toy Car Kit has no T-junction/cross piece for the two tees
+          the authored map needs — decide at the phase checkpoint
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 — Input & Tap-to-Move
