@@ -40,8 +40,8 @@
   - [x] Write failing tests for tick wiring decisions (logic parts only); implement; manual-verify spawn → jingle → drive → serve → celebrate (15 tests in `orderFlow.test.ts` red first; `orderFlow.ts` edge reader + predicates; manual steps recorded for the device pass)
 - [x] Task: Input routing (tap ordering house = respond when `spawned`, serve when `active` + armed; tap truck ability = jingle; newest-wins preserved) `9d5008e`
   - [x] Tests for routing decisions; implement; manual-verify on touch (routing tests in `orderFlow.test.ts`; `resolveOrderTap`/`isTapOnHouse` now drive `answerMissions`, jingle latch on the ability press, one `activate()` path tells the latch on every morph, ring blooms on first arm)
-- [ ] Task: Helper-hand reuse (10s idle → trace + demo tap on ordering house, cooldown ≥10s)
-  - [ ] Tests for `missionActive` + `destination` wiring; implement; manual-verify
+- [x] Task: Helper-hand reuse (10s idle → trace + demo tap on ordering house, cooldown ≥10s) `eb20544`
+  - [x] Tests for `missionActive` + `destination` wiring; implement; manual-verify (new `missionFocus.test.ts` 9 tests + `fireAwaitsKid` tests; hand now ticks every frame so a quiet town resets its patience)
 - [ ] Task: Audio (spawn jingle cue once, serve `gulp`-or-`cheer` pairing per sound+visual rule, mute/cap respected)
   - [ ] Implement; manual-verify with sound on/off
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
