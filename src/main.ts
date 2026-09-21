@@ -22,17 +22,17 @@ import { createHelperHand } from './game/mission/helperHand';
 import { createHelperTrace } from './game/mission/helperTrace';
 import { createIceCreamMission } from './game/mission/iceCreamMission';
 import { createIceCreamPacer } from './game/mission/iceCreamPacer';
-import { isTownBusy } from './game/mission/missionBusy';
-import { missionFocus } from './game/mission/missionFocus';
 import {
   createMissionManager,
   distanceBetween,
   fireAwaitsKid,
 } from './game/mission/missionManager';
+import { createMissionRegistry } from './game/mission/missionRegistry';
 import {
   createOrderBeats,
   isTapOnHouse,
   MISSION_SNAP_RADIUS,
+  orderAwaitsKid,
   orderIsOpen,
   resolveOrderTap,
 } from './game/mission/orderFlow';
@@ -148,6 +148,83 @@ async function main(): Promise<void> {
   let abilityVisible = true;
   let serveArmed = false;
   let pendingDemo: Vec2 | undefined;
+  // The car's position for this frame's mission pass, set in `tickMissions`.
+  let frameCarPosition: Vec2 = spawn;
+
+  // The seam that lets a third mission join without a third tick/tap block
+  // here (spec FR13): fire and ice-cream contribute; the registry owns order.
+  const missions = createMissionRegistry([
+    {
+      id: 'fire',
+      tick: (delta) => {
+        mission.update(delta, distanceToFire(frameCarPosition));
+        tickFireMission(frameCarPosition);
+      },
+      tap: async (aim) => {
+        const burning = firePoint();
+        if (
+          mission.snapshot().state !== 'spawned' ||
+          burning === undefined ||
+          distanceBetween(aim, burning) > MISSION_SNAP_RADIUS
+        ) {
+          return false;
+        }
+        mission.respond();
+        if (fleet.activeId() !== 'fire') {
+          activate('fire');
+          await swapVehicle('fire');
+        }
+        return true;
+      },
+      focus: (carPosition) => {
+        const fireAt = firePoint();
+        if (fireAt !== undefined && fireAwaitsKid(mission.snapshot().state)) {
+          return { awaiting: true, destination: fireAt };
+        }
+        return { awaiting: false, destination: carPosition };
+      },
+      isIdle: () => mission.snapshot().state === 'idle',
+    },
+    {
+      id: 'iceCream',
+      tick: (delta) => {
+        orders.update(delta, distanceToOrder(frameCarPosition));
+        tickOrderMission(frameCarPosition);
+      },
+      tap: async (aim) => {
+        const waiting = orderPoint();
+        const action =
+          waiting === undefined
+            ? 'ignore'
+            : resolveOrderTap({
+                state: orders.snapshot().state,
+                onOrderHouse: isTapOnHouse(aim, waiting),
+                armed: serveArmedNow(),
+              });
+        if (action === 'respond') {
+          orders.respond();
+          if (fleet.activeId() !== 'iceCream') {
+            activate('iceCream');
+            await swapVehicle('iceCream');
+          }
+          return true;
+        }
+        if (action === 'serve') {
+          orders.serve();
+          return true;
+        }
+        return false;
+      },
+      focus: (carPosition) => {
+        const orderAt = orderPoint();
+        if (orderAt !== undefined && orderAwaitsKid(orders.snapshot().state)) {
+          return { awaiting: true, destination: orderAt };
+        }
+        return { awaiting: false, destination: carPosition };
+      },
+      isIdle: () => orders.snapshot().state === 'idle',
+    },
+  ]);
 
   // Sound waits for a gesture. The context and its samples are prepared up
   // front so the very first tap has something to play; only `unlock` (below,
@@ -487,69 +564,33 @@ async function main(): Promise<void> {
   /**
    * Whether that tap also answers a mission, before it becomes a destination.
    *
-   * Either mission answers to the same gesture as driving somewhere: tap the
-   * burning house and the car becomes the fire truck and heads over; tap the
-   * ordering house and it becomes the ice-cream truck, or hands over a cone if
-   * serve is already armed.
+   * Each mission claims taps through the registry in registration order: fire
+   * answers the burning house, ice-cream the ordering house (or serves a cone
+   * when armed). The first claim wins; later missions never see that aim.
    */
   async function answerMissions(aim: Vec2): Promise<void> {
-    const snapshot = mission.snapshot();
-    const burning = firePoint();
-    if (
-      snapshot.state === 'spawned' &&
-      burning !== undefined &&
-      distanceBetween(aim, burning) <= MISSION_SNAP_RADIUS
-    ) {
-      mission.respond();
-      if (fleet.activeId() !== 'fire') {
-        activate('fire');
-        await swapVehicle('fire');
-      }
-    }
-
-    // The rules live in `orderFlow` so they can be tested without a renderer.
-    const waiting = orderPoint();
-    const action =
-      waiting === undefined
-        ? 'ignore'
-        : resolveOrderTap({
-            state: orders.snapshot().state,
-            onOrderHouse: isTapOnHouse(aim, waiting),
-            armed: serveArmedNow(),
-          });
-    if (action === 'respond') {
-      orders.respond();
-      if (fleet.activeId() !== 'iceCream') {
-        activate('iceCream');
-        await swapVehicle('iceCream');
-      }
-    } else if (action === 'serve') {
-      orders.serve();
-    }
+    await missions.tap(aim);
   }
 
   /**
-   * One tick of the town's own story, for both missions at once: the pacers
-   * decide when the town is due another, each mission owns the one it is given,
-   * the fire and the cone icon are drawn from the very state the missions keep,
-   * and the hand offers one tap if the kid has gone quiet with one still
-   * waiting.
+   * One tick of the town's own story: the registry gives every mission its
+   * frame in order (FSM then feedback), the pacers decide when the town is due
+   * another, and the hand offers one tap if the kid has gone quiet with one
+   * still waiting.
    */
   function tickMissions(delta: number, carPosition: Vec2): void {
+    frameCarPosition = carPosition;
     // Both missions arm and disarm from a fresh distance every frame: arriving
     // arms the hose, driving off takes it away again. That is what makes either
     // mission interruptible instead of cancellable.
-    mission.update(delta, distanceToFire(carPosition));
-    orders.update(delta, distanceToOrder(carPosition));
+    missions.tick(delta);
 
     tickPacers(delta);
-    tickFireMission(carPosition);
-    tickOrderMission(carPosition);
     tickHelperHand(delta, carPosition);
 
     // A trace, and the demo tap it announced, belong only to a mission that
     // still needs the kid; when the town goes quiet, both are dropped.
-    if (mission.snapshot().state === 'idle' && orders.snapshot().state === 'idle') {
+    if (!missions.isBusy()) {
       helperTrace.hide();
       pendingDemo = undefined;
     }
@@ -567,7 +608,7 @@ async function main(): Promise<void> {
    * town, one turn, whichever mission takes it first.
    */
   function tickPacers(delta: number): void {
-    let busy = isTownBusy(mission.snapshot(), orders.snapshot());
+    let busy = missions.isBusy();
 
     const fireDue = pacer.update(delta, busy);
     if (fireDue !== undefined && lightFire(fireDue)) {
@@ -704,14 +745,8 @@ async function main(): Promise<void> {
    */
   function tickHelperHand(delta: number, carPosition: Vec2): void {
     // Whichever mission is still waiting on the kid is what the hand points at;
-    // the choice itself is `missionFocus`, so it is testable without a hand.
-    const focus = missionFocus({
-      fireState: mission.snapshot().state,
-      fireAt: firePoint(),
-      orderState: orders.snapshot().state,
-      orderAt: orderPoint(),
-      carPosition,
-    });
+    // the registry takes each mission's focus contribution in order.
+    const focus = missions.focus(carPosition);
     // The hand is ticked even when the town is quiet, with nothing to point at:
     // between missions its patience resets, so a new one always gets the full
     // ten seconds rather than inheriting a count from an empty street.
