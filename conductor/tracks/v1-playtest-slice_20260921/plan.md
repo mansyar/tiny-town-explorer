@@ -227,12 +227,12 @@
           pink under cream with a yellow roof stripe, grille and headlights over
           a bumper, blue-hubbed wheels, and a point-down waffle cone with a
           vanilla swirl and a cherry seated on the roof
-- [ ] Task: TDD VehicleSystem (Red→Green)
-    - [ ] Test: four-vehicle registry, active-vehicle switching state
-    - [ ] Test: per-vehicle ability one-shot dispatch (spray burst,
+- [x] Task: TDD VehicleSystem (Red→Green) [553c166]
+    - [x] Test: four-vehicle registry, active-vehicle switching state
+    - [x] Test: per-vehicle ability one-shot dispatch (spray burst,
           jingle+cones, gulp, siren) as typed events
-    - [ ] Test: engine-loop pitch mapping (speed→playbackRate curve)
-    - [ ] Test: burst audio scheduling (1–2s one-shots, interruptible)
+    - [x] Test: engine-loop pitch mapping (speed→playbackRate curve)
+    - [x] Test: burst audio scheduling (1–2s one-shots, interruptible)
 - [ ] Task: AudioEngine — first-tap unlock, mute node, kid-safe gain
       cap, CC0 one-shot loading, oscillator jingle (jingle note
       scheduling covered by test above; wiring manual)
