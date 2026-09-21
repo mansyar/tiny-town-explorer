@@ -225,6 +225,32 @@
         height: 22px;
         width: 22px;
       }
+      /* The add-to-home-screen nudge (see game/hud/installHint.ts): icons only,
+         pointing up at chrome the game does not own. */
+      .install-hint {
+        align-items: center;
+        background: rgb(16 26 40 / 72%);
+        border-radius: 22px;
+        bottom: calc(150px + env(safe-area-inset-bottom));
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 12px 18px;
+        pointer-events: auto;
+        position: fixed;
+        right: calc(18px + env(safe-area-inset-right));
+        transition: opacity 200ms ease-out;
+      }
+      .install-hint svg {
+        height: 30px;
+        width: 30px;
+      }
+      .install-hint .install-hint__arrow {
+        height: 24px;
+        transform: translateY(calc(var(--bob, 0) * -5px));
+        width: 24px;
+      }
       .hud-button--mute {
         background: #5e6a78;
         bottom: calc(20px + env(safe-area-inset-bottom));

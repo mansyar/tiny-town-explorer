@@ -8,6 +8,12 @@ import { collectObstacles } from './game/collision/collision';
 import { createAbilityFx } from './game/feedback/abilityFx';
 import { createTargetRing } from './game/feedback/targetRing';
 import { createHoldGate } from './game/hud/holdGate';
+import {
+  createInstallHint,
+  HINT_SESSION_KEY,
+  platformFrom,
+  shouldShowHint,
+} from './game/hud/installHint';
 import { createParentPanel } from './game/hud/parentPanel';
 import { createVehicleHud, type VehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
@@ -164,6 +170,29 @@ async function main(): Promise<void> {
     });
   }
 
+  // The one-time nudge to put the game on the home screen: session-scoped, and
+  // never shown to someone already playing from the home screen.
+  const installHint = createInstallHint(platformFrom(navigator.userAgent));
+  let hinted = false;
+  try {
+    hinted = window.sessionStorage.getItem(HINT_SESSION_KEY) !== null;
+  } catch {
+    // Safari in private mode refuses sessionStorage. A hint is not worth a throw.
+    hinted = false;
+  }
+  const installed =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as { readonly standalone?: boolean }).standalone === true;
+  if (shouldShowHint({ installed, hintedThisSession: hinted })) {
+    try {
+      window.sessionStorage.setItem(HINT_SESSION_KEY, 'yes');
+    } catch {
+      // As above: the hint has still been shown.
+    }
+    document.body.append(installHint.element);
+    installHint.show();
+  }
+
   // The car and its motor arrive only once the town has been measured, because
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
   let motor: VehicleMotor | undefined;
@@ -306,6 +335,7 @@ async function main(): Promise<void> {
       panel.setHoldProgress(0);
       panel.show();
     }
+    installHint.update(delta);
     // The fleet ticks its own clock. A burst that is never updated never ends,
     // which leaves the ability button dimmed and every later press ignored.
     fleet.update(delta);
