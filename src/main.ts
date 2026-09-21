@@ -2,6 +2,7 @@ import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createModelLibrary } from './game/assets/modelLibrary';
 import { TOWN_MODELS, VEHICLE_MODELS } from './game/assets/modelRegistry';
 import { createCameraRig } from './game/camera';
+import { collectObstacles } from './game/collision/collision';
 import { createTargetRing } from './game/feedback/targetRing';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { findPath } from './game/path/pathfinder';
@@ -41,8 +42,10 @@ async function main(): Promise<void> {
   const grid = createTownGrid();
 
   // The car starts on the street and the camera opens on it, so the sky is on
-  // screen while the models stream in.
-  const motor = createVehicleMotor();
+  // screen while the models stream in. Its hitboxes come from the same authored
+  // map the town is built from, so the car cannot disagree with the art about
+  // where a wall is.
+  const motor = createVehicleMotor({ obstacles: collectObstacles(grid) });
   const spawn = grid.spawnPoints[0] ?? { x: 0, z: 0 };
   motor.snapTo(spawn);
 

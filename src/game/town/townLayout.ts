@@ -6,7 +6,7 @@ import {
 } from '../assets/modelRegistry';
 import type { TownGrid } from './townGrid';
 import type { Direction, RoadConnections, RoadShape, Vec2 } from './townTypes';
-import { DIRECTION_STEPS, DIRECTIONS } from './townTypes';
+import { DIRECTION_STEPS, DIRECTIONS, HOUSE_LOT_FIT } from './townTypes';
 
 /**
  * The town's placement plan: what to mount, and exactly where.
@@ -64,9 +64,6 @@ export type Placement = GroundPlacement | ModelPlacement;
 export interface TownPlan {
   readonly placements: readonly Placement[];
 }
-
-/** A house may fill this share of its one-tile lot, leaving a visible margin. */
-const HOUSE_FIT = 0.86;
 
 /**
  * Which axis a straight road runs along, and therefore its yaw: the kit's
@@ -218,7 +215,7 @@ export function planTown(grid: TownGrid): TownPlan {
       url: buildingModelFor(index),
       position: house.position,
       yaw: yawForDirection(house.facing),
-      fitWithin: grid.tileSize * HOUSE_FIT,
+      fitWithin: grid.tileSize * HOUSE_LOT_FIT,
     });
   });
 

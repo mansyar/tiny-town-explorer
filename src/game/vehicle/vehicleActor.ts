@@ -1,4 +1,4 @@
-import { Box3, Group } from 'three';
+import { Box3, Group, type Object3D } from 'three';
 import type { ModelLibrary } from '../assets/modelLibrary';
 import type { VehicleMotor } from './vehicleMotor';
 
@@ -10,6 +10,10 @@ import type { VehicleMotor } from './vehicleMotor';
  * without a renderer — the motor owns the numbers, and this owns placing a mesh
  * where those numbers say. The model hangs inside a group so that seating it on
  * the asphalt never fights with the pose the motor writes.
+ *
+ * The squash on impact is read from the motor's recoil rather than triggered by
+ * an event, so the two can never disagree: while the motor is springing back,
+ * the body is flat, and when it is not, the body is not.
  */
 
 /**
@@ -18,6 +22,20 @@ import type { VehicleMotor } from './vehicleMotor';
  * asphalt, not on the base plane.
  */
 export const ROAD_SURFACE_HEIGHT = 0.01;
+
+/**
+ * How flat the body squashes at the peak of a bonk, as a share of its height.
+ * Big enough to read as comedy at play distance, small enough to stay a car.
+ */
+export const IMPACT_SQUASH = 0.25;
+
+/**
+ * How much the body spreads sideways as it flattens.
+ *
+ * Squashing one axis alone reads as a shrinking car; spreading the other two
+ * keeps it looking like a soft thing being pressed, which is the gag.
+ */
+export const IMPACT_SPREAD = 0.15;
 
 /**
  * Yaw applied to the model inside its holder, so the holder's `+z` is always
@@ -36,6 +54,25 @@ export interface VehicleActor {
   readonly object: Group;
   /** Copies the motor's position and heading onto the model. */
   sync(): void;
+}
+
+/**
+ * Flattens and spreads the body for a bonk.
+ *
+ * The curve peaks at the middle of the recoil and returns to zero at both ends,
+ * so the body is never left mid-squash however the recoil is interrupted.
+ */
+function squash(
+  model: Object3D,
+  restScale: { readonly x: number; readonly y: number; readonly z: number },
+  progress: number | undefined,
+): void {
+  const amount = progress === undefined ? 0 : Math.sin(Math.PI * progress);
+  model.scale.set(
+    restScale.x * (1 + IMPACT_SPREAD * amount),
+    restScale.y * (1 - IMPACT_SQUASH * amount),
+    restScale.z * (1 + IMPACT_SPREAD * amount),
+  );
 }
 
 /**
@@ -61,12 +98,14 @@ export async function createVehicleActor(
   object.name = 'vehicle';
   object.add(model);
 
+  const restScale = model.scale.clone();
   const actor: VehicleActor = {
     object,
     sync(): void {
       object.position.x = motor.position.x;
       object.position.z = motor.position.z;
       object.rotation.y = motor.heading();
+      squash(model, restScale, motor.bounceProgress());
     },
   };
   actor.sync();

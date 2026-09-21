@@ -1,8 +1,10 @@
 import { Box3, BoxGeometry, Group, Mesh, MeshLambertMaterial } from 'three';
 import { describe, expect, it } from 'vitest';
 import type { ModelLibrary } from '../assets/modelLibrary';
+import type { Obstacle } from '../collision/collision';
 import {
   createVehicleActor,
+  IMPACT_SQUASH,
   MODEL_FACING_YAW,
   ROAD_SURFACE_HEIGHT,
 } from './vehicleActor';
@@ -71,6 +73,47 @@ describe('createVehicleActor', () => {
     expect(actor.object.position.x).toBeCloseTo(2, 10);
     expect(actor.object.position.z).toBeCloseTo(-1, 10);
     expect(actor.object.rotation.y).toBeCloseTo(Math.PI / 2, 10);
+  });
+
+  it('squashes flat while the car is bouncing, and stands straight again after', async () => {
+    const wall: Obstacle = {
+      id: 'wall',
+      solid: true,
+      shape: { kind: 'box', centre: { x: 1.5, z: 0 }, halfX: 0.43, halfZ: 0.43 },
+    };
+    const motor = createVehicleMotor({ heading: Math.PI / 2, obstacles: [wall] });
+    const actor = await createVehicleActor(library(standingModel), 'car.glb', motor);
+    const model = actor.object.children[0];
+    expect(model).toBeDefined();
+    motor.setPath({ waypoints: [], destination: { x: 5, z: 0 } });
+
+    const step = 1 / 120;
+    for (let frame = 0; frame < 600 && !motor.isBouncing(); frame++) {
+      motor.update(step);
+      actor.sync();
+    }
+    expect(motor.isBouncing()).toBe(true);
+
+    // Half a recoil in is the peak of the squash.
+    for (let frame = 0; frame < 24; frame++) {
+      motor.update(step);
+      actor.sync();
+    }
+    expect(model?.scale.y).toBeCloseTo(1 - IMPACT_SQUASH, 2);
+    // Flattening spreads the toy sideways, so it reads as squashed cardboard
+    // rather than as a shrinking car.
+    expect(model?.scale.x).toBeGreaterThan(1);
+    expect(model?.scale.z).toBeGreaterThan(1);
+
+    for (let frame = 0; frame < 600 && motor.isBouncing(); frame++) {
+      motor.update(step);
+      actor.sync();
+    }
+    actor.sync();
+
+    expect(motor.bounceProgress()).toBeUndefined();
+    expect(model?.scale.y).toBeCloseTo(1, 6);
+    expect(model?.scale.x).toBeCloseTo(1, 6);
   });
 
   it('follows the car as it drives', async () => {

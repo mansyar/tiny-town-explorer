@@ -107,6 +107,16 @@ export const PROP_COLLISION_RADIUS: Readonly<Record<PropKind, number>> = {
   tree: 0.16,
 };
 
+/**
+ * Share of a one-tile lot a house may fill, centred on the lot.
+ *
+ * Kit buildings run up to 1.83 units wide against one-tile lots, so the renderer
+ * scales each one to fit this cap — and the collision box is derived from the
+ * same figure, because a hitbox that disagreed with the art would let the car
+ * park inside a wall.
+ */
+export const HOUSE_LOT_FIT = 0.86;
+
 /** Unit step for each compass direction in grid space. */
 export const DIRECTION_STEPS: Readonly<Record<Direction, TileCoord>> = {
   north: { x: 0, y: -1 },

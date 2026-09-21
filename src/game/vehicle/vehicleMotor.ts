@@ -1,3 +1,10 @@
+import {
+  CONTACT_SKIN,
+  depenetration,
+  type Impact,
+  type Obstacle,
+  sweepObstacles,
+} from '../collision/collision';
 import type { Path } from '../path/pathfinder';
 import type { Vec2 } from '../town/townTypes';
 
@@ -15,6 +22,13 @@ import type { Vec2 } from '../town/townTypes';
  *   through lawns and overshoot tight corners.
  * - **Constant speed.** No acceleration curve: it is one less thing to tune, and
  *   a toy car that always trundles at the same pace reads as dependable.
+ *
+ * Hitting things is the third: motion is swept against the town's hitboxes, and
+ * contact recoils the car and costs it something, so nothing can be jammed. A
+ * crashable prop is bumped once and then driven past — a cone must never be able
+ * to block a journey — while a building consumes the leg that ran into it, which
+ * is what stops a tap inside a wall from becoming an endless grind. The route's
+ * cursor only ever advances, so no bonk can put the car into a loop.
  */
 
 /** World units per second while driving. */
@@ -36,6 +50,26 @@ export const ARRIVAL_RADIUS = 0.25;
  * waypoint on an arc, cutting the corner it was meant to take.
  */
 export const ALIGN_TOLERANCE = 0.08;
+
+/**
+ * Radius of the car's own footprint, in world units. Matches the kit truck's
+ * 0.52 width; the vehicles are all this class of toy car.
+ */
+export const CAR_RADIUS = 0.26;
+
+/**
+ * How long a recoil lasts, in seconds. Short: a bonk is a punctuation mark, not
+ * a cutscene, and every frame of it is a frame the kid is not driving.
+ */
+export const BOUNCE_DURATION = 0.4;
+
+/**
+ * Peak distance the car springs back from the contact point, in world units.
+ *
+ * The recoil rises and falls (`sin`), so the car ends exactly where it touched:
+ * a one-sided offset would leave it drifting further from the wall on every hit.
+ */
+export const BOUNCE_BACK_DISTANCE = 0.14;
 
 /**
  * A live world point, written in place every frame.
@@ -65,6 +99,10 @@ export function facingOf(heading: number): Vec2 {
 export interface VehicleMotorOptions {
   readonly position?: Vec2;
   readonly heading?: number;
+  /** Hitboxes to sweep against; empty (the default) is a world with no walls. */
+  readonly obstacles?: readonly Obstacle[];
+  /** Radius of the car's footprint, defaulting to {@link CAR_RADIUS}. */
+  readonly radius?: number;
 }
 
 export interface VehicleMotor {
@@ -76,6 +114,12 @@ export interface VehicleMotor {
   speed(): number;
   /** Whether a route still has somewhere to go. */
   isDriving(): boolean;
+  /** Whether the car is mid-recoil, i.e. not driving this frame. */
+  isBouncing(): boolean;
+  /** How far through the recoil, in `[0, 1]`; `undefined` when not bouncing. */
+  bounceProgress(): number | undefined;
+  /** Bumps since this motor was created. Monotonic, so callers can latch it. */
+  bonkCount(): number;
   /** Replaces the route: the newest tap wins, so a new path supersedes the old. */
   setPath(path: Path): void;
   /** Advances the car by one frame. */
@@ -94,8 +138,126 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
   let currentSpeed = 0;
   let targets: readonly Vec2[] = [];
   let cursor = 0;
+  let bonks = 0;
+
+  const obstacles = options.obstacles ?? [];
+  const radius = options.radius ?? CAR_RADIUS;
+  /** Crashable obstacles already dealt with on this route, by id. */
+  let passed = new Set<string>();
+  /** Where the last bump happened, and which way the car came from. */
+  let contact: Vec2 = { x: position.x, z: position.z };
+  let backX = 0;
+  let backZ = 0;
+  let bouncing = false;
+  let bounceElapsed = 0;
 
   const target = (): Vec2 | undefined => targets[cursor];
+
+  /** One frame of the recoil, which ends exactly on the contact point. */
+  const stepBounce = (elapsed: number): void => {
+    bounceElapsed += elapsed;
+    const progress = Math.min(bounceElapsed / BOUNCE_DURATION, 1);
+    const recoil = Math.sin(Math.PI * progress) * BOUNCE_BACK_DISTANCE;
+    position.x = contact.x + backX * recoil;
+    position.z = contact.z + backZ * recoil;
+    if (progress >= 1) {
+      position.x = contact.x;
+      position.z = contact.z;
+      bouncing = false;
+    }
+  };
+
+  /**
+   * The contact point, moved clear of the hitbox if it landed inside it.
+   *
+   * The swept test can stop a car fractionally within a surface (the inflated
+   * box squares its corners), and a recoil that starts inside a wall is a car
+   * that grinds its way further in every time it is aimed there again.
+   */
+  const pushClear = (impact: Impact): Vec2 => {
+    const overlap = depenetration(impact.obstacle.shape, impact.point, radius);
+    if (overlap === undefined) {
+      return impact.point;
+    }
+    const push = overlap.distance + CONTACT_SKIN;
+    return {
+      x: impact.point.x + overlap.normal.x * push,
+      z: impact.point.z + overlap.normal.z * push,
+    };
+  };
+
+  /**
+   * Turns toward the next target and drives, or collides.
+   *
+   * The car is aligned before it moves, so the frame's motion is the straight
+   * line to the target rather than an arc; that is also what makes the sweep
+   * below a single segment.
+   */
+  const driveToward = (waypoint: Vec2, elapsed: number): void => {
+    const desired = headingFor({
+      x: waypoint.x - position.x,
+      z: waypoint.z - position.z,
+    });
+    const error = shortestTurn(desired - heading);
+    const turned = clampMagnitude(error, TURN_RATE * elapsed);
+    heading += turned;
+    if (Math.abs(error - turned) > ALIGN_TOLERANCE) {
+      // Still pointing too far off: turn on the spot, wheels and all.
+      currentSpeed = 0;
+      return;
+    }
+
+    // Drive where the nose points, so the car can never crab sideways.
+    const facing = facingOf(heading);
+    const nextX = position.x + facing.x * DRIVE_SPEED * elapsed;
+    const nextZ = position.z + facing.z * DRIVE_SPEED * elapsed;
+
+    // Sweep this frame's motion: at 1.6 u/s a single frame covers far enough to
+    // pass clean through a prop, so contact must be found along the way rather
+    // than at the destination.
+    const impact =
+      obstacles.length === 0
+        ? undefined
+        : sweepObstacles(obstacles, position, { x: nextX, z: nextZ }, radius, passed);
+    if (impact === undefined) {
+      currentSpeed = DRIVE_SPEED;
+      position.x = nextX;
+      position.z = nextZ;
+      return;
+    }
+    collide(impact);
+  };
+
+  /** Stops on the first thing hit and recoils away from it. */
+  const collide = (impact: Impact): void => {
+    // Land on the surface rather than wherever the car had got to, and make
+    // sure it is on the outside of it: a car that grazed a corner can stop
+    // fractionally overlapping, and a recoil from inside a wall is a car that
+    // can never leave.
+    const pushed = pushClear(impact);
+    position.x = pushed.x;
+    position.z = pushed.z;
+    currentSpeed = 0;
+    bonks += 1;
+    contact = { x: pushed.x, z: pushed.z };
+    // Recoil away from the surface. Not "back the way the car came": a corner
+    // glanced while driving away would be pushed straight into the wall.
+    backX = impact.normal.x;
+    backZ = impact.normal.z;
+    bounceElapsed = 0;
+    bouncing = true;
+
+    if (impact.obstacle.solid) {
+      // Nothing gets past a building, so the leg that ran into it is over.
+      // Consuming it is what guarantees a way out: the cursor only advances, so
+      // the worst a wall can cost is the rest of the route.
+      cursor += 1;
+    } else {
+      // Crashable: bump it once, then drive on through. Without this the car
+      // would re-hit a cone on every frame it spent passing it.
+      passed.add(impact.obstacle.id);
+    }
+  };
 
   return {
     position,
@@ -112,17 +274,41 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
       return target() !== undefined;
     },
 
+    isBouncing(): boolean {
+      return bouncing;
+    },
+
+    bounceProgress(): number | undefined {
+      return bouncing ? Math.min(bounceElapsed / BOUNCE_DURATION, 1) : undefined;
+    },
+
+    bonkCount(): number {
+      return bonks;
+    },
+
     setPath(path: Path): void {
       // Copy rather than hold the caller's route: the cursor consumes these as
       // the car passes them, and a path may be re-used for a second car.
       targets = [...path.waypoints, path.destination];
       cursor = 0;
       currentSpeed = 0;
+      bouncing = false;
+      bounceElapsed = 0;
+      // A new journey gets a clean slate: a cone bumped on the last one is
+      // something to bump again.
+      passed = new Set<string>();
     },
 
     update(deltaSeconds: number): void {
       const elapsed = Math.max(deltaSeconds, 0);
       if (elapsed === 0) {
+        return;
+      }
+
+      // Recoil first: a car mid-bounce is not driving, and its motion is a
+      // function of the contact point rather than of the route.
+      if (bouncing) {
+        stepBounce(elapsed);
         return;
       }
 
@@ -139,24 +325,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
         return;
       }
 
-      const desired = headingFor({ x: next.x - position.x, z: next.z - position.z });
-      const error = shortestTurn(desired - heading);
-      const turned = clampMagnitude(error, TURN_RATE * elapsed);
-      heading += turned;
-
-      if (Math.abs(error - turned) > ALIGN_TOLERANCE) {
-        // Still pointing too far off: turn on the spot, wheels and all.
-        currentSpeed = 0;
-        return;
-      }
-
-      // Drive where the nose points, so the car can never crab sideways. The
-      // tolerance above is small enough that this is the straight line to the
-      // waypoint, not an arc that drifts off it.
-      currentSpeed = DRIVE_SPEED;
-      const facing = facingOf(heading);
-      position.x += facing.x * DRIVE_SPEED * elapsed;
-      position.z += facing.z * DRIVE_SPEED * elapsed;
+      driveToward(next, elapsed);
     },
 
     snapTo(point: Vec2, nextHeading?: number): void {
