@@ -32,7 +32,7 @@
   - [x] Reuse confirmed: `targetRing.show()` pulses at the ordering house on arm (22/22 feedback tests green); morph poof = existing `abilityFx.burst('poof')` on truck swap; handoff = existing `abilityFx.burst('cones')` at the house (Phase 4 wiring). Manual verify: ring blooms on arm, poof on morph, cones arc on serve.
 - [x] Task: Celebration (reuse confetti + cheer + sun FX, single-serve beat) (reuse-verified, no new code)
   - [x] Reuse confirmed: `confetti` in BURST_PLANS, `cheer` in audioRegistry/audioEngine, `sunFx` module present (Phase 4 wires all three to `complete`). Manual verify: confetti + cheer + sunbeam on serve, single beat, then calm gap.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `5f47580`]
 
 ## Phase 4 – Wiring (mixed: logic TDD, glue manual)
 
