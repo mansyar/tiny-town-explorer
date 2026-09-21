@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createIceCreamMission } from './iceCreamMission';
-import { createMissionManager } from './missionManager';
 import { isTownBusy } from './missionBusy';
+import { createMissionManager } from './missionManager';
 
 /** A fire mission parked in `driving`: spawned, responded, far away. */
 function drivingFire() {
