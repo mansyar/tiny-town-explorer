@@ -18,3 +18,5 @@ coverage/
 Thumbs.db
 
 .freebuff/
+# Python bytecode from the Blender recipe checks
+__pycache__/
