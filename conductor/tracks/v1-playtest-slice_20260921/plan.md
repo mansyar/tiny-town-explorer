@@ -5,7 +5,7 @@
 > only (Red→Green tasks); visual/scene/asset work records manual
 > verification intent in its task summary.
 
-## Phase 1 — Project Scaffold & Toolchain
+## Phase 1 — Project Scaffold & Toolchain [checkpoint: 4d3b0e3]
 
 - [x] Task: Initialize Vite 8 + TypeScript 7 strict project with pnpm 12.4 [e12ea79]
     - [ ] package.json with `packageManager` field (corepack), deps:
