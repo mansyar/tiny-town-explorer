@@ -14,7 +14,7 @@
   - [ ] Write failing tests (either mission busy pauses both pacers; spawn rejected while busy)
   - [ ] Implement to pass (caller-owned `busy` helper or pacer coordination)
   - [ ] Refactor + coverage
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `84298d5`]
 
 ## Phase 2 – Serve-gating rules (TDD)
 
