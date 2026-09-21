@@ -55,3 +55,12 @@
   - [x] iPad sitting run by the reviewer on 2026-09-22 against the dev server over the LAN and reported working (signal → jingle → drive → serve → celebrate → calm gap, sound on/off, 10s helper demo — steps in `docs/playtest.md`)
 - [x] Task: Update `docs/playtest.md` with AC1–AC7 results `1255f7c`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `1255f7c`]
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions `ae5b998`
+  - [x] **High** – a tap on the ordering house could resolve onto a nearby prop and honk instead of serving: thread the pre-snap aim through `tapAt`/`answerMissions` for both missions
+  - [x] **Medium** – `.hud-button--ability.is-hidden` had no CSS rule, so the hose button never actually hid out of reach
+  - [x] **Medium** – `iceCreamPacer` was a near-verbatim copy of `firePacer`: share one calm-gap factory
+  - [x] **Low** – one shared mission snap tolerance (was `snapToFire` + `SNAP_TO_ORDER`); `MissionFocusInput` optional fields
+  - [x] Refresh `docs/playtest.md` so the known-issues section matches the fixed code
