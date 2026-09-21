@@ -20,11 +20,16 @@ import { createFireFx } from './game/mission/fireFx';
 import { createFirePacer } from './game/mission/firePacer';
 import { createHelperHand } from './game/mission/helperHand';
 import { createHelperTrace } from './game/mission/helperTrace';
+import { createIceCreamMission } from './game/mission/iceCreamMission';
+import { createIceCreamPacer } from './game/mission/iceCreamPacer';
+import { isTownBusy } from './game/mission/missionBusy';
 import {
   createMissionManager,
   distanceBetween,
   type MissionSnapshot,
 } from './game/mission/missionManager';
+import { createOrderBeats, orderIsOpen } from './game/mission/orderFlow';
+import { createOrderMarker } from './game/mission/orderMarker';
 import { createSunFx } from './game/mission/sunFx';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
@@ -94,18 +99,19 @@ async function main(): Promise<void> {
   const fx = createAbilityFx();
   scene.add(fx.object);
 
-  // The mission needs the town's lots, which the grid already holds: a pacer
+  // The missions need the town's lots, which the grid already holds: a pacer
   // that decides when a fire is due and where, the state machine that owns it,
   // the hand that helps after ten quiet seconds, and the fire and route trace
   // they draw. None of it waits on the models, so the loop can tick it from the
   // first frame.
   const mission = createMissionManager();
-  const pacer = createFirePacer({
-    houses: grid.houses.map((house) => ({
-      id: house.id,
-      position: house.position,
-    })),
-  });
+  // Both pacers choose from the same lots. They never have to avoid each
+  // other's pick, because the two missions never run at once.
+  const houseLots = grid.houses.map((house) => ({
+    id: house.id,
+    position: house.position,
+  }));
+  const pacer = createFirePacer({ houses: houseLots });
   const hand = createHelperHand();
   const fire = createFireFx();
   scene.add(fire.object);
@@ -114,6 +120,15 @@ async function main(): Promise<void> {
   // The town's own applause: a smiling sun that comes out when a fire is out.
   const sun = createSunFx();
   scene.add(sun.object);
+
+  // The second mission: a house that wants ice cream. The pacer decides when
+  // and where, the state machine owns the delivery, the marker shows the order,
+  // and the beats keep its cue and its celebration to one each per order.
+  const orders = createIceCreamMission();
+  const orderPacer = createIceCreamPacer({ houses: houseLots });
+  const orderMarker = createOrderMarker();
+  scene.add(orderMarker.object);
+  const orderBeats = createOrderBeats();
 
   // Bursts the fire started with, for the flame's size; one celebration per
   // fire; whether the ability button is on screen; the demo tap the hand owes.
@@ -326,6 +341,7 @@ async function main(): Promise<void> {
     ring.update(delta);
     fx.update(delta);
     fire.update(delta);
+    orderMarker.update(delta);
     helperTrace.update(delta);
     sun.update(delta, rig.camera);
     // The gear fills its ring while it is held, and the settings open on the
@@ -355,7 +371,7 @@ async function main(): Promise<void> {
         bonks = motor.bonkCount();
         audio.play('bonk');
       }
-      tickMission(delta, motor.position);
+      tickMissions(delta, motor.position);
     }
     rig.update(delta);
   }
@@ -373,6 +389,21 @@ async function main(): Promise<void> {
     return burning === undefined
       ? Number.POSITIVE_INFINITY
       : distanceBetween(from, burning);
+  }
+
+  /** Where the ice-cream order is waiting, if one is. */
+  function orderPoint(): Vec2 | undefined {
+    const id = orders.snapshot().orderHouseId;
+    const lot = id === undefined ? undefined : grid.houseById(id);
+    return lot?.position;
+  }
+
+  /** How far the car is from the ordering house; infinity if nothing is. */
+  function distanceToOrder(from: Vec2): number {
+    const waiting = orderPoint();
+    return waiting === undefined
+      ? Number.POSITIVE_INFINITY
+      : distanceBetween(from, waiting);
   }
 
   /**
@@ -417,28 +448,70 @@ async function main(): Promise<void> {
   }
 
   /**
-   * One tick of the town's own story: the pacer decides when another fire is
-   * due, the mission owns it once it is lit, the fire is drawn from the very
-   * count the mission keeps, and the hand offers one tap if the kid has gone
-   * quiet with a fire still waiting.
+   * One tick of the town's own story, for both missions at once: the pacers
+   * decide when the town is due another, each mission owns the one it is given,
+   * the fire and the cone icon are drawn from the very state the missions keep,
+   * and the hand offers one tap if the kid has gone quiet with one still
+   * waiting.
    */
-  function tickMission(delta: number, carPosition: Vec2): void {
-    // The hose arms when the car is close enough and disarms when it drives
-    // away, so the mission needs a fresh distance every frame. This is also
-    // what makes a rescue interruptible instead of cancellable.
+  function tickMissions(delta: number, carPosition: Vec2): void {
+    // Both missions arm and disarm from a fresh distance every frame: arriving
+    // arms the hose, driving off takes it away again. That is what makes either
+    // mission interruptible instead of cancellable.
     mission.update(delta, distanceToFire(carPosition));
+    orders.update(delta, distanceToOrder(carPosition));
 
-    // While a mission is in flight it is the kid's turn; the town waits its
-    // turn, which is also what gives the next fire a full calm gap.
-    fireIfDue(delta, mission.snapshot().state !== 'idle');
+    tickPacers(delta);
+    tickFireMission(carPosition);
+    tickOrderMission(carPosition);
+    tickHelperHand(delta, carPosition, mission.snapshot());
 
+    // A trace, and the demo tap it announced, belong only to a mission that
+    // still needs the kid; when the town goes quiet, both are dropped.
+    if (mission.snapshot().state === 'idle' && orders.snapshot().state === 'idle') {
+      helperTrace.hide();
+      pendingDemo = undefined;
+    }
+
+    if (pendingDemo !== undefined && helperTrace.isDone()) {
+      const demo = pendingDemo;
+      pendingDemo = undefined;
+      helperTrace.hide();
+      void tapAt(demo);
+    }
+  }
+
+  /**
+   * The two pacers, kept in one place so the shared gate is read once: one
+   * town, one turn, whichever mission takes it first.
+   */
+  function tickPacers(delta: number): void {
+    let busy = isTownBusy(mission.snapshot(), orders.snapshot());
+
+    const fireDue = pacer.update(delta, busy);
+    if (fireDue !== undefined && lightFire(fireDue)) {
+      // The fire took the town's turn this frame, so an order that came due in
+      // the very same frame waits rather than landing on top of it.
+      busy = true;
+    }
+    const orderDue = orderPacer.update(delta, busy);
+    if (orderDue !== undefined) {
+      lightOrder(orderDue);
+    }
+  }
+
+  /**
+   * The fire's feedback: how the remaining bursts are drawn, whether the hose
+   * button belongs on screen, and its celebration.
+   */
+  function tickFireMission(carPosition: Vec2): void {
     const snapshot = mission.snapshot();
-    const burning = snapshot.state !== 'idle';
 
     // The hose arrives with proximity and leaves with it. While a fire is
     // burning the ability button *is* the hose button, so it only exists once
-    // the car is close enough to use it.
-    const showAbility = !burning || snapshot.state === 'active';
+    // the car is close enough to use it. An open order keeps the button: its
+    // jingle is how the kid answers one, wherever the truck happens to be.
+    const showAbility = snapshot.state !== 'spawned' && snapshot.state !== 'driving';
     if (showAbility !== abilityVisible) {
       abilityVisible = showAbility;
       hud?.setAbilityVisible(showAbility);
@@ -446,8 +519,6 @@ async function main(): Promise<void> {
 
     if (snapshot.fireHouseId === undefined) {
       fire.extinguish();
-      helperTrace.hide();
-      pendingDemo = undefined;
     } else {
       fire.setBursts(snapshot.burstsLeft, fireTotal);
     }
@@ -459,22 +530,40 @@ async function main(): Promise<void> {
       sun.show(where);
       audio.play('cheer');
     }
-
-    tickHelperHand(delta, carPosition, snapshot);
-
-    if (pendingDemo !== undefined && helperTrace.isDone()) {
-      const demo = pendingDemo;
-      pendingDemo = undefined;
-      helperTrace.hide();
-      void tapAt(demo);
-    }
   }
 
-  /** Lights the next fire whenever the pacer says the town is due one. */
-  function fireIfDue(delta: number, burning: boolean): void {
-    const due = pacer.update(delta, burning);
-    if (due !== undefined) {
-      lightFire(due);
+  /**
+   * The order's feedback: the cone icon over the house, the jingle cue that
+   * arrives with it, and the handoff celebration.
+   */
+  function tickOrderMission(carPosition: Vec2): void {
+    const snapshot = orders.snapshot();
+
+    // The cone icon floats over the ordering house while the order is open, and
+    // the celebration clears it: one order, one beat of attention.
+    const marker = orderIsOpen(snapshot.state);
+    if (marker !== orderMarker.isShowing()) {
+      if (marker) {
+        orderMarker.show();
+      } else {
+        orderMarker.hide();
+      }
+    }
+
+    // Cues fire on the edge, never on the state: `spawned` lasts as long as the
+    // kid takes, but the jingle is owed once.
+    const beats = orderBeats(snapshot);
+    if (beats.orderOpened) {
+      // Sound and visual pair: the cone icon's other half is the truck's own
+      // jingle, which is exactly the hint about which vehicle delivers it.
+      audio.playAbility([{ kind: 'jingle' }]);
+    }
+    if (beats.served) {
+      const where = orderPoint() ?? carPosition;
+      fx.burst('confetti', where, 0);
+      fx.burst('cones', where, 0);
+      sun.show(where);
+      audio.play('cheer');
     }
   }
 
@@ -490,6 +579,17 @@ async function main(): Promise<void> {
     celebrated = false;
     sun.hide();
     audio.play('chime');
+    return true;
+  }
+
+  /** Opens an order at a lot: mission state and cone icon in one step. */
+  function lightOrder(houseId: string): boolean {
+    const lot = grid.houseById(houseId);
+    if (lot === undefined || !orders.spawn(houseId)) {
+      return false;
+    }
+    orderMarker.place(lot.position);
+    orderMarker.show();
     return true;
   }
 
