@@ -1,1 +1,3 @@
 Task: Ordering-house marker. New visual src/game/mission/orderMarker.ts mirroring fireFx shape: pure markerBounce/markerSway + thin primitive layer (waffle cone + scoop + quaver note, MeshBasicMaterial, ~100 tris, floats at 1.7 above lot so the 72px tap target is untouched). Tests: 4 passed (bounce rest/lift/bounds, sway both-ways, object smoke). Manual steps recorded for Phase 4 wiring: marker appears over ordering house, bounces calmly, readable at 48px, hides on serve.
+
+Phase 3 checkpoint VERIFIED (scope: orderMarker.ts + test, commit 5f47580; serve/celebration reuse-verified zero-code; 36/36 tests, check + typecheck clean; user confirmed checkpoint with on-device visual check deferred to Phase 4 device pass).
