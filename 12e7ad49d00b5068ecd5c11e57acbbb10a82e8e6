@@ -1,0 +1,1 @@
+Phase 6 visuals landed: fireFx (flame scale from bursts-left, flicker, smoke cycle) and helperTrace (arc-length dots, eased pointer) as pure-frame modules with thin mesh layers, 22 new tests, 333 total. Added a confetti burst to abilityFx for the completion celebration instead of a second particle system. Not yet wired into main.ts.
