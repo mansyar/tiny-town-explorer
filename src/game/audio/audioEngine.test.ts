@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cappedGain,
-  ENGINE_BASE_HZ,
-  engineTone,
+  hornSchedule,
   JINGLE_STEPS,
   jingleSchedule,
   MASTER_GAIN_CAP,
@@ -77,18 +76,22 @@ describe('the siren', () => {
   });
 });
 
-describe('the engine note', () => {
-  it('sits at its base rate when the motor reports one', () => {
-    expect(engineTone(1)).toBe(ENGINE_BASE_HZ);
+describe('the horn', () => {
+  it('sounds two blares a beat apart', () => {
+    const tones = hornSchedule(0);
+    expect(tones).toHaveLength(4);
+    const firstBlare = tones[0]?.at ?? -1;
+    const secondBlare = tones[2]?.at ?? -1;
+    expect(firstBlare).toBe(0);
+    expect(secondBlare).toBeGreaterThan(firstBlare);
   });
 
-  it('rises with the rate', () => {
-    expect(engineTone(2)).toBe(ENGINE_BASE_HZ * 2);
-    expect(engineTone(1.6)).toBeGreaterThan(engineTone(0.85));
-  });
-
-  it('never goes negative', () => {
-    expect(engineTone(-1)).toBe(0);
+  it('stacks two notes into each blare', () => {
+    const tones = hornSchedule(0);
+    expect(tones[0]?.frequency).not.toBe(tones[1]?.frequency);
+    expect(tones[0]?.frequency).toBe(tones[2]?.frequency);
+    expect(tones[1]?.frequency).toBe(tones[3]?.frequency);
+    expect(tones[0]?.seconds).toBe(tones[1]?.seconds);
   });
 });
 

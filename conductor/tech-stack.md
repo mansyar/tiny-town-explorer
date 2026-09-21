@@ -34,10 +34,13 @@
   Ogg Vorbis only, and iOS Safari does not decode Ogg Vorbis, so the seven
   clips the game uses were transcoded to mono 44.1 kHz MP3 with loudness
   normalisation. The packs themselves are not vendored — only the clips, in
-  `src/assets/audio/`, with their provenance recorded beside them. The engine
-  loop is synthesized rather than sampled, because neither pack ships one;
-  `setEngine` drives a sawtooth's frequency from the same speed-to-rate curve
-  the plan called a `playbackRate` mapping.
+  `src/assets/audio/`, with their provenance recorded beside them. The car's
+  engine loop comes from a third CC0 source (OpenGameArt's *Some sounds* by
+  Ziph — a synthesized, deliberately cartoonish engine built to be pitch-bent by
+  rpm), kept as WAV because MP3 encoder padding would leave a gap at the loop
+  point. `setEngine` maps the motor's rate straight onto the loop's
+  `playbackRate`, which is the speed-to-playbackRate curve the plan named — the
+  earlier synthesized sawtooth is gone.
 
 ## Package Management
 - **pnpm 12.4** (installed: 12.4.1) — strict, fast, disk-efficient; pinned

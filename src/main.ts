@@ -132,6 +132,7 @@ async function main(): Promise<void> {
     const command = router.tapAt(ndcFromPoint(event.clientX, event.clientY, rect));
     if (command.kind === 'honk') {
       ring.show(command.at);
+      audio.honk();
       return;
     }
     if (!router.isCurrent(command)) {

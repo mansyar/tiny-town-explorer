@@ -6,9 +6,9 @@
  * sound until `unlock()` is called from the first tap.
  *
  * The scheduling decisions — the jingle's notes, the siren's warble, the gain
- * ceiling, the engine's note — are exported as pure functions and covered by
- * tests; `conductor/workflow.md` puts audio scheduling in the test-first set
- * and leaves the player graph itself to hand verification.
+ * ceiling — are exported as pure functions and covered by tests;
+ * `conductor/workflow.md` puts audio scheduling in the test-first set and
+ * leaves the player graph itself to hand verification.
  */
 import type { AbilityEvent } from '../vehicle/vehicleSystem';
 
@@ -18,8 +18,20 @@ export const MASTER_GAIN_CAP = 0.3;
 /** Ramp applied when the mute flips, so muting never clicks. */
 export const MUTE_RAMP_SECONDS = 0.06;
 
-/** The clipped samples the build ships; see `audioRegistry` for their URLs. */
-export type SampledSound = 'bonk' | 'cheer' | 'chime' | 'drop' | 'gulp' | 'poof' | 'tap';
+/**
+ * The samples the build ships; see `audioRegistry` for their URLs. `engine` is
+ * the one loop — `setEngine` pitches it by the motor's rate — and the rest are
+ * one-shots for `play`.
+ */
+export type SampledSound =
+  | 'bonk'
+  | 'cheer'
+  | 'chime'
+  | 'drop'
+  | 'engine'
+  | 'gulp'
+  | 'poof'
+  | 'tap';
 
 /** One scheduled note. */
 export interface Tone {
@@ -44,8 +56,22 @@ const SIREN_LOW = 622.25;
 const SIREN_HIGH = 830.61;
 const SIREN_STEP_SECONDS = 0.22;
 
-/** Base of the engine note; `engineTone` scales it by the motor's rate. */
-export const ENGINE_BASE_HZ = 55;
+/** How loud the engine loop sits under the master gain. */
+export const ENGINE_GAIN = 0.5;
+
+const HORN_LOW = 440;
+const HORN_HIGH = 554.37;
+const HORN_BLARE_SECONDS = 0.14;
+const HORN_GAP_SECONDS = 0.06;
+
+/** The toy horn: a cheerful beep-beep for the dead-zone honk. */
+export function hornSchedule(startAt: number): readonly Tone[] {
+  const blares = [startAt, startAt + HORN_BLARE_SECONDS + HORN_GAP_SECONDS];
+  return blares.flatMap((at) => [
+    { frequency: HORN_LOW, at, seconds: HORN_BLARE_SECONDS },
+    { frequency: HORN_HIGH, at, seconds: HORN_BLARE_SECONDS },
+  ]);
+}
 
 /** Lays the jingle out from `startAt`, one note after another. */
 export function jingleSchedule(startAt: number): readonly Tone[] {
@@ -77,11 +103,6 @@ export function cappedGain(requested: number): number {
   return Math.min(MASTER_GAIN_CAP, Math.max(0, requested));
 }
 
-/** The engine's note at a rate from `VehicleSystem.engineRate`. */
-export function engineTone(rate: number): number {
-  return ENGINE_BASE_HZ * Math.max(0, rate);
-}
-
 /** The sample an ability event plays, or none when it is synthesized. */
 export function sampledSoundFor(event: AbilityEvent): SampledSound | undefined {
   if (event.kind === 'gulp') {
@@ -107,6 +128,8 @@ export interface AudioEngine {
   play(id: SampledSound): void;
   /** Play whatever the ability events call for, sampled or synthesized. */
   playAbility(events: readonly AbilityEvent[]): void;
+  /** The dead-zone honk: a two-note toy beep. */
+  honk(): void;
   /** Set the engine's note from `VehicleSystem.engineRate`; `0` stops it. */
   setEngine(rate: number): void;
   dispose(): void;
@@ -124,7 +147,7 @@ export function createAudioEngine(options: AudioEngineOptions = {}): AudioEngine
   let master: GainNode | undefined;
   let mute: GainNode | undefined;
   let engine:
-    | { readonly oscillator: OscillatorNode; readonly gain: GainNode }
+    | { readonly source: AudioBufferSourceNode; readonly gain: GainNode }
     | undefined;
   let noise: AudioBuffer | undefined;
   let muted = false;
@@ -275,27 +298,41 @@ export function createAudioEngine(options: AudioEngineOptions = {}): AudioEngine
 
     setEngine: (rate) => {
       const { context: ctx, master: out } = graph();
+      // The loop starts once its sample has decoded, and stays silent until then.
       if (engine === undefined) {
-        const oscillator = ctx.createOscillator();
-        const gain = ctx.createGain();
-        oscillator.type = 'sawtooth';
-        oscillator.connect(gain);
-        gain.connect(out);
-        gain.gain.value = 0;
-        engine = { oscillator, gain };
-        oscillator.start();
+        const loop = buffers.get('engine');
+        if (loop !== undefined) {
+          const source = ctx.createBufferSource();
+          const gain = ctx.createGain();
+          source.buffer = loop;
+          source.loop = true;
+          source.connect(gain);
+          gain.connect(out);
+          gain.gain.value = 0;
+          engine = { source, gain };
+          source.start();
+        }
       }
+      if (engine === undefined) {
+        return;
+      }
+      // Parked is silent; under way the note rises with the motor's own rate.
       const audible = rate > 0;
-      engine.gain.gain.setTargetAtTime(audible ? 0.18 : 0, ctx.currentTime, 0.05);
-      engine.oscillator.frequency.setTargetAtTime(
-        engineTone(audible ? rate : 0) || ENGINE_BASE_HZ,
+      engine.gain.gain.setTargetAtTime(audible ? ENGINE_GAIN : 0, ctx.currentTime, 0.05);
+      engine.source.playbackRate.setTargetAtTime(
+        audible ? rate : 1,
         ctx.currentTime,
         0.05,
       );
     },
 
+    honk: () => {
+      const { context: ctx } = graph();
+      scheduleTones(hornSchedule(ctx.currentTime + 0.02), 'square');
+    },
+
     dispose: () => {
-      engine?.oscillator.stop();
+      engine?.source.stop();
       engine = undefined;
       buffers.clear();
       noise = undefined;
