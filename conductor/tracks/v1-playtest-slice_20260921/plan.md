@@ -94,12 +94,21 @@
 
 ## Phase 3 — Input & Tap-to-Move
 
-- [ ] Task: TDD InputRouter (Red→Green)
-    - [ ] Test: newest-tap-wins command supersession (mash safety)
-    - [ ] Test: dead-zone classification (<0.5u → bounce-and-honk
-          event, no path emitted)
-    - [ ] Test: tap-to-prop snapping (within snap radius)
-    - [ ] Test: ground-plane raycast projection
+- [x] Task: TDD InputRouter (Red→Green) [769880b]
+    - [x] Test: newest-tap-wins command supersession (mash safety) —
+          `latest()`/`isCurrent()`; a honk keeps its id but does not
+          supersede, so feedback never abandons the chosen destination
+    - [x] Test: dead-zone classification (<0.5u → bounce-and-honk
+          event, no path emitted) — judged on the resolved target, so a tap
+          on a prop under the car honks instead of shuffling on the spot
+    - [x] Test: tap-to-prop snapping (within snap radius) — 0.45, nearest
+          prop wins, collision radius still governs the bonk itself
+    - [x] Test: ground-plane raycast projection — screen centre resolves to
+          the camera's focus, screen-right lands camera-right (not mirrored),
+          taps beyond the frustum stay finite, and a camera aimed at the
+          horizon answers with a honk rather than nothing
+    - [ ] Not wired to a pointer listener yet: the consumer (VehicleMotor +
+          target ring) comes later in this phase, so no dead code in `main.ts`
 - [ ] Task: TDD Pathfinder (Red→Green)
     - [ ] Test: tile adjacency/BFS route over road grid
     - [ ] Test: nearest-road-point snap for grass taps
