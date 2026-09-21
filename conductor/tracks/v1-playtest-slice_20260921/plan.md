@@ -385,7 +385,17 @@
 
 ## Phase 8 — PWA, Cloudflare Pages & Playtest Hardening
 
-- [ ] Task: Finalize manifest + real 192/512 icons from Kenney art
+- [x] Task: Finalize manifest + real 192/512 icons from Kenney art [ac6b52f]
+    - [x] Manifest was already complete from the scaffold (standalone, any
+          orientation, #87ceeb theme and background, 192 + 512 + maskable), so
+          this task came down to the pictures
+    - [x] The icons are deterministic Blender renders of the Kenney fire truck
+          the game actually drives: three-quarter with a mild downward tilt to
+          match the isometric camera, on the theme's sky blue, the maskable one
+          keeping the truck inside the central safe circle
+    - [x] The placeholder generator and its five tests are gone with the
+          `icons:generate` script, so nothing invites regenerating placeholders
+          over the real icons. Suite now 361 tests across 28 files
 - [ ] Task: Cloudflare Pages runbook (docs/cloudflare-pages.md): git
       connect steps, build command `pnpm build`, output `dist`; first
       deploy verified (manual)
