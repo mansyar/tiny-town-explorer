@@ -28,8 +28,14 @@ import {
   distanceBetween,
   type MissionSnapshot,
 } from './game/mission/missionManager';
-import { createOrderBeats, orderIsOpen } from './game/mission/orderFlow';
+import {
+  createOrderBeats,
+  isTapOnHouse,
+  orderIsOpen,
+  resolveOrderTap,
+} from './game/mission/orderFlow';
 import { createOrderMarker } from './game/mission/orderMarker';
+import { createServeGate } from './game/mission/serveGate';
 import { createSunFx } from './game/mission/sunFx';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
@@ -129,12 +135,16 @@ async function main(): Promise<void> {
   const orderMarker = createOrderMarker();
   scene.add(orderMarker.object);
   const orderBeats = createOrderBeats();
+  // Whether the kid has jingled since this order opened. Serve is a tap on the
+  // house, but only on a truck that has already sang (spec AC2).
+  const serveGate = createServeGate();
 
   // Bursts the fire started with, for the flame's size; one celebration per
   // fire; whether the ability button is on screen; the demo tap the hand owes.
   let fireTotal = 0;
   let celebrated = false;
   let abilityVisible = true;
+  let serveArmed = false;
   let pendingDemo: Vec2 | undefined;
 
   /** How close a tap must land to count as aiming at the burning house. */
@@ -289,9 +299,7 @@ async function main(): Promise<void> {
 
   const hudControls = createVehicleHud({
     onSelect: (id) => {
-      fleet.setActive(id);
-      hudControls.setActive(id);
-      hudControls.setAbility(id);
+      activate(id);
       void swapVehicle(id);
     },
     onAbility: () => {
@@ -300,6 +308,11 @@ async function main(): Promise<void> {
         return;
       }
       audio.playAbility(events);
+      // The jingle is the key that arms serve: remember it until the kid
+      // morphs away or the order closes.
+      if (events.some((event) => event.kind === 'jingle')) {
+        serveGate.noteJingle();
+      }
       for (const event of events) {
         switch (event.kind) {
           case 'spray':
@@ -331,6 +344,18 @@ async function main(): Promise<void> {
   document.body.append(hudControls.element);
   hudControls.setActive(fleet.activeId());
   hudControls.setAbility(fleet.activeId());
+
+  /**
+   * Morphs the fleet by whichever route asked for it, and tells the serve latch
+   * on the way: a jingle only survives on the ice-cream truck, so leaving it
+   * abandons the serve and coming back needs a fresh one (spec AC2).
+   */
+  function activate(id: VehicleId): void {
+    fleet.setActive(id);
+    serveGate.noteActiveVehicle(id);
+    hud?.setActive(id);
+    hud?.setAbility(id);
+  }
   /**
    * One frame of the whole game, in the order the pieces depend on it. Named
    * rather than inlined so the loop and any verification drive the same code.
@@ -407,6 +432,24 @@ async function main(): Promise<void> {
   }
 
   /**
+   * Whether serve is armed right now, read from the live car: the ice-cream
+   * truck is driving, it has jingled since the order opened, and it is within
+   * `SERVE_RANGE` of the house. The same answer drives both the ring the kid
+   * sees and the serve tap itself, so what is shown and what is honoured can
+   * never disagree.
+   */
+  function serveArmedNow(): boolean {
+    const waiting = orderPoint();
+    if (waiting === undefined) {
+      return false;
+    }
+    return serveGate.canServe(
+      fleet.activeId(),
+      orders.isServeReady(distanceBetween(vehicle.position, waiting)),
+    );
+  }
+
+  /**
    * The one place a destination tap is answered, whether the finger was a
    * child's or the helper hand's demo.
    *
@@ -414,6 +457,10 @@ async function main(): Promise<void> {
    * burning house and the car becomes the fire truck and heads over. That is
    * also how the camera reaches the fire - it follows the car, so the car going
    * there *is* the pan, with no separate camera state to get stuck in.
+   *
+   * An ice-cream order answers to the same gesture with one tap doing two jobs:
+   * tap the ordering house and the car becomes the truck and heads over, tap it
+   * again once serve is armed and one cone changes hands.
    */
   async function tapAt(point: Vec2): Promise<void> {
     // Ring before routing: a tap is answered within a frame even on the way to
@@ -421,21 +468,7 @@ async function main(): Promise<void> {
     ring.show(point);
     audio.play('tap');
 
-    const snapshot = mission.snapshot();
-    const burning = firePoint();
-    if (
-      snapshot.state === 'spawned' &&
-      burning !== undefined &&
-      distanceBetween(point, burning) <= snapToFire
-    ) {
-      mission.respond();
-      if (fleet.activeId() !== 'fire') {
-        fleet.setActive('fire');
-        hud?.setActive('fire');
-        hud?.setAbility('fire');
-        await swapVehicle('fire');
-      }
-    }
+    await answerMissions(point);
 
     const route = findPath(grid, vehicle.position, point);
     if (route === undefined) {
@@ -445,6 +478,50 @@ async function main(): Promise<void> {
     // flight ends where it is rather than playing out behind a departing car.
     fleet.interruptBurst();
     vehicle.setPath(route);
+  }
+
+  /**
+   * Whether that tap also answers a mission, before it becomes a destination.
+   *
+   * Either mission answers to the same gesture as driving somewhere: tap the
+   * burning house and the car becomes the fire truck and heads over; tap the
+   * ordering house and it becomes the ice-cream truck, or hands over a cone if
+   * serve is already armed.
+   */
+  async function answerMissions(point: Vec2): Promise<void> {
+    const snapshot = mission.snapshot();
+    const burning = firePoint();
+    if (
+      snapshot.state === 'spawned' &&
+      burning !== undefined &&
+      distanceBetween(point, burning) <= snapToFire
+    ) {
+      mission.respond();
+      if (fleet.activeId() !== 'fire') {
+        activate('fire');
+        await swapVehicle('fire');
+      }
+    }
+
+    // The rules live in `orderFlow` so they can be tested without a renderer.
+    const waiting = orderPoint();
+    const action =
+      waiting === undefined
+        ? 'ignore'
+        : resolveOrderTap({
+            state: orders.snapshot().state,
+            onOrderHouse: isTapOnHouse(point, waiting),
+            armed: serveArmedNow(),
+          });
+    if (action === 'respond') {
+      orders.respond();
+      if (fleet.activeId() !== 'iceCream') {
+        activate('iceCream');
+        await swapVehicle('iceCream');
+      }
+    } else if (action === 'serve') {
+      orders.serve();
+    }
   }
 
   /**
@@ -539,6 +616,18 @@ async function main(): Promise<void> {
   function tickOrderMission(carPosition: Vec2): void {
     const snapshot = orders.snapshot();
 
+    // The serve affordance: the ring blooms on the house on the frame serve is
+    // first armed, so "you are close enough, on the right truck, and it sang"
+    // reads as a place to tap rather than a state the kid has to deduce.
+    const armed = serveArmedNow();
+    if (armed && !serveArmed) {
+      const waiting = orderPoint();
+      if (waiting !== undefined) {
+        ring.show(waiting);
+      }
+    }
+    serveArmed = armed;
+
     // The cone icon floats over the ordering house while the order is open, and
     // the celebration clears it: one order, one beat of attention.
     const marker = orderIsOpen(snapshot.state);
@@ -590,6 +679,9 @@ async function main(): Promise<void> {
     }
     orderMarker.place(lot.position);
     orderMarker.show();
+    // A fresh order starts with no jingle: the one that served the last cone
+    // must not carry over into this delivery.
+    serveGate.noteOrderOpened();
     return true;
   }
 
