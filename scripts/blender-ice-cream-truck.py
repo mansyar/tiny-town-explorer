@@ -43,6 +43,7 @@ import json
 import math
 import struct
 import sys
+import tempfile
 from pathlib import Path
 
 import bpy
@@ -50,9 +51,10 @@ from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[1]
 CAR_KIT = ROOT / "src" / "assets" / "kits" / "car-kit"
-OUT_DIR = Path(
-    r"C:\Users\Ansyar\AppData\Local\Temp\opencode\ice-cream-truck"
-)
+# Build artefacts land in the OS temp directory rather than in the repo: the
+# recipe re-runs at any time, and the committed model is the packed GLB under
+# `src/assets/kits/car-kit/`.
+OUT_DIR = Path(tempfile.gettempdir()) / "tiny-town-explorer-ice-cream-truck"
 GLB_PATH = OUT_DIR / "ice-cream-truck.glb"
 PALETTE_PNG = OUT_DIR / "colormap.png"
 

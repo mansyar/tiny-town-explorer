@@ -36,6 +36,7 @@ from __future__ import annotations
 import math
 import shutil
 import struct
+import tempfile
 from pathlib import Path
 
 import bpy
@@ -45,7 +46,10 @@ from mathutils import Vector
 ROOT = Path(__file__).resolve().parents[1]
 FIRETRUCK = ROOT / "src" / "assets" / "kits" / "car-kit" / "firetruck.glb"
 ICON_DIR = ROOT / "public" / "icons"
-RENDER_DIR = Path(r"C:\Users\Ansyar\AppData\Local\Temp\opencode\icons")
+# Check renders land in the OS temp directory rather than in the repo: they are
+# working files, and the shipped icons are the three PNGs copied into
+# `public/icons/`.
+RENDER_DIR = Path(tempfile.gettempdir()) / "tiny-town-explorer-icons"
 
 # #87ceeb, and its linear equivalent under the Standard view transform.
 SKY_SRGB = (135, 206, 235)

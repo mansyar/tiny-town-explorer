@@ -6,14 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": [
-      "**",
-      "!**/dist",
-      "!**/dev-dist",
-      "!**/coverage",
-      "!**/*.md",
-      "!**/.freebuff"
-    ]
+    "includes": ["**", "!**/dist", "!**/dev-dist", "!**/coverage", "!**/*.md"]
   },
 
   // Formatter settings come from conductor/code_styleguides/typescript.md
