@@ -10,7 +10,7 @@
   - [ ] Write failing tests (gap range, busy pauses, house-distance preference + fallback)
   - [ ] Implement to pass (`iceCreamPacer.ts` mirroring `firePacer.ts`)
   - [ ] Refactor + coverage
-- [ ] Task: Shared busy gate (fire ⇄ ice-cream mutual exclusion)
+- [x] Task: Shared busy gate (fire ⇄ ice-cream mutual exclusion) `ba2e9e3`
   - [ ] Write failing tests (either mission busy pauses both pacers; spawn rejected while busy)
   - [ ] Implement to pass (caller-owned `busy` helper or pacer coordination)
   - [ ] Refactor + coverage
