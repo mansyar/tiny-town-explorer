@@ -1,4 +1,4 @@
-import { Box3, Group, type Object3D } from 'three';
+import { Box3, Group, type Object3D, Vector3 } from 'three';
 import type { ModelLibrary } from '../assets/modelLibrary';
 import type { VehicleMotor } from './vehicleMotor';
 
@@ -76,23 +76,52 @@ function squash(
 }
 
 /**
+ * How a kit's model has to be turned and sized to drive the car.
+ */
+export interface VehicleActorOptions {
+  /**
+   * Yaw that puts the kit's nose on the car's nose. The kits disagree: the Toy
+   * Car Kit authors vehicles facing −z, the Car Kit faces +z.
+   */
+  readonly facingYaw?: number;
+  /**
+   * Longest horizontal extent to fit the model into — the car's own collision
+   * capsule. Kit fleet vehicles are authored about four times the town's
+   * scale, so they are measured and scaled down rather than re-authored.
+   */
+  readonly fitLength?: number;
+}
+
+/**
  * Builds the car and starts it at the motor's current pose.
  *
  * @param library Source of kit models (shared templates, cloned instances).
  * @param url Bundled vehicle model URL.
  * @param motor The car's motion.
+ * @param options Facing correction and length fit for the kit's model.
  */
 export async function createVehicleActor(
   library: ModelLibrary,
   url: string,
   motor: VehicleMotor,
+  options: VehicleActorOptions = {},
 ): Promise<VehicleActor> {
+  const { facingYaw = MODEL_FACING_YAW, fitLength } = options;
   const model = await library.instantiate(url);
   // Seat the model on the asphalt by measuring it, rather than trusting a
   // kit's origin convention: swapping in another vehicle must not float it.
   model.position.y -= new Box3().setFromObject(model).min.y;
   model.position.y += ROAD_SURFACE_HEIGHT;
-  model.rotation.y += MODEL_FACING_YAW;
+  model.rotation.y += facingYaw;
+  // Fitting after turning, so a long vehicle is measured across the axis it
+  // will actually drive along. Never scaled up: a small model stays small.
+  if (fitLength !== undefined) {
+    const size = new Box3().setFromObject(model).getSize(new Vector3());
+    const longest = Math.max(size.x, size.z);
+    if (longest > fitLength) {
+      model.scale.multiplyScalar(fitLength / longest);
+    }
+  }
 
   const object = new Group();
   object.name = 'vehicle';

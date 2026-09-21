@@ -1,20 +1,24 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createModelLibrary } from './game/assets/modelLibrary';
-import { TOWN_MODELS, VEHICLE_MODELS } from './game/assets/modelRegistry';
+import { TOWN_MODELS } from './game/assets/modelRegistry';
 import { createAudioEngine, type SampledSound } from './game/audio/audioEngine';
 import { SOUND_MODELS } from './game/audio/audioRegistry';
 import { createCameraRig } from './game/camera';
 import { collectObstacles } from './game/collision/collision';
 import { createTargetRing } from './game/feedback/targetRing';
+import { createVehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
 import { createTownGrid } from './game/town/townGrid';
 import { mountTown } from './game/town/townRenderer';
-import { createVehicleActor } from './game/vehicle/vehicleActor';
+import {
+  createVehicleActor,
+  type VehicleActorOptions,
+} from './game/vehicle/vehicleActor';
 import { createVehicleMotor, type VehicleMotor } from './game/vehicle/vehicleMotor';
-import { createVehicleSystem } from './game/vehicle/vehicleSystem';
+import { createVehicleSystem, type VehicleId } from './game/vehicle/vehicleSystem';
 
 /**
  * Creates the single WebGL renderer. Antialiasing, soft shadows, and a pixel
@@ -79,6 +83,10 @@ async function main(): Promise<void> {
   // The fleet is not on screen yet, but its engine curve is what gives the car
   // its voice, so the voice tracks the one vehicle that already drives.
   const fleet = createVehicleSystem();
+  const fleetActorOptions = (id: VehicleId): VehicleActorOptions => {
+    const spec = fleet.spec(id);
+    return { facingYaw: spec.facingYaw, fitLength: spec.fitLength };
+  };
 
   // The car and its motor arrive only once the town has been measured, because
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
@@ -149,9 +157,41 @@ async function main(): Promise<void> {
     vehicle.setPath(path);
   });
 
-  const car = await createVehicleActor(library, VEHICLE_MODELS.truck, vehicle);
+  const car = await createVehicleActor(
+    library,
+    fleet.spec(fleet.activeId()).model,
+    vehicle,
+    fleetActorOptions(fleet.activeId()),
+  );
   scene.add(car.object);
   actor = car;
+
+  const swapVehicle = async (id: VehicleId): Promise<void> => {
+    const next = await createVehicleActor(
+      library,
+      fleet.spec(id).model,
+      vehicle,
+      fleetActorOptions(id),
+    );
+    // The replacement is built before the old one goes, so no frame is empty.
+    if (actor !== undefined) {
+      scene.remove(actor.object);
+    }
+    actor = next;
+    scene.add(next.object);
+    audio.play('poof');
+  };
+
+  const hud = createVehicleHud({
+    onSelect: (id) => {
+      fleet.setActive(id);
+      hud.setActive(id);
+      void swapVehicle(id);
+    },
+    onMute: (muted) => audio.setMuted(muted),
+  });
+  document.body.append(hud.element);
+  hud.setActive(fleet.activeId());
   await Promise.all(TOWN_MODELS.map((url) => library.load(url)));
 }
 

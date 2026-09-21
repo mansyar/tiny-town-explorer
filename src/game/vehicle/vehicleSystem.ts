@@ -8,7 +8,7 @@
  * The AudioEngine consumes the `AbilityEvent`s this module emits.
  */
 import { VEHICLE_MODELS } from '../assets/modelRegistry';
-import { DRIVE_SPEED } from './vehicleMotor';
+import { CAR_HALF_LENGTH, DRIVE_SPEED } from './vehicleMotor';
 
 /** The v1 fleet, in HUD order. */
 export const VEHICLE_IDS = ['fire', 'iceCream', 'garbage', 'police'] as const;
@@ -40,9 +40,22 @@ export interface AbilityCast {
   readonly seconds: number;
 }
 
+/**
+ * The car's own length. Every fleet model is fitted to it, so the art can never
+ * overhang the collision capsule that stops it (see `vehicleActor`).
+ */
+export const FLEET_LENGTH = CAR_HALF_LENGTH * 2;
+
+/** Every Car Kit vehicle — and the authored ice-cream truck — faces +z. */
+export const FLEET_FACING_YAW = 0;
+
 export interface VehicleSpec {
   readonly id: VehicleId;
   readonly model: string;
+  /** How far to turn the kit's model onto the car's nose (see `vehicleActor`). */
+  readonly facingYaw: number;
+  /** Longest extent the model may occupy, inside the car's collision capsule. */
+  readonly fitLength: number;
   /** A fresh cast per press, never a shared array a caller could mutate. */
   readonly cast: () => AbilityCast;
 }
@@ -69,11 +82,15 @@ const SPECS: Record<VehicleId, VehicleSpec> = {
   fire: {
     id: 'fire',
     model: VEHICLE_MODELS.firetruck,
+    facingYaw: FLEET_FACING_YAW,
+    fitLength: FLEET_LENGTH,
     cast: () => ({ events: [{ kind: 'spray', seconds: 1.5 }], seconds: 1.5 }),
   },
   iceCream: {
     id: 'iceCream',
     model: VEHICLE_MODELS.iceCreamTruck,
+    facingYaw: FLEET_FACING_YAW,
+    fitLength: FLEET_LENGTH,
     cast: () => ({
       events: [{ kind: 'jingle' }, { kind: 'cones' }],
       seconds: 0,
@@ -82,11 +99,15 @@ const SPECS: Record<VehicleId, VehicleSpec> = {
   garbage: {
     id: 'garbage',
     model: VEHICLE_MODELS.garbageTruck,
+    facingYaw: FLEET_FACING_YAW,
+    fitLength: FLEET_LENGTH,
     cast: () => ({ events: [{ kind: 'gulp' }], seconds: 0 }),
   },
   police: {
     id: 'police',
     model: VEHICLE_MODELS.police,
+    facingYaw: FLEET_FACING_YAW,
+    fitLength: FLEET_LENGTH,
     cast: () => ({ events: [{ kind: 'siren' }], seconds: 0 }),
   },
 };

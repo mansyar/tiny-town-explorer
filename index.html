@@ -42,6 +42,74 @@
         height: 100%;
         width: 100%;
       }
+      /*
+        The controls (see game/hud/vehicleHud.ts). A fixed overlay with
+        pointer-events off, so a tap anywhere else still falls through to the
+        town, re-enabled on the buttons themselves. Sized in px rather than rem
+        because a pre-reader's fingers do not resize with the font.
+      */
+      .hud {
+        inset: 0;
+        pointer-events: none;
+        position: fixed;
+      }
+      .hud-vehicles {
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        display: flex;
+        gap: 18px;
+        left: calc(20px + env(safe-area-inset-left));
+        position: absolute;
+        pointer-events: auto;
+      }
+      .hud-button {
+        align-items: center;
+        border: 4px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 6px 0 rgb(0 0 0 / 18%);
+        color: #ffffff;
+        display: flex;
+        height: 84px;
+        justify-content: center;
+        padding: 0;
+        transition:
+          transform 120ms ease-out,
+          box-shadow 120ms ease-out;
+        width: 84px;
+      }
+      .hud-button svg {
+        height: 48px;
+        width: 48px;
+      }
+      .hud-button.is-active {
+        box-shadow:
+          0 6px 0 rgb(0 0 0 / 18%),
+          0 0 0 6px rgb(255 255 255 / 65%);
+        transform: translateY(-6px) scale(1.08);
+      }
+      .hud-button--fire {
+        background: #e1473e;
+      }
+      .hud-button--iceCream {
+        background: #ff8aae;
+      }
+      .hud-button--garbage {
+        background: #57a05a;
+      }
+      .hud-button--police {
+        background: #3f6fc4;
+      }
+      .hud-button--mute {
+        background: #5e6a78;
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        height: 72px;
+        pointer-events: auto;
+        position: absolute;
+        right: calc(20px + env(safe-area-inset-right));
+        width: 72px;
+      }
+      .hud-button--mute.is-muted {
+        background: #9aa4b0;
+      }
     </style>
   </head>
   <body>
