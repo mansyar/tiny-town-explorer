@@ -141,8 +141,24 @@
     - [ ] The final stretch to a tap still crosses lots unopposed (a car can
           pass between or through houses): obstacle-aware pathing per FR3 and
           building hitboxes per FR4 arrive with the collision phase
-- [ ] Task: Expanding target ring + drive feel polish (visual; manual
-      verify: instant ring, smooth turn, constant speed)
+- [x] Task: Expanding target ring + drive feel polish (visual; manual
+      verify: instant ring, smooth turn, constant speed) [a59a747]
+    - [x] Test: `ringFrame` pinned pure — starts small and opaque, ends at full
+          radius and zero opacity, monotonic, fastest expansion first, and both
+          negative and over-long elapsed times clamp
+    - [x] One ring, not a pool: the newest tap restarts the pulse, so a mash
+          cannot litter the street; a unit ring is scaled, so pulses allocate
+          nothing
+    - [x] Answers both outcomes — at the destination for a drive, at the car for
+          a dead-zone honk — so no touch is silent, within the 100ms budget
+    - [x] Verified by watching it drive: turn-in-place then a constant 1.6 u/s
+          on the line through both junctions and both bends, and a mid-route
+          tap replaces the route (a 0.45s pulse is easy to miss between tool
+          calls, so it was sampled live over seconds and re-checked at speed)
+    - [ ] Noted for polish: an out-of-town tap is clamped to the map edge, so its
+          ring sits half over the edge of the world — accurate, since that is
+          the destination the car drives to, but it reads as "go where there is
+          no ground"
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 — Collisions: Bounce & Resume
