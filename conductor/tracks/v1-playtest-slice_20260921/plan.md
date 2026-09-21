@@ -92,7 +92,7 @@
 - [x] Task: Model-wiring Phase Verification & Checkpoint (Refer to
       workflow.md) [checkpoint: c70f12e]
 
-## Phase 3 — Input & Tap-to-Move
+## Phase 3 — Input & Tap-to-Move [checkpoint: a59a747]
 
 - [x] Task: TDD InputRouter (Red→Green) [769880b]
     - [x] Test: newest-tap-wins command supersession (mash safety) —
@@ -159,7 +159,8 @@
           ring sits half over the edge of the world — accurate, since that is
           the destination the car drives to, but it reads as "go where there is
           no ground"
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: a59a747]
 
 ## Phase 4 — Collisions: Bounce & Resume
 
