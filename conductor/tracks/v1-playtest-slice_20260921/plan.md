@@ -312,10 +312,35 @@
           the help rather than resetting a separate timer; nothing accumulates
           outside a mission and the parent toggle drops a half-finished count.
           13 tests.
-- [ ] Task: Fire visuals — smoke puffs, flame mesh shrinking per burst,
+- [x] Task: Fire visuals — smoke puffs, flame mesh shrinking per burst,
       confetti + smiling sun, alarm chime, hose button (visual; manual
-      verify full mission on tablet)
-- [ ] Task: Helper hand trace animation (visual; manual verify timing)
+      verify full mission on tablet) [12e7ad4]
+    - [x] Flame size is a function of bursts left, so the picture cannot
+          disagree with the mission that owns it; smoke cycles; the alarm is the
+          mission chime, and completion is confetti with the win cheer
+    - [x] Manual verification drove the real frame function: a spawn shows the
+          flame and smoke, three sprays took a three-burst fire to out, and the
+          hose button is the ability button, hidden until the car is close
+    - [ ] The smiling sun the spec also names is not built. Confetti and the
+          cheer landed; the sun is deferred to Phase 7 polish rather than
+          invented here, so the celebration is not yet what the spec describes
+- [x] Task: Helper hand trace animation (visual; manual verify timing) [12e7ad4]
+    - [x] Dots resampled by arc length along the route, a pointer on an eased
+          curve; driven frame by frame the trace ran 108 frames (1.8s) after
+          9.98s of quiet, and its demo tap followed at 11.78s
+- [x] Task: Correction (2026-09-21, found while wiring) — the mission was never
+      ticked, and the hose button never hid [54417a9]
+    - [x] Reason: `tickMission` called the pacer but never `mission.update`, so
+          the hose could never arm and water could never put a fire out (three
+          sprays left the count at four); and the ability button's visibility was
+          written only when it changed, so it stayed on screen at spawn
+    - [x] Fix: tick the mission with a fresh distance every frame, and mirror the
+          visibility so the first frame of a fire hides the button
+    - [x] Tests: neither fault is reachable from the unit tests, which cover the
+          state machine and the button separately. This is the second wiring
+          fault a phase verification has caught, after the burst clock, which is
+          the argument for driving the real frame function rather than trusting
+          the parts in isolation
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 7 — HUD, Parent Panel & Polish
