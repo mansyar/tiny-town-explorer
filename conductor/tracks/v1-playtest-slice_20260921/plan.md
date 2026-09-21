@@ -42,32 +42,36 @@
     - [x] Measured: 197 models / 74,329 tris committed (8.16 MiB); town
           projection ~25k tris (see note: contradicts tech-stack 15k)
     - [x] Gap: Toy Car Kit has no T-junction/cross piece for the two tees
-          the authored map needs — user chose to author one in Blender
-          (2026-09-21 plan amendment; see the task below)
-- [ ] Task: Author a T-junction track piece in Blender (plan amendment,
-      2026-09-21)
-    - [x] Phase 0/1 recon (gate 0.1/0.2/1.1): Blender 5.2.0 LTS present;
-          mount measured by slicing kit vertices and palette texels —
-          `scripts/blender-analyze-kit.py`, table recorded in
-          `t-junction-recon.md`. Contract: 4.00 pitch, 1.00 x 0.30 slab
-          plus a 0.20 x 0.05 tapering peg per arm, 0.60 asphalt band with
-          0.20 kerbs, connectable-frame base at z = -1.00; palette texels
-          to reuse identified; authoring conventions added to
-          tech-stack.md
-    - [ ] Recipe `scripts/blender-t-junction.py` (build / render_checks /
-          export_ / verify_glb), authored z-up, exported by selection
-    - [ ] Renders (gate 3.1): ride angle + inhabitant fit
-    - [ ] Style gate (gate 3.5): palette match vs a kit straight render +
-          side-by-side rubric scoring, then user acceptance on the render
-    - [ ] Export and gate the GLB (parse, node contract, size, Y extent,
-          hygiene), packed through the existing asset pipeline
+          the authored map needs. Measured the track pieces and found the
+          real problem: they are 0.30-thick raised slabs with striped side
+          walls, i.e. a race track, not street paving. Superseded by the
+          City Kit (Roads) decision below (`kit-mount-measurements.md`)
+- [x] Task: Adopt City Kit (Roads) for the road grid (plan amendment,
+      2026-09-21, replacing the planned Blender-authored T-junction)
+    - [x] Downloaded, packed and committed all 95 models (palette embedded
+          under `city-kit-roads/colormap`, 2.8 MiB); licence + provenance
+          recorded in `src/assets/kits/README.md`
+    - [x] Measured the mount with `scripts/blender-analyze-kit.py`: 1.00 x
+          1.00 tiles, base z = 0.00 with the surface at +0.02, so the
+          existing `tileSize: 1` map needs no rescaling and needs no
+          per-family seating offsets; `road-intersection` is the T the two
+          tees needed, `road-crossroad` the 4-way, `road-curve` a 2x2 bend;
+          props include `electricity-pole` (the spec's pole)
+    - [x] Abandoned the Blender-authored piece and deleted its artifacts
+          (recipe, GLB, renders) once the rendered fit showed walls running
+          through a town street; the skill's authoring conventions were
+          dropped from tech-stack.md in favour of the measurement tooling
+    - [ ] Outstanding: the spec's crashable **hydrant** still has no kit
+          model (Roads has pole/cone/sign/light/dumpster) — substitute or
+          author one when the collision phase lands
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: 13d2bad]
 - [ ] Task: Wire the kit models into the rendered town (was the implicit
-      second half of 'Render town from data') — mount road tiles/houses/
-      trees via the model library, apply the per-family seating offsets
-      (track +1.00, vehicles +0.30 on the road), reconcile the triangle
-      budget note in tech-stack.md with the measured ~25k
+      second half of 'Render town from data') — mount roads (straight,
+      intersection, crossroad, end, driveway), houses (city-kit-suburban),
+      ground/kerb tiles and trees via the model library; vehicles from
+      `vehicle-*` ride at +0.02; reconcile the triangle budget note in
+      tech-stack.md with the measured ~25k
 - [ ] Task: Model-wiring Phase Verification & Checkpoint (Refer to
       workflow.md)
 

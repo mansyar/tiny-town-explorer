@@ -34,13 +34,15 @@ import sys
 
 import bpy
 
-KIT_DIR = os.path.join("src", "assets", "kits", "toy-car-kit")
+KIT_DIR = os.path.join("src", "assets", "kits", "city-kit-roads")
 PIECES = [
-    "track-road-narrow-straight",
-    "track-road-narrow",
-    "track-road-narrow-corner-small",
-    "track-road-narrow-curve",
-    "vehicle-racer",
+    "road-straight",
+    "road-intersection",
+    "road-crossroad",
+    "road-curve",
+    "tile-low",
+    "tile-high",
+    "electricity-pole",
 ]
 # Coarsening used when clustering vertices into modelling planes.
 PLANE_EPSILON = 0.01
@@ -164,9 +166,26 @@ def palette_samples(objects):
             v = sum(coord[1] for coord in uv) / len(uv)
             texel = texel_of(image, u, v)
             entry = groups[face_orientation(normal.z)].setdefault(
-                tuple(texel), {"texel": texel, "uv": [round(u, 4), round(v, 4)], "color": color_of(image, u, v), "area": 0.0}
+                tuple(texel),
+                {
+                    "texel": texel,
+                    "uv": [round(u, 4), round(v, 4)],
+                    "color": color_of(image, u, v),
+                    "area": 0.0,
+                    # Where the swatch actually sits on the piece: areas alone
+                    # cannot tell a kerb strip from an end cap.
+                    "bounds": [None, None, None, None],
+                },
             )
             entry["area"] = round(entry["area"] + triangle.area, 4)
+            corners = [obj.matrix_world @ mesh.vertices[index].co for index in triangle.vertices]
+            for corner in corners:
+                bounds = entry["bounds"]
+                bounds[0] = corner.x if bounds[0] is None else min(bounds[0], corner.x)
+                bounds[1] = corner.y if bounds[1] is None else min(bounds[1], corner.y)
+                bounds[2] = corner.x if bounds[2] is None else max(bounds[2], corner.x)
+                bounds[3] = corner.y if bounds[3] is None else max(bounds[3], corner.y)
+            entry["bounds"] = [round(value, 3) for value in entry["bounds"]]
     return {
         orientation: sorted(entries.values(), key=lambda entry: -entry["area"])
         for orientation, entries in groups.items()

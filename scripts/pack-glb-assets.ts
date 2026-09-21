@@ -21,7 +21,10 @@ import { padTo4, readGlbChunks, writeGlb } from './glb.ts';
  * `colormap`, so without namespacing two kits collide on one name and a runtime
  * texture cache would hand one kit's palette to the other's models.
  *
- * Usage: `node scripts/pack-glb-assets.ts <sourceDir> <outDir> --kit=<id>`
+ * Usage: `node scripts/pack-glb-assets.ts <sourceDir> <outDir> --kit=<id> [--file=<name>.glb]`
+ *
+ * `--file` packs one model (a freshly authored piece); without it the whole kit
+ * is packed, which is a no-op for models that are already packed.
  */
 
 /** Mutable glTF image, as far as packing needs to touch it. */
@@ -213,13 +216,26 @@ function concat(parts: readonly Uint8Array[]): Uint8Array {
   return merged;
 }
 
-/** Packs every top-level `.glb` of a kit directory into another directory. */
+/**
+ * Packs the top-level `.glb` files of a kit directory into another directory.
+ * `only` restricts it to a single file, which is how a freshly authored piece
+ * is packed without rewriting the rest of the kit (re-packing is a no-op, but
+ * 197 pointless writes are still 197 pointless writes).
+ */
 export async function packKit(
   sourceDir: string,
   outDir: string,
   kitId: string,
+  only?: string,
 ): Promise<void> {
-  const files = (await readdir(sourceDir)).filter((name) => name.endsWith('.glb'));
+  const files = (await readdir(sourceDir)).filter(
+    (name) => name.endsWith('.glb') && (only === undefined || name === only),
+  );
+  if (files.length === 0) {
+    throw new Error(
+      `No model to pack in ${sourceDir}${only === undefined ? '' : ` named ${only}`}`,
+    );
+  }
   await mkdir(outDir, { recursive: true });
 
   let before = 0;
@@ -246,6 +262,7 @@ async function main(): Promise<void> {
   const positional = args.filter((arg) => !arg.startsWith('--'));
   const [sourceDir, outDir] = positional;
   const kitId = args.find((arg) => arg.startsWith('--kit='))?.split('=')[1];
+  const only = args.find((arg) => arg.startsWith('--file='))?.split('=')[1];
   if (sourceDir === undefined || outDir === undefined || kitId === undefined) {
     process.stderr.write(
       'Usage: node scripts/pack-glb-assets.ts <sourceDir> <outDir> --kit=<id>\n',
@@ -253,7 +270,7 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  await packKit(sourceDir, outDir, kitId);
+  await packKit(sourceDir, outDir, kitId, only);
 }
 
 if (process.argv[1]?.includes('pack-glb-assets')) {

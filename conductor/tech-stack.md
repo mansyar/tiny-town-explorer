@@ -44,48 +44,40 @@
   ESLint + Prettier pair); integrates with the Vite workflow.
 
 ## Assets
-- **Kenney CC0:** Toy Car Kit (vehicles + track tiles = road grid),
-  City Kit (Suburban) 2025 remake (single-texture-map houses ≈ free
-  palette atlas), Nature Kit. GLB preferred; consolidate into
-  shared palette atlas / packed GLB at scaffold time.
+- **Kenney CC0:** Toy Car Kit (vehicles; its track pieces are *not* road
+  paving — see the measurement note below), City Kit (Suburban) 2025 remake
+  (single-texture-map houses ≈ free palette atlas), City Kit (Roads) — the
+  road grid — and Nature Kit for future greenery. GLB preferred; pack into
+  self-contained GLBs at scaffold time.
 
-## Authoring original 3D assets (added 2026-09-21)
-_Deviation note: the Toy Car Kit has no T-junction or cross piece, so the
-road grid cannot be built from kit art alone. Rather than adding a third
-kit, original pieces are authored to the kit's measured module contract._
+## Kit geometry is measured before mounting (added 2026-09-21)
+_Deviation note: FR12 names two kits, and the plan read "track tiles as road
+grid". Measuring the Toy Car Kit's track pieces showed they are 0.30-thick
+raised slabs with striped side walls — a slot-car/race track, not streets —
+so the grid moved to **City Kit (Roads)** (flat 1.00 × 1.00 × 0.02 tiles with
+`road-intersection`/`road-crossroad` junctions). A Blender-authored T-junction
+was started on the old assumption and deleted once a fit render showed walls
+running through a town street. Full table:
+`conductor/tracks/v1-playtest-slice_20260921/kit-mount-measurements.md`._
 
-- **Blender 5.2.0 LTS via the CLI, build-time only.** Never a runtime or
-  shipped dependency; the exported GLB is the artifact. Every piece is
-  produced by a checked-in Python recipe run headless
-  (`blender --background --python scripts/blender-<name>.py`) so it stays
-  regenerable — no hand-sculpting, and no hand-patching of exported files.
-- **Measure the mount before drawing.** `scripts/blender-analyze-kit.py`
-  slices the kit's own vertices and palette; the resulting table for the
-  current piece lives in the track folder
-  (`t-junction-recon.md`), and the numbers below come from it.
-- **Module contract (Toy Car Kit road family).** Assembly pitch 4.00; arm
-  profile 1.00 wide × 0.30 thick slab plus a 0.20 × 0.05 tapering peg; road
-  surface at the top of the slab, kerbs 0.20 per side of a 0.60 asphalt
-  band.
-- **Seating frames differ per family, so every mounted model carries an
-  explicit offset.** Connectable track hangs with its base at kit z =
-  −1.00 and needs a +1.00 lift; plain tiles and vehicles stand on kit z =
-  0. Vehicles then ride on the road surface (+0.30), not the ground plane.
-  Ground contact is verified in the running app, never only in renders.
-- **Style = the kit's own palette.** Original pieces UV-map onto the kit's
-  `colormap.png` swatches (asphalt `(112,12)`, kerb `(304,12)`, side and
-  underside warm/light tones) and are exported with the palette as an
-  external `Textures/colormap.png` reference, then run through
-  `scripts/pack-glb-assets.ts` like any kit model. Flat swatches only — no
-  gradients or baked shading.
-- **Node-name contract.** Anything the runtime must find by name uses
-  `<piece>_<part>` and is listed in the recipe's header comment; renaming
-  one is a breaking change.
-- **Verified by renders, not viewport screenshots.** Each recipe renders
-  stills from the ride angle plus a fit render with the occupant, and the
-  style gate compares the new piece beside accepted kit neighbours.
-- **Budget:** a piece stays under ~150 KB and should stay in the same
-  triangle band as its neighbours (the straight is 304 triangles).
+- **Measure first, then mount.** `scripts/blender-analyze-kit.py` (Blender
+  5.2.0 LTS via the CLI, build-time only, never shipped) slices a kit's own
+  vertices and palette: extents, the modelling planes on a piece's run axis
+  (mate contract), and every palette texel grouped by face orientation with
+  its area and bounds. Extents and triangle counts also come from
+  `pnpm assets:measure` without Blender.
+- **Roads (the current grid):** 1.00 × 1.00 tile pitch, base z = 0.00 and
+  surface z = +0.02, so mounted tiles need no lift and `tileSize: 1` needs no
+  rescaling; `road-curve` covers 2 × 2; props stand on z = 0.
+- **Seating is per piece family, so verify ground contact in the running
+  app, never only in a render.** Vehicles ride on the road surface (+0.02),
+  not the ground plane.
+- **Style comes from the kit's own palette.** Any mounted or authored model
+  UV-maps onto its kit's `colormap.png` swatches (flat swatches only, no
+  gradients), and the packing step namespaces each kit's palette
+  (`city-kit-roads/colormap`) so a runtime texture cache can never mix kits.
+- **Budget:** individual pieces stay in their neighbours' band (roads: 44–308
+  triangles; props up to ~420).
 
 ## Backend / Data
 - **None.** Fully static PWA on any static host; no database, no server
