@@ -1,0 +1,32 @@
+PHASE VERIFICATION — Model-wiring (phase scope: 13d2bad..c70f12e, i.e. the
+City Kit (Roads) pivot plus the kit-model wiring)
+
+Automated gate, all announced and run as one sequence:
+- pnpm check            clean (36 files)
+- pnpm typecheck        clean (tsc 7.0.2)
+- CI=true pnpm test     116 tests / 12 files passing
+- CI=true pnpm test:coverage  99.68% stmts, 100% funcs
+- pnpm build            clean; precache 29 entries (1.8 MiB); 19 GLBs emitted
+
+Coverage per code file changed this phase:
+- src/game/town/townLayout.ts   100% stmts / 100% funcs (branch 94.7%)
+- src/game/town/townRenderer.ts 100% across the board
+- src/game/assets/modelRegistry.ts 100% across the board
+- src/game/town/townMap.ts, townTypes.ts 100% (exercised through the town tests)
+- scripts/pack-glb-assets.ts    tested by scripts/pack-glb-assets.test.ts
+- src/game/town/townBuilder.ts  deleted this phase, with its test
+- src/main.ts                   bootstrap, excluded under workflow.md §4
+- scripts/blender-analyze-kit.py  deliberate exclusion: a Blender-runtime
+  measurement script with no harness in this project; verified by execution,
+  with its output committed to kit-mount-measurements.md
+
+Manual verification steps given to the user: view the Preview tab (live on the
+current bundle), confirm kit-art town with no placeholders; ring road
+continuous with kerbs and lane markings; cross street splitting the interior;
+park with two pines in the north-west; every house facing its street; both ring
+corners turning with the kerb outside and both tees three-way with no seam
+breaks; portrait/landscape resize keeps the town centred at the same vertical
+extent.
+
+USER CONFIRMATION: "Yes — confirm and checkpoint". The user confirmed the phase
+meets expectations with no changes requested, and the checkpoint was recorded.
