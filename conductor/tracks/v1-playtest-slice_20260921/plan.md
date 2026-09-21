@@ -21,7 +21,8 @@
       any, 192/512 placeholder icons), autoUpdate registration [3c41783]
 - [x] Task: Render-loop smoke test — three.js scene boots, empty town
       ground renders in dev and preview builds [d6df284]
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [4d3b0e3]
 
 ## Phase 2 — Town Data, World & Camera
 
