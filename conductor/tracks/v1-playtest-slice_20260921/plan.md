@@ -352,8 +352,20 @@
           every frame of a long press, since the caller opens a panel on it; a
           second finger cannot restart the count, and releasing arms a fresh
           hold. 12 tests.
-- [ ] Task: Parent panel UI — textless toggles (SFX, music, helper
-      hand), attribution behind gate (visual; manual verify)
+- [x] Task: Parent panel UI — textless toggles (SFX, music, helper
+      hand), attribution behind gate (visual; manual verify) [4e82a37]
+    - [x] A 56px gear holds the gate and the ring fills from `--hold`; the panel
+          opens once per completed hold. Driven in the browser: a two-second hold
+          left it shut with the ring at 0.66 and back to 0 on release, three
+          seconds opened it, the sound control muted the game and dimmed itself,
+          the hand control turned the helper off for good, and the cross closed it
+    - [x] Deviation (SFX/music): the game has no music track, so a music toggle
+          would be a dead control. The panel ships the sound toggle (the master
+          mute) and the helper hand; the music toggle arrives with a music track
+    - [x] Deviation (attribution): not in the UI. The Kenney kits are CC0 and ask
+          for none, and the product guidelines forbid written words anywhere in
+          the interface including this panel; provenance stays in
+          `src/assets/kits/README.md` and `src/assets/audio/README.md`
 - [ ] Task: Mute button + add-to-home-screen animated hint, one-time
       per session (visual; manual verify)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
