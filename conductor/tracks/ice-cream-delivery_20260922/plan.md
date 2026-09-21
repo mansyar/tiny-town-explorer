@@ -36,8 +36,8 @@
 
 ## Phase 4 – Wiring (mixed: logic TDD, glue manual)
 
-- [ ] Task: `main.ts` integration (spawn/respond/serve/update tick, serve-range distance, jingle cue scheduling)
-  - [ ] Write failing tests for tick wiring decisions (logic parts only); implement; manual-verify spawn → jingle → drive → serve → celebrate
+- [x] Task: `main.ts` integration (spawn/respond/serve/update tick, serve-range distance, jingle cue scheduling) `d1a5e4f`
+  - [x] Write failing tests for tick wiring decisions (logic parts only); implement; manual-verify spawn → jingle → drive → serve → celebrate (15 tests in `orderFlow.test.ts` red first; `orderFlow.ts` edge reader + predicates; manual steps recorded for the device pass)
 - [ ] Task: Input routing (tap ordering house = respond when `spawned`, serve when `active` + armed; tap truck ability = jingle; newest-wins preserved)
   - [ ] Tests for routing decisions; implement; manual-verify on touch
 - [ ] Task: Helper-hand reuse (10s idle → trace + demo tap on ordering house, cooldown ≥10s)
