@@ -1,0 +1,19 @@
+Task: Configure Biome 2.5 + Vitest 5 (biome.json, vitest.config.ts)
+
+Summary of changes:
+- Added biome.json (schema 2.5.14, git-ignore aware, dist/dev-dist/coverage
+  excluded, space indent width 2, line width 90, single quotes, always
+  semicolons, trailing commas, organizeImports assist, preset recommended
+  with noExplicitAny error and cognitive-complexity warning).
+- Added vitest.config.ts (node environment, src/**/*.test.ts include,
+  v8 coverage with text/html reporters; main.ts and game/scene.ts excluded
+  as manual-verified visual glue).
+
+Verification:
+- `pnpm check` clean (8 files, 0 issues) after adopting Biome 2.5's
+  `linter.rules.preset` and folder-ignore syntax.
+- `pnpm typecheck` clean; `CI=true pnpm test --passWithNoTests` exits 0
+  (first real test lands with the render-loop smoke task).
+
+Note: coverage thresholds are intentionally deferred to the first
+logic-bearing modules so scaffold code does not trip a global floor.
