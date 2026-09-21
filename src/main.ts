@@ -7,6 +7,8 @@ import { createCameraRig } from './game/camera';
 import { collectObstacles } from './game/collision/collision';
 import { createAbilityFx } from './game/feedback/abilityFx';
 import { createTargetRing } from './game/feedback/targetRing';
+import { createHoldGate } from './game/hud/holdGate';
+import { createParentPanel } from './game/hud/parentPanel';
 import { createVehicleHud, type VehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { createFireFx } from './game/mission/fireFx';
@@ -135,6 +137,32 @@ async function main(): Promise<void> {
     const spec = fleet.spec(id);
     return { facingYaw: spec.facingYaw, fitLength: spec.fitLength };
   };
+
+  // The parent settings, and the only way in: a three-second hold on the gear.
+  const gate = createHoldGate();
+  const panel = createParentPanel({
+    onToggle: (id, on) => {
+      if (id === 'sfx') {
+        audio.setMuted(!on);
+        hud?.setMuted(!on);
+        return;
+      }
+      hand.setEnabled(on);
+    },
+  });
+  document.body.append(panel.element);
+  panel.element.addEventListener('pointerdown', (event) => {
+    event.stopPropagation();
+    gate.press();
+  });
+  // Any way the press can end counts as letting go: lifting, the system
+  // cancelling it, or the finger sliding off the gear.
+  for (const ending of ['pointerup', 'pointercancel', 'pointerleave'] as const) {
+    panel.element.addEventListener(ending, () => {
+      gate.release();
+      panel.setHoldProgress(0);
+    });
+  }
 
   // The car and its motor arrive only once the town has been measured, because
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
@@ -268,6 +296,16 @@ async function main(): Promise<void> {
     fire.update(delta);
     helperTrace.update(delta);
     sun.update(delta, rig.camera);
+    // The gear fills its ring while it is held, and the settings open on the
+    // frame the hold completes - once, however long the finger stays down.
+    if (gate.isHolding()) {
+      panel.setHoldProgress(gate.progress());
+    }
+    if (gate.update(delta)) {
+      gate.release();
+      panel.setHoldProgress(0);
+      panel.show();
+    }
     // The fleet ticks its own clock. A burst that is never updated never ends,
     // which leaves the ability button dimmed and every later press ignored.
     fleet.update(delta);
