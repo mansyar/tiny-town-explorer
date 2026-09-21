@@ -1,0 +1,7 @@
+Task: Audio (spawn jingle cue once, serve gulp-or-cheer pairing per sound+visual rule, mute/cap respected).
+
+The spawn cue landed with the tick wiring in d1a5e4f: the synthesized ice-cream jingle is played once per order off the orderOpened edge, and its visual pair is the bouncing cone + note marker (spec FR1). Serve now plays drop with the cones burst as the handoff sound the free-play 'cones' ability event already maps to, followed by cheer with confetti and the sun. Plan said "gulp-or-cheer"; the spec wins - gulp is the garbage truck's identity voice and would read as the wrong truck, while NFR5/AC3 name cheer. No new clips, no new scheduling: every cue goes through the same unlocked, muted, gain-capped engine (audioEngine's MASTER_GAIN_CAP = 0.3, mute ramp) that the rest of the game uses.
+
+Files: src/main.ts.
+
+Verification: 421 tests / 35 files green (audioEngine's 16 scheduling/cap tests unchanged and passing), pnpm check + typecheck clean. Manual verify for the device pass: the order's jingle is audible exactly once as the cone icon appears; serve gives cones + drop then confetti + cheer + sun; mute silences all of it and unmute restores it; no cue is louder than a fire's cheer.
