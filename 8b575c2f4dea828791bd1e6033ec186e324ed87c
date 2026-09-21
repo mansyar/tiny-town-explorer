@@ -1,0 +1,1 @@
+FirePacer landed as pure pacing: 11 tests, 298 total. Calm gap 60-90s randomised, paused while a mission runs, at least two world units (two tiles) from the previous fire, fresh gap after each. Degenerate towns handled (one house repeats, no houses never fires). Task 2 of Phase 6; the town is injected as ids and positions so no TownGrid dependency.
