@@ -263,8 +263,17 @@
           poof clip played on the morph, and the console stayed clean
     - [x] Note: the ability trigger is not here yet — `requestAbility` still has
           no caller, and gets one when its visuals land in the next task
-- [ ] Task: Poof morph + ability visuals — droplets, floating cones,
-      star particles, siren flash (visual; manual verify)
+- [x] Task: Poof morph + ability visuals — droplets, floating cones,
+      star particles, siren flash (visual; manual verify) [2b9a18b]
+    - [x] The abilities finally fire: the HUD's ability button is the first
+          caller of `requestAbility`, plays the events through the AudioEngine,
+          and dims while a one-shot is running
+    - [x] Manual verification: the hose fan, the tossed cones, the siren wash and
+          the morph puff were each captured mid-flight in the running app, and
+          the console stayed clean
+    - [x] Iterated once on looks: the hose was 14 large slow droplets that read
+          as a blob, now 20 smaller faster ones; cones and the puff got their own
+          bit size once they proved too small against the bodywork
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 — Fire Mission (FSM, Pacing, Effects)
