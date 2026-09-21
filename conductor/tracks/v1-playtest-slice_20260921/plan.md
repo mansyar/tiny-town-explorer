@@ -41,9 +41,35 @@
       measure initial triangle count (start ~50k budget) [3cc6af0]
     - [x] Measured: 197 models / 74,329 tris committed (8.16 MiB); town
           projection ~25k tris (see note: contradicts tech-stack 15k)
-    - [ ] Gap: Toy Car Kit has no T-junction/cross piece for the two tees
-          the authored map needs — decide at the phase checkpoint
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+    - [x] Gap: Toy Car Kit has no T-junction/cross piece for the two tees
+          the authored map needs — user chose to author one in Blender
+          (2026-09-21 plan amendment; see the task below)
+- [ ] Task: Author a T-junction track piece in Blender (plan amendment,
+      2026-09-21)
+    - [x] Phase 0/1 recon (gate 0.1/0.2/1.1): Blender 5.2.0 LTS present;
+          mount measured by slicing kit vertices and palette texels —
+          `scripts/blender-analyze-kit.py`, table recorded in
+          `t-junction-recon.md`. Contract: 4.00 pitch, 1.00 x 0.30 slab
+          plus a 0.20 x 0.05 tapering peg per arm, 0.60 asphalt band with
+          0.20 kerbs, connectable-frame base at z = -1.00; palette texels
+          to reuse identified; authoring conventions added to
+          tech-stack.md
+    - [ ] Recipe `scripts/blender-t-junction.py` (build / render_checks /
+          export_ / verify_glb), authored z-up, exported by selection
+    - [ ] Renders (gate 3.1): ride angle + inhabitant fit
+    - [ ] Style gate (gate 3.5): palette match vs a kit straight render +
+          side-by-side rubric scoring, then user acceptance on the render
+    - [ ] Export and gate the GLB (parse, node contract, size, Y extent,
+          hygiene), packed through the existing asset pipeline
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: 13d2bad]
+- [ ] Task: Wire the kit models into the rendered town (was the implicit
+      second half of 'Render town from data') — mount road tiles/houses/
+      trees via the model library, apply the per-family seating offsets
+      (track +1.00, vehicles +0.30 on the road), reconcile the triangle
+      budget note in tech-stack.md with the measured ~25k
+- [ ] Task: Model-wiring Phase Verification & Checkpoint (Refer to
+      workflow.md)
 
 ## Phase 3 — Input & Tap-to-Move
 

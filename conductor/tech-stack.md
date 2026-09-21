@@ -49,6 +49,44 @@
   palette atlas), Nature Kit. GLB preferred; consolidate into
   shared palette atlas / packed GLB at scaffold time.
 
+## Authoring original 3D assets (added 2026-09-21)
+_Deviation note: the Toy Car Kit has no T-junction or cross piece, so the
+road grid cannot be built from kit art alone. Rather than adding a third
+kit, original pieces are authored to the kit's measured module contract._
+
+- **Blender 5.2.0 LTS via the CLI, build-time only.** Never a runtime or
+  shipped dependency; the exported GLB is the artifact. Every piece is
+  produced by a checked-in Python recipe run headless
+  (`blender --background --python scripts/blender-<name>.py`) so it stays
+  regenerable — no hand-sculpting, and no hand-patching of exported files.
+- **Measure the mount before drawing.** `scripts/blender-analyze-kit.py`
+  slices the kit's own vertices and palette; the resulting table for the
+  current piece lives in the track folder
+  (`t-junction-recon.md`), and the numbers below come from it.
+- **Module contract (Toy Car Kit road family).** Assembly pitch 4.00; arm
+  profile 1.00 wide × 0.30 thick slab plus a 0.20 × 0.05 tapering peg; road
+  surface at the top of the slab, kerbs 0.20 per side of a 0.60 asphalt
+  band.
+- **Seating frames differ per family, so every mounted model carries an
+  explicit offset.** Connectable track hangs with its base at kit z =
+  −1.00 and needs a +1.00 lift; plain tiles and vehicles stand on kit z =
+  0. Vehicles then ride on the road surface (+0.30), not the ground plane.
+  Ground contact is verified in the running app, never only in renders.
+- **Style = the kit's own palette.** Original pieces UV-map onto the kit's
+  `colormap.png` swatches (asphalt `(112,12)`, kerb `(304,12)`, side and
+  underside warm/light tones) and are exported with the palette as an
+  external `Textures/colormap.png` reference, then run through
+  `scripts/pack-glb-assets.ts` like any kit model. Flat swatches only — no
+  gradients or baked shading.
+- **Node-name contract.** Anything the runtime must find by name uses
+  `<piece>_<part>` and is listed in the recipe's header comment; renaming
+  one is a breaking change.
+- **Verified by renders, not viewport screenshots.** Each recipe renders
+  stills from the ride angle plus a fit render with the occupant, and the
+  style gate compares the new piece beside accepted kit neighbours.
+- **Budget:** a piece stays under ~150 KB and should stay in the same
+  triangle band as its neighbours (the straight is 304 triangles).
+
 ## Backend / Data
 - **None.** Fully static PWA on any static host; no database, no server
   runtime, zero persistence (by design). Offline = workbox precache.
