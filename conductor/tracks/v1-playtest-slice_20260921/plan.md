@@ -30,9 +30,9 @@
           spawn points from a single hand-authored 6×6 layout
     - [ ] Test: adjacency queries (tile neighbors, lot lookup by point,
           props by proximity radius)
-- [ ] Task: Render town from data — Kenney track tiles as road grid,
+- [x] Task: Render town from data — Kenney track tiles as road grid,
       houses on lots, park corner, hydrants/poles (visual; manual verify:
-      layout matches authored map, no z-fighting)
+      layout matches authored map, no z-fighting) [abd0953]
 - [ ] Task: CameraRig — orthographic ~45° tilt, medium framing (car ≈15%
       of viewport height), smooth follow, frustum refit on any
       orientation/resize (manual verify on portrait + landscape)
