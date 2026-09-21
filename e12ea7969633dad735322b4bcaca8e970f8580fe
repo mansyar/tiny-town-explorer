@@ -1,0 +1,21 @@
+Task: Initialize Vite 8 + TypeScript 7 strict project with pnpm 12.4
+
+Summary of changes:
+- Created package.json (packageManager pnpm@12.4.1, engines node>=24,
+  scripts: dev/build/preview/check/check:fix/typecheck/test/test:watch/
+  test:coverage) and committed pnpm-lock.yaml.
+- Created strict tsconfig.json (ES2022, bundler resolution, noUncheckedIndexedAccess,
+  verbatimModuleSyntax, noEmit) covering src + vite/vitest configs.
+- Created minimal vite.config.ts (es2022 target, no asset inlining, LAN-hosted
+  dev/preview servers) and index.html shell (touch-action: none, theme #87CEEB,
+  fixed full-viewport #app mount).
+- Created .gitignore (node_modules, dist, dev-dist, coverage, OS cruft).
+- Created src/main.ts entry-point stub to be replaced by the render bootstrap.
+
+Verification:
+- Verified registry peer ranges: vite-plugin-pwa 1.3.0 supports vite ^8.0.0;
+  vitest 5.0.1 supports vite ^8.0.0 and @types/node >=24 — no tech-stack deviation.
+- `pnpm install` resolved exactly the pinned versions (vite 8.3.0, typescript
+  7.0.2, vitest 5.0.1, @biomejs/biome 2.5.14, vite-plugin-pwa 1.3.0, three 0.186.0).
+- `pnpm typecheck` (tsc 7.0.2 native) clean; `pnpm build` produced a clean dist
+  bundle.
