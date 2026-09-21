@@ -182,9 +182,14 @@ describe('dead-zone honk', () => {
     expect(command.kind === 'honk' && command.at).toEqual({ x: 0, z: 2 });
     expect(rig.router.latest()).toBeUndefined();
     // No path was emitted, so nothing is current either.
-    expect(rig.router.isCurrent({ kind: 'drive', id: 1, target: { x: 0, z: 2 } })).toBe(
-      false,
-    );
+    expect(
+      rig.router.isCurrent({
+        kind: 'drive',
+        id: 1,
+        landed: { x: 0, z: 2 },
+        target: { x: 0, z: 2 },
+      }),
+    ).toBe(false);
   });
 
   it('drives when the tap clears the dead zone', () => {
@@ -222,6 +227,31 @@ describe('tap-to-prop snapping', () => {
     expect(command.kind).toBe('drive');
     expect(command.kind === 'drive' && command.propId).toBe('cone-1');
     expect(command.kind === 'drive' && command.target).toEqual({ x: 0.3, z: 0 });
+  });
+
+  it('keeps the kid’s own aim when it snaps onto a prop', () => {
+    const rig = harness();
+    rig.moveCarTo(CAR_AWAY);
+
+    // The trip to a cone is not what a mission is asked about: a house tap that
+    // picks up a prop beside the lot must still read as the house.
+    const point = { x: 0.3 + PROP_SNAP_RADIUS - 0.1, z: 0 };
+    const command = rig.tapWorld(point);
+
+    expect(command.kind === 'drive' && command.target).toEqual({ x: 0.3, z: 0 });
+    expect(command.kind === 'drive' && command.landed.x).toBeCloseTo(point.x, 3);
+    expect(command.kind === 'drive' && command.landed.z).toBeCloseTo(point.z, 3);
+  });
+
+  it('lands the aim and the target on the same point when nothing snapped', () => {
+    const rig = harness();
+    const point = { x: 0.9, z: 0.6 };
+    const command = rig.tapWorld(point);
+
+    expect(command.kind === 'drive' && command.landed.x).toBeCloseTo(point.x, 3);
+    expect(command.kind === 'drive' && command.landed.z).toBeCloseTo(point.z, 3);
+    expect(command.kind === 'drive' && command.target.x).toBeCloseTo(point.x, 3);
+    expect(command.kind === 'drive' && command.target.z).toBeCloseTo(point.z, 3);
   });
 
   it('takes the nearest prop when a tap could mean either', () => {

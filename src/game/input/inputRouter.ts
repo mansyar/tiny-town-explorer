@@ -58,6 +58,16 @@ export interface DriveCommand {
   readonly id: number;
   /** World-space point on the ground plane, always inside the town's bounds. */
   readonly target: Vec2;
+  /**
+   * Where the tap landed before prop snapping: what the kid actually aimed at.
+   *
+   * `target` is where the car will go, which is not always where the finger
+   * was — a tap near a cone resolves onto the cone. Anything that reads the tap
+   * as an *intent about the world* (is this the house that just ordered ice
+   * cream?) has to ask this point instead, or a prop beside that house steals
+   * the tap and the kid's aim is silently redirected.
+   */
+  readonly landed: Vec2;
   /** Set when the tap snapped to a crashable prop. */
   readonly propId?: string;
 }
@@ -154,7 +164,7 @@ export function createInputRouter({
       }
 
       sequence += 1;
-      latestDrive = { kind: 'drive', id: sequence, target, propId: prop?.id };
+      latestDrive = { kind: 'drive', id: sequence, target, landed, propId: prop?.id };
       return latestDrive;
     },
 

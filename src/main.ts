@@ -32,6 +32,7 @@ import {
 import {
   createOrderBeats,
   isTapOnHouse,
+  MISSION_SNAP_RADIUS,
   orderIsOpen,
   resolveOrderTap,
 } from './game/mission/orderFlow';
@@ -147,9 +148,6 @@ async function main(): Promise<void> {
   let abilityVisible = true;
   let serveArmed = false;
   let pendingDemo: Vec2 | undefined;
-
-  /** How close a tap must land to count as aiming at the burning house. */
-  const snapToFire = 0.9;
 
   // Sound waits for a gesture. The context and its samples are prepared up
   // front so the very first tap has something to play; only `unlock` (below,
@@ -269,7 +267,7 @@ async function main(): Promise<void> {
     if (!router.isCurrent(command)) {
       return;
     }
-    void tapAt(command.target);
+    void tapAt(command.target, command.landed);
   });
 
   const car = await createVehicleActor(
@@ -462,14 +460,19 @@ async function main(): Promise<void> {
    * An ice-cream order answers to the same gesture with one tap doing two jobs:
    * tap the ordering house and the car becomes the truck and heads over, tap it
    * again once serve is armed and one cone changes hands.
+   *
+   * `point` is where the car is being sent; `aim` is where the finger landed.
+   * They differ when the router snapped the tap onto a prop, and every mission
+   * decision is made against the aim - a cone beside an ordered house must not
+   * be able to steal the serve, nor a hydrant beside a burning one the hose.
    */
-  async function tapAt(point: Vec2): Promise<void> {
+  async function tapAt(point: Vec2, aim: Vec2 = point): Promise<void> {
     // Ring before routing: a tap is answered within a frame even on the way to
     // a destination the road network cannot reach.
     ring.show(point);
     audio.play('tap');
 
-    await answerMissions(point);
+    await answerMissions(aim);
 
     const route = findPath(grid, vehicle.position, point);
     if (route === undefined) {
@@ -489,13 +492,13 @@ async function main(): Promise<void> {
    * ordering house and it becomes the ice-cream truck, or hands over a cone if
    * serve is already armed.
    */
-  async function answerMissions(point: Vec2): Promise<void> {
+  async function answerMissions(aim: Vec2): Promise<void> {
     const snapshot = mission.snapshot();
     const burning = firePoint();
     if (
       snapshot.state === 'spawned' &&
       burning !== undefined &&
-      distanceBetween(point, burning) <= snapToFire
+      distanceBetween(aim, burning) <= MISSION_SNAP_RADIUS
     ) {
       mission.respond();
       if (fleet.activeId() !== 'fire') {
@@ -511,7 +514,7 @@ async function main(): Promise<void> {
         ? 'ignore'
         : resolveOrderTap({
             state: orders.snapshot().state,
-            onOrderHouse: isTapOnHouse(point, waiting),
+            onOrderHouse: isTapOnHouse(aim, waiting),
             armed: serveArmedNow(),
           });
     if (action === 'respond') {

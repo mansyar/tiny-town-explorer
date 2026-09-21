@@ -26,11 +26,11 @@ import { orderAwaitsKid } from './orderFlow';
 
 export interface MissionFocusInput {
   readonly fireState: MissionState;
-  /** Where the fire is, or `undefined` when its lot cannot be resolved. */
-  readonly fireAt: Vec2 | undefined;
+  /** Where the fire is; absent when its lot cannot be resolved. */
+  readonly fireAt?: Vec2;
   readonly orderState: IceCreamState;
-  /** Where the order is, or `undefined` when its lot cannot be resolved. */
-  readonly orderAt: Vec2 | undefined;
+  /** Where the order is; absent when its lot cannot be resolved. */
+  readonly orderAt?: Vec2;
   /** Handed back as the destination when nothing needs pointing at. */
   readonly carPosition: Vec2;
 }

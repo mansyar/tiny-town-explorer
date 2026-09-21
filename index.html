@@ -110,6 +110,13 @@
         opacity: 0.45;
         transform: scale(0.94);
       }
+      /* Out of reach, the ability button *is* the hose the car cannot use yet,
+         so it is not on screen at all. An open ice-cream order never hides it:
+         that jingle is how the kid answers the order, from any distance. */
+      .hud-button--ability.is-hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
       /* The parent panel (see game/hud/parentPanel.ts). The gear is deliberately
          the least interesting thing on screen, and the ring that fills while it
          is held is the only feedback it needs. */

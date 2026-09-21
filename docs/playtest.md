@@ -55,7 +55,8 @@ rate.
    siren wash, gulp).
 5. **Play a mission through.** Wait out the calm gap for the fire, tap the
    burning house, drive over, get close, spray it out. Confetti and the sun
-   should land.
+   should land. The ability button stays away until the truck is beside the
+   fire — that is the hose arriving with proximity, not a missing button.
 6. **The parent panel.** Hold the gear for three seconds — it must not open
    sooner — then toggle sound and the hand off and on, and close it.
 7. **Install it.** Share → *Add to Home Screen*, then open it from the icon. It
@@ -102,7 +103,7 @@ then; the suite has grown since — see AC7 below.*
 | AC4 | The order waits forever; driving away disarms but keeps the order | **Met** | Desktop pass: the marker stayed over the house with the truck 4.25 units away, and an unanswered order held the town ~95s without resolving. `orderFlow` also pins "never mistakes an abandoned order for a served one". |
 | AC5 | No spawn while a mission runs (either kind), calm gap 60–90s honoured | **Met** | `missionBusy` 5 tests plus both pacers' gap rules (`firePacer` 11, `iceCreamPacer` 11). In the running app: with the fire pacer at its shipped gap and an unanswered order holding the town, no fire appeared for ~95s. |
 | AC6 | The helper hand demos once after 10s idle mid-mission, then cools down | **Met** | `helperHand` 13 tests and `missionFocus` 7 (which mission it points at). Desktop pass: the hand traced the route and its demo tap on the ordering house answered the order for real — the gesture a finger would have made. |
-| AC7 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green; logic coverage >80% | **Met** | Biome 86 files clean, `tsc --noEmit` clean, **421 tests across 35 files**. `game/mission` at 97.67% statements / 93.56% branches; `orderFlow`, `missionFocus`, `serveGate`, `helperHand`, `iceCreamMission`, `iceCreamPacer`, `missionBusy` and `firePacer` all at 100% statements. `main.ts` stays exempt DOM glue. |
+| AC7 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green; logic coverage >80% | **Met** | Biome 88 files clean, `tsc --noEmit` clean, **433 tests across 36 files** (the review that followed the sweep added tests for the shared calm-gap pacer and for tap aims). `game/mission` at 97%+ statements, with `orderFlow`, `missionFocus`, `serveGate`, `helperHand`, `iceCreamMission`, `iceCreamPacer`, `calmGapPacer`, `missionBusy` and `firePacer` all at 100% statements. `main.ts` stays exempt DOM glue. |
 
 ### How the desktop pass was driven
 
@@ -147,16 +148,23 @@ and offline play. This is what the second mission adds.
 - Whether the cone icon reads at a glance from across the room.
 - Anything a small child would have got wrong.
 
-### Known issues to watch for
+### Issues the desktop pass turned up, and what became of them
 
-Both came out of the desktop pass and are tracked outside this track:
+Both were found by the pass and both are fixed in the review that followed it:
 
-- **The hose button never hides.** `.hud-button--ability.is-hidden` has no CSS
-  rule anywhere, so the v1 fire mission's "only in reach" rule changes nothing
-  on screen. Ice-cream orders are unaffected — an open order deliberately keeps
-  the jingle button.
-- **A serve tap can honk instead of serving.** A tap snaps to any prop within
-  0.45 units *before* the 0.5-unit dead-zone check, so a tap on a marked house
-  with a cone beside it can resolve onto the cone and, when the parked truck is
-  inside 0.5 of that prop, honk rather than serve. Reproduced once and
-  intermittent; if a serve tap ever honks on the device, that is this bug.
+- **The hose button never hid.** `.hud-button--ability.is-hidden` was toggled
+  but had no CSS rule anywhere, so the v1 promise "the ability button *is* the
+  hose button, so it only exists once the car is close enough" never happened on
+  screen. Fixed: out of reach the button now fades out and stops taking taps,
+  while an open ice-cream order keeps it visible — that jingle is how the kid
+  answers an order, from any distance. Worth a glance on the device: while a
+  fire is burning and the truck is far away, the ability button should be gone,
+  and it should come back as the truck arrives.
+- **A serve tap could honk instead of serving.** A tap snapped to any prop
+  within 0.45 units *before* the 0.5-unit dead-zone check, so a tap on a marked
+  house with a cone beside it could resolve onto the cone and, when the parked
+  truck was inside 0.5 of that prop, honk rather than serve (reproduced once on
+  the desktop pass). Fixed: the router now reports both the snapped destination
+  and where the finger actually landed, and both missions are answered against
+  the aim. Still worth a tap or two on the device where a cone sits beside an
+  ordered house: a serve must always be a serve.

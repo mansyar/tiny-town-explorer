@@ -20,13 +20,21 @@ import type { Vec2 } from '../town/townTypes';
 import type { IceCreamSnapshot, IceCreamState } from './iceCreamMission';
 
 /**
- * How close a tap must land to count as aiming at the ordering house. The same
- * 0.9 the fire mission snaps with, so answering either mission feels identical.
+ * How close a tap must land to count as aiming at a mission's house.
+ *
+ * Shared by both missions — a fire and an order are answered by the same
+ * gesture, so they must not disagree about how forgiving it is. It lives here,
+ * beside the tap rules, rather than being restated in `main.ts` under a second
+ * name.
  */
-export const SNAP_TO_ORDER = 0.9;
+export const MISSION_SNAP_RADIUS = 0.9;
 
-/** Whether a tap landed on the ordering house rather than somewhere else. */
-export function isTapOnHouse(point: Vec2, house: Vec2, snap = SNAP_TO_ORDER): boolean {
+/** Whether a tap landed on a mission's house rather than somewhere else. */
+export function isTapOnHouse(
+  point: Vec2,
+  house: Vec2,
+  snap = MISSION_SNAP_RADIUS,
+): boolean {
   return Math.hypot(house.x - point.x, house.z - point.z) <= snap;
 }
 
