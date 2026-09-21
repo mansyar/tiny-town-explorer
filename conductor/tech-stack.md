@@ -25,8 +25,13 @@
   triangles (10 houses, the road grid and props). The full built scene with the
   fleet mounted measured **37,904 triangles per frame including the shadow-map
   pass**, across 134 draw calls and 106 meshes (2026-09-22) — inside the spec's
-  ~50k budget, so nothing needed ratcheting down. Frame rate was judged on the
-  iPad 9th-gen floor in the Phase 8 playtest.
+  ~50k budget, so nothing needed ratcheting down. Frame rate was judged on  the iPad 9th-gen floor in the Phase 8 playtest.
+- **Second mission (added 2026-09-22):** the ice-cream order marker is 212
+  triangles of primitives (5 meshes, 3 shared `MeshBasicMaterial`s) — no new
+  GLB, no new texture, no new kit — measured from the geometries rather than
+  estimated. The cone handoff reuses the existing `cones` burst pool, so the
+  37,904-triangle scene above stays inside its budget; a second mission FSM
+  costs no rendering time of its own.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
