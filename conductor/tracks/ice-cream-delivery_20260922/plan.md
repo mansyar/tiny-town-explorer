@@ -6,7 +6,7 @@
   - [ ] Write failing tests for spawn/respond/serve/update, patient-forever spawn, drive-away disarm, single-serve → complete + 2.5s linger → idle
   - [ ] Implement to pass (new `iceCreamMission.ts` or parallel manager; `SERVE_RANGE = 1.9`)
   - [ ] Refactor + coverage (>80% logic module)
-- [ ] Task: Order pacer (60–90s calm gap, ≥2-unit separation, never same house twice)
+- [x] Task: Order pacer (60–90s calm gap, ≥2-unit separation, never same house twice) `b8015cc`
   - [ ] Write failing tests (gap range, busy pauses, house-distance preference + fallback)
   - [ ] Implement to pass (`iceCreamPacer.ts` mirroring `firePacer.ts`)
   - [ ] Refactor + coverage
