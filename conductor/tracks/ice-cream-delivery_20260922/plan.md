@@ -2,7 +2,7 @@
 
 ## Phase 1 – Mission logic (TDD)
 
-- [ ] Task: Ice-cream order FSM (mirrors fire `idle→spawned→driving→active→complete`)
+- [x] Task: Ice-cream order FSM (mirrors fire `idle→spawned→driving→active→complete`) `3409c7b`
   - [ ] Write failing tests for spawn/respond/serve/update, patient-forever spawn, drive-away disarm, single-serve → complete + 2.5s linger → idle
   - [ ] Implement to pass (new `iceCreamMission.ts` or parallel manager; `SERVE_RANGE = 1.9`)
   - [ ] Refactor + coverage (>80% logic module)
