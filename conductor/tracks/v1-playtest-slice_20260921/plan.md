@@ -409,8 +409,15 @@
           worker only exists in built output, so a passing dev server proves
           nothing about the deployed site. Run here: `precache 42 entries` at
           3.3 MiB
-    - [ ] The deploy itself is the reviewer's step (hence the "(manual)" above):
-          it needs a Cloudflare account and the repo on a git host
+    - [x] The deploy itself was the reviewer's step (hence the "(manual)" above):
+          a Pages project connected to the repo, build `pnpm build`, output
+          `dist`, `NODE_VERSION` 24, no deploy command. Live at
+          https://tiny-town-explorer.pages.dev
+    - [x] Verified from outside rather than taken on trust: the site, `sw.js`,
+          the manifest, an icon and a hashed GLB all return 200 over HTTPS at
+          the exact byte sizes the local production build produced. First
+          attempt had been set up as a Worker and failed at the deploy step - see
+          "If the dashboard hands you a Worker instead" in the runbook
 - [ ] Task: Offline verification — load once, airplane-mode reload
       fully playable (manual)
 - [ ] Task: Performance profile on iPad-class device — fps + triangle
