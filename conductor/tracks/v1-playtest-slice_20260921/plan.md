@@ -89,8 +89,8 @@
           number and a ~20k projection including four vehicles
     - [ ] Deferred: vehicles do not exist yet (VehicleSystem is Phase 5), so
           nothing rides at the +0.01 asphalt level this task; wire them then
-- [ ] Task: Model-wiring Phase Verification & Checkpoint (Refer to
-      workflow.md)
+- [x] Task: Model-wiring Phase Verification & Checkpoint (Refer to
+      workflow.md) [checkpoint: c70f12e]
 
 ## Phase 3 — Input & Tap-to-Move
 
