@@ -1,0 +1,20 @@
+Task: Mission registry seam (FR13)
+
+Summary:
+- Added `src/game/mission/missionRegistry.ts`: a thin mission registry where each mission contributes optional `{ tick, tap, focus }` callbacks behind a single pass, with a stable pass order and exactly-one-active-mission invariant.
+- Moved the fire and ice-cream missions behind the registry in `src/main.ts`, collapsing the duplicated per-mission tick/tap block into the single registry pass.
+- New test file `src/game/mission/missionRegistry.test.ts` (12 tests): a mission contributes tick/tap/focus; exactly one mission active at a time; stable pass order; a mission with nothing to do contributes nothing.
+
+Why:
+FR13 requires that adding a third (park) and fourth (puppy) mission must not add a third copy of the tick/tap block in main.ts. The seam is deliberately bounded — a registry, not an FSM rewrite.
+
+Files changed:
+- src/game/mission/missionRegistry.ts (new)
+- src/game/mission/missionRegistry.test.ts (new)
+- src/main.ts (fire + ice-cream routed through registry)
+
+Verification:
+- pnpm check (biome) clean
+- pnpm typecheck (tsc --noEmit) clean
+- CI=true pnpm test: 445/445 passing (37 files), fire and ice-cream suites green and untouched
+- Coverage on missionRegistry.ts: 100% stmts/branch/funcs/lines (>80% target)
