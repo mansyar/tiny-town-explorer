@@ -42,9 +42,9 @@
   - [x] Tests for routing decisions; implement; manual-verify on touch (routing tests in `orderFlow.test.ts`; `resolveOrderTap`/`isTapOnHouse` now drive `answerMissions`, jingle latch on the ability press, one `activate()` path tells the latch on every morph, ring blooms on first arm)
 - [x] Task: Helper-hand reuse (10s idle → trace + demo tap on ordering house, cooldown ≥10s) `eb20544`
   - [x] Tests for `missionActive` + `destination` wiring; implement; manual-verify (new `missionFocus.test.ts` 9 tests + `fireAwaitsKid` tests; hand now ticks every frame so a quiet town resets its patience)
-- [ ] Task: Audio (spawn jingle cue once, serve `gulp`-or-`cheer` pairing per sound+visual rule, mute/cap respected)
-  - [ ] Implement; manual-verify with sound on/off
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Audio (spawn jingle cue once, serve `gulp`-or-`cheer` pairing per sound+visual rule, mute/cap respected) `465cf62`
+  - [x] Implement; manual-verify with sound on/off (spawn = one synthesized jingle per order against the cone icon; serve = `drop` with the cones burst then `cheer` with confetti + sun — spec NFR5/AC3 name `cheer` over the plan's `gulp`, which is the garbage truck's voice; all cues under the existing unlock/mute/cap)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `465cf62`]
 
 ## Phase 5 – Verification + docs
 
