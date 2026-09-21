@@ -215,7 +215,7 @@
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
       [checkpoint: ee538c2]
 
-## Phase 5 — Vehicles & Abilities
+## Phase 5 — Vehicles & Abilities [checkpoint: e18b398]
 
 - [x] Task: Source the fleet's art — three from the Car Kit, one authored [61dfa87]
     - [x] Vendor the CC0 Car Kit (fire truck, garbage truck, police car) behind
@@ -283,7 +283,8 @@
     - [x] Fix: tick the fleet in the render loop beside the motor, ring and fx
     - [x] Verified in the browser with a sample over time: the button flares for
           about 1.4s, clears, and fires again on the next press
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+      [checkpoint: e18b398]
 
 ## Phase 6 — Fire Mission (FSM, Pacing, Effects)
 
