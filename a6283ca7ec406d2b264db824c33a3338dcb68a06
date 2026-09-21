@@ -1,0 +1,41 @@
+TASK: VehicleMotor waypoint follower + wiring (Phase 3)
+
+ACCEPTANCE
+- rotate-then-drive: the car turns in place beyond ALIGN_TOLERANCE (0.08 rad,
+  ~one 60fps frame of turning), then drives where its nose points, so it
+  cannot crab sideways or cut a corner on an arc.
+- constant speed 1.6 u/s, 4.5 rad/s turn, 0.25 arrival radius; a route ends
+  parked, and passing a waypoint advances the cursor (which is also what stops
+  a fresh route stalling on the tile the car already stands on).
+- newest tap wins end to end: a second tap mid-route replaces the path; the
+  motor copies the route it is given rather than holding the caller's array.
+- unwired modules are now wired in main.ts: pointerdown -> ndcFromPoint ->
+  tapAt -> isCurrent -> findPath -> motor.setPath, with rig.setTarget(motor
+  .position) following the car.
+
+TEST-FIRST FINDINGS (Red -> Green)
+- With a 20-degree alignment tolerance the car left every waypoint on an arc
+  (about 1.3cm off the line) and transiently overshot its heading. Tightening
+  the tolerance to roughly one frame of turning is what makes "rotate, then
+  drive" mean what it says.
+- The kit's vehicles are authored facing -z (a truck's taller cargo half sits
+  along +z, measured from its own geometry), while town models face +z. Without
+  the half turn inside the holder the truck drove cab-last, which is invisible
+  in a still frame and obvious the moment it moves.
+- A tap outside the town resolved to a ground point in the void and drove the
+  car off the map, over ground that is not there. Found by verifying in the
+  browser, not in a test: the router now clamps to the grid's footprint, and
+  the whole rim is ring road, so an out-of-town tap always ends on a street.
+  Two existing tests were tapping outside the 5x5 test town without knowing it
+  and had to move.
+
+COVERAGE
+- vehicleMotor.ts and vehicleActor.ts both 100% statements/branches/functions
+  /lines; 180 tests across 16 files; biome clean, tsc --noEmit clean.
+
+DEFERRED (recorded in the plan)
+- The final stretch to a tap crosses lots unopposed, so the car can drive
+  between or through houses: obstacle-aware pathing (FR3) and building
+  hitboxes with bounce-and-resume (FR4) are Phase 4.
+- The expanding target ring is the next task; honk feedback still has no
+  visual.
