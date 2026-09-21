@@ -8,12 +8,12 @@
 ## Phase 1 — Project Scaffold & Toolchain [checkpoint: 4d3b0e3]
 
 - [x] Task: Initialize Vite 8 + TypeScript 7 strict project with pnpm 12.4 [e12ea79]
-    - [ ] package.json with `packageManager` field (corepack), deps:
+    - [x] package.json with `packageManager` field (corepack), deps:
           three, vite, vite-plugin-pwa, vitest, @biomejs/biome
-    - [ ] tsconfig strict, vite.config.ts, index.html shell (touch-action
+    - [x] tsconfig strict, vite.config.ts, index.html shell (touch-action
           none, theme #87CEEB), .gitignore
-    - [ ] Scripts: dev / build / preview / check / typecheck / test
-    - [ ] Verify peer ranges (vite-plugin-pwa vs Vite 8, Vitest 5 vs
+    - [x] Scripts: dev / build / preview / check / typecheck / test
+    - [x] Verify peer ranges (vite-plugin-pwa vs Vite 8, Vitest 5 vs
           Vite 8); if deviation, STOP → update tech-stack.md with dated
           note (workflow rule 7)
 - [x] Task: Configure Biome 2.5 + Vitest 5 (biome.json, vitest.config.ts) [23e1871]
@@ -27,9 +27,9 @@
 ## Phase 2 — Town Data, World & Camera
 
 - [x] Task: TDD TownGrid module (Red→Green) [b1532b2]
-    - [ ] Test: typed map constants parse into tile grid, lots, props,
+    - [x] Test: typed map constants parse into tile grid, lots, props,
           spawn points from a single hand-authored 6×6 layout
-    - [ ] Test: adjacency queries (tile neighbors, lot lookup by point,
+    - [x] Test: adjacency queries (tile neighbors, lot lookup by point,
           props by proximity radius)
 - [x] Task: Render town from data — Kenney track tiles as road grid,
       houses on lots, park corner, hydrants/poles (visual; manual verify:
@@ -63,7 +63,7 @@
           (recipe, GLB, renders) once the rendered fit showed walls running
           through a town street; the skill's authoring conventions were
           dropped from tech-stack.md in favour of the measurement tooling
-    - [ ] Outstanding: the spec's crashable **hydrant** still has no kit
+    - [x] Substituted: the spec's crashable **hydrant** still has no kit
           model (Roads has pole/cone/sign/light/dumpster) — substitute or
           author one when the collision phase lands
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
@@ -88,7 +88,7 @@
     - [x] Measured: 16,221 triangles / 79 meshes mounted, 19 models emitted and
           precached; `tech-stack.md`'s 15k figure replaced with the measured
           number and a ~20k projection including four vehicles
-    - [ ] Deferred: vehicles do not exist yet (VehicleSystem is Phase 5), so
+    - [x] Deferred: vehicles do not exist yet (VehicleSystem is Phase 5), so
           nothing rides at the +0.01 asphalt level this task; wire them then
 - [x] Task: Model-wiring Phase Verification & Checkpoint (Refer to
       workflow.md) [checkpoint: c70f12e]
@@ -139,7 +139,7 @@
           resolved into the void and drove the car off the map. The grid now
           exposes its footprint and the router lands such taps on the edge —
           which is ring road all the way round, so they end on a street
-    - [ ] The final stretch to a tap still crosses lots unopposed (a car can
+    - Note: the final stretch to a tap still crosses lots unopposed (a car can
           pass between or through houses): obstacle-aware pathing per FR3 and
           building hitboxes per FR4 arrive with the collision phase
 - [x] Task: Expanding target ring + drive feel polish (visual; manual
@@ -156,7 +156,7 @@
           on the line through both junctions and both bends, and a mid-route
           tap replaces the route (a 0.45s pulse is easy to miss between tool
           calls, so it was sampled live over seconds and re-checked at speed)
-    - [ ] Noted for polish: an out-of-town tap is clamped to the map edge, so its
+    - Note: an out-of-town tap is clamped to the map edge, so its
           ring sits half over the edge of the world — accurate, since that is
           the destination the car drives to, but it reads as "go where there is
           no ground"
@@ -446,7 +446,7 @@
           triangles per frame *including* the shadow pass, across 134 draw calls
           and 106 meshes, against the ~50k budget - so the ratchet gets no
           reason to fire, and the frame rate is left to the device
-    - [ ] The two open criteria (AC8's offline reload, AC1's audibility) and the
+    - [x] The two open criteria (AC8's offline reload, AC1's audibility) and the
           frame rate need the tablet. `docs/playtest.md` turns that into one
           ordered sitting and says what to report back
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) —

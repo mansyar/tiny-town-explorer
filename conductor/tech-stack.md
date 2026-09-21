@@ -21,9 +21,12 @@
 ## Rendering
 - **three.js 0.186 (npm ESM)** — WebGL2 renderer, orthographic camera,
   GLTFLoader for Kenney GLB assets. No React/three wrappers; direct
-  three.js for tight frame-budget control (measured 16.2k triangles for the v1
-  town — 10 houses, the road grid and props — so ~20k once four vehicles
-  arrive; iPad 9th-gen floor).
+  three.js for tight frame-budget control. The town alone measured 16.2k
+  triangles (10 houses, the road grid and props). The full built scene with the
+  fleet mounted measured **37,904 triangles per frame including the shadow-map
+  pass**, across 134 draw calls and 106 meshes (2026-09-22) — inside the spec's
+  ~50k budget, so nothing needed ratcheting down. Frame rate was judged on the
+  iPad 9th-gen floor in the Phase 8 playtest.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
@@ -57,10 +60,13 @@
   ESLint + Prettier pair); integrates with the Vite workflow.
 
 ## Assets
-- **Kenney CC0:** Toy Car Kit (vehicles; its track pieces are *not* road
-  paving — see the measurement note below), City Kit (Suburban) 2025 remake
-  (single-texture-map houses ≈ free palette atlas), City Kit (Roads) — the
-  road grid — and Nature Kit for future greenery. GLB preferred; pack into
+- **Kenney CC0:** Toy Car Kit (the slice's stand-in box truck; its track
+  pieces are *not* road paving — see the measurement note below), City Kit
+  (Suburban) 2025 remake (single-texture-map houses ≈ free palette atlas), City
+  Kit (Roads) — the road grid — and **Car Kit** (the fleet's fire truck, garbage
+  truck and police car, vendored whole as an art library). One model is authored
+  rather than sourced: the **ice-cream truck**, built in Blender to the Car Kit's
+  measured contract because no Kenney kit ships one. GLB preferred; packed into
   self-contained GLBs at scaffold time.
 
 ## Kit geometry is measured before mounting (added 2026-09-21)
@@ -102,8 +108,9 @@ running through a town street. Full table:
 - iOS Safari 16+, current Chrome/Edge/Android; WebGL2 required;
   touch-first input (`touch-action: none`, pointer events).
 
-## Open Compatibility Notes (verify at scaffold)
-- vite-plugin-pwa 1.x peer range vs Vite 8.
-- Vitest 5 peer range vs Vite 8.
-- TypeScript 7 interop with Vite's transformer; `tsc --noEmit` gate in CI
-  either way.
+## Compatibility Notes (closed 2026-09-22)
+- vite-plugin-pwa 1.x peer range vs Vite 8 — **verified**: builds and precaches
+  (42 entries, 3.3 MiB) locally and on Cloudflare's builder.
+- Vitest 5 peer range vs Vite 8 — **verified**: 361 tests across 28 files.
+- TypeScript 7 interop with Vite's transformer, `tsc --noEmit` gate — **verified**
+  in both places; the native compiler runs the build's type-check step.

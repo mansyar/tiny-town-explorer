@@ -4,9 +4,9 @@
 Tiny Town Explorers is an offline-first 3D toy-car sandbox PWA for children
 aged 3–5 — an interactive digital toy rug where kids drive a Fire Truck,
 Ice Cream Truck, Garbage Truck, or Police Car around a low-poly suburban town
-built from Kenney's CC0 toy-track and city kits. Kids tap anywhere to send
-their car along the road network (road-hopping on track tiles, then finishing
-over grass), bouncing harmlessly off hydrants, poles, and houses with a
+built from Kenney's CC0 city and car kits. Kids tap anywhere to send
+their car along the road network (road-hopping on the street tiles, then
+finishing over grass), bouncing harmlessly off cones, poles, and houses with a
 squish-and-resume bonk. The design pillars are absolute: zero text (icons and
 sounds only), zero failure (no timers, no penalties, no wrong choices), and
 pure agency (every tap gets a response). The v1 slice ships all four vehicles
@@ -39,8 +39,8 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
 4. **Offline First** — fully playable with no Wi-Fi; installable PWA.
 
 ## v1 Scope — Playtest Slice
-- Full low-poly suburban town on a Kenney toy-track tile grid (the track
-  pieces double as the pathing graph).
+- Full low-poly suburban town on a Kenney City Kit (Roads) tile grid (the
+  road tiles double as the pathing graph).
 - All four vehicles drivable as free-play toys with live special abilities:
   water spray, ice cream jingle, trash gulp, siren.
 - Tap-to-move with road-following pathing: route along track tiles, finish
@@ -52,8 +52,10 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
   swap; tap-burst hose (3–4 bursts extinguish); confetti resolution.
 - Inactivity helper: after 10s mid-mission, a hand traces the route and
   performs one demo tap.
-- Parent panel behind a hold-3s filling-ring gate: SFX/music toggles,
-  helper-hand toggle, attribution.
+- Parent panel behind a hold-3s filling-ring gate: a sound toggle and a
+  helper-hand toggle, icons only. No music toggle (the game ships no music
+  track) and no attribution in the UI (the kits are CC0 and ask for none;
+  provenance lives in the repo's asset READMEs).
 - Audio: silent until first tap (Web Audio unlock), always-visible mute
   icon, kid-safe volume cap; CC0 sounds + synthesized jingle.
 - Any-orientation play; ortho camera tracks the active car.
