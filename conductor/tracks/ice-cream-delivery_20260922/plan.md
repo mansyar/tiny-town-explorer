@@ -22,7 +22,7 @@
   - [ ] Write failing tests (serve available only when: ice-cream truck active + jingled since spawn + within serve range; morphing away abandons jingle; re-jingle re-arms)
   - [ ] Implement to pass (vehicle/mission glue, reuses `iceCream` cast `jingle` + `cones`, burst untouched since `seconds: 0`)
   - [ ] Refactor + coverage
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `8d35c7e`]
 
 ## Phase 3 – Order signal + celebration visuals (manual-verify, exempt from TDD)
 
