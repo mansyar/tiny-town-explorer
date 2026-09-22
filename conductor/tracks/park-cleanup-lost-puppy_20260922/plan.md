@@ -75,8 +75,8 @@
 
 - [x] Task: Full gates (NFR2, NFR4)
   - [x] `pnpm check`, `pnpm typecheck`, `CI=true pnpm test`, coverage >80% on logic; measure the new triangle and precache deltas
-- [~] Task: Device pass (AC11)
-  - [ ] Desktop drive of both missions in the real render loop, then the iPad sitting — bark, gulp and cheer audible, and again with sound off
+- [x] Task: Device pass (AC11)
+  - [x] Desktop drive of both missions in the real render loop, then the iPad sitting — bark, gulp and cheer audible, and again with sound off
 - [ ] Task: Update `docs/playtest.md` with AC1–AC11 results
 - [ ] Task: Update `tech-stack.md` — the puppy/litter/dumpster triangle delta and the bark clip with its provenance
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
