@@ -44,14 +44,14 @@ phase.*
 
 ## Phase 4 – Shared celebration/linger + unified completion sparkle (TDD)
 
-- [ ] Task: Celebration & linger as data
-  - [ ] Write failing tests: confetti/cheer/sun recipe per mission expressed as data; linger duration preserved per mission; celebration fires exactly once (red first)
-  - [ ] Implement the shared celebration module
-- [ ] Task: Unified completion sparkle (FR4, AC6)
-  - [ ] Write failing tests: fires exactly once per completion; zero fires in free play or mission start; survives tap-spam and interruption during linger (red first)
-  - [ ] Implement the town-hall sparkle trigger (logic) + FX hook (manual-verify), paired with existing celebration audio — never sound-only
-  - [ ] Refactor + coverage (>80% on sparkle/celebration logic)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Celebration & linger as data
+  - [x] Write failing tests: confetti/cheer/sun recipe per mission expressed as data; linger duration preserved per mission; celebration fires exactly once (red first)
+  - [x] Implement the shared celebration module
+- [x] Task: Unified completion sparkle (FR4, AC6) `0c847a1`
+  - [x] Write failing tests: fires exactly once per completion; zero fires in free play or mission start; survives tap-spam and interruption during linger (red first)
+  - [x] Implement the completion-site sparkle trigger (logic) + FX hook (manual-verify), paired with existing celebration audio — never sound-only
+  - [x] Refactor + coverage (>80% on sparkle/celebration logic) — missionCelebration.ts: 100% stmts/branch/funcs
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 – Mission migration + deletion (mixed)
 
