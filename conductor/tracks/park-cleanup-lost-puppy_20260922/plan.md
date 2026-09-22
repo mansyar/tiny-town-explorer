@@ -55,9 +55,9 @@
   - [x] Build the tied-bag and crumpled-paper primitives, mount the vendored `dumpster.glb` through the existing registry/pack path (its tests may need the new entry), and record the manual steps — readable at 48px, bounces, sits flush on the ground (`parkLitterFx.ts` factories; `PROP_MODELS.dumpster` + `PropKind` + collision radius 0.18 + townMap prop on park tile (2,1); manual steps recorded in the commit's git note; 514/514 pass)
 - [x] Task: The puppy mesh (FR14) `306c455`
   - [x] Build the pup from primitives in the props' lit material family, ≤4 shared materials, ~200–300 triangles; record the manual steps — reads as a puppy at play distance, hops aboard, runs to the door (`puppyFx.ts` createPuppy(): 4 Lambert materials, ~230 tris, ground origin, named meshes; steps recorded in the commit's git note; 514/514 pass)
-- [~] Task: Source and transcode the CC0 bark (FR15)
-  - [ ] Licence-check a CC0 bark source, transcode to mono 44.1 kHz MP3 with loudness normalisation, place it in `src/assets/audio/` with provenance beside it, register it in the audio registry, and measure the byte delta for the precache note
-- [ ] Task: Sweep FX + celebration wiring (reuse-verified, no new code)
+- [x] Task: Source and transcode the CC0 bark (FR15) `51d9c4f`
+  - [x] Licence-check a CC0 bark source, transcode to mono 44.1 kHz MP3 with loudness normalisation, place it in `src/assets/audio/` with provenance beside it, register it in the audio registry, and measure the byte delta for the precache note (BigSoundBank #0682 "Barking of a Spitz" CC0 by Joseph SARDIN; `bark.mp3` mono 44.1 kHz 16,989 B via house loudnorm recipe; README provenance rows + paragraph; `SampledSound`/`SOUND_MODELS` gain `bark`; delta +16.6 KiB → 384 KiB total, recorded in the commit's git note; 514/514 pass)
+- [~] Task: Sweep FX + celebration wiring (reuse-verified, no new code)
   - [ ] Confirm reuse: the `gulp` burst on a sweep, a `poof` per collected piece, `confetti` + `cheer` + `sunFx` on both completions; record the manual steps
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
