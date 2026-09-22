@@ -553,6 +553,7 @@ async function main(): Promise<void> {
       return;
     }
     puppyPending = false;
+    hud?.setPolicePulse(false);
     const spot = puppySpot;
     if (spot !== undefined) {
       pawMarker.place(spot.position);
@@ -1029,6 +1030,8 @@ async function main(): Promise<void> {
     spotPup.visible = true;
     riderPup.visible = false;
     audio.play('bark');
+    // FR6: the pulse is the quiet town's ask; the siren's answer clears it.
+    hud?.setPolicePulse(true);
   }
 
   /** Confetti + cheer + sun — the exact trio FR5, FR9 and FR10 ask for. */

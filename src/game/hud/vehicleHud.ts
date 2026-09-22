@@ -59,6 +59,8 @@ export interface VehicleHud {
   setAbilityBusy(busy: boolean): void;
   /** Show or hide the ability button; it doubles as the hose button. */
   setAbilityVisible(visible: boolean): void;
+  /** FR6: pulse the police button while the town waits for the siren. */
+  setPolicePulse(pulsing: boolean): void;
   setMuted(muted: boolean): void;
   dispose(): void;
 }
@@ -138,6 +140,9 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
     },
     setAbilityVisible(visible): void {
       abilityButton.classList.toggle('is-hidden', !visible);
+    },
+    setPolicePulse(pulsing): void {
+      buttons.get('police')?.classList.toggle('is-pulsing', pulsing);
     },
     setMuted(next): void {
       muted = next;
