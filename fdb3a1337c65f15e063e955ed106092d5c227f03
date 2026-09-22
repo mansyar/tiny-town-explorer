@@ -1,0 +1,21 @@
+Task: Four-mission rotation (FR11)
+
+Summary: New missionRotation.ts wraps the shared calm-gap pacer so one
+60-90s countdown decides WHEN the town acts and WHOSE turn it is; the
+draw excludes the mission that just ran (never back-to-back). Each
+mission's own pacer still decides WHERE its next instance lands via a
+new pickHouse() passthrough (calmGapPacer.pickHouse extracted from
+chooseHouse, records lastHouseId, leaves the clock untouched).
+main.ts tickPacers rewired: the two-racing-pacers-with-manual-busy
+block is replaced by rotation.update(delta, missions.isBusy()) +
+pickHouse + lightFire/lightOrder.
+
+Why: FR11 — one countdown cannot fire two missions at once, and the
+no-repeat draw makes same-mission-back-to-back impossible by
+construction. Pool starts ['fire','iceCream']; park/puppy join in
+Phase 5. Spec amended (user-approved): "three missions" -> "four".
+
+Tests: missionRotation.test.ts (12), pickHouse blocks added to
+calmGapPacer/firePacer/iceCreamPacer suites. 476/476 green,
+missionRotation 100% stmts/funcs/lines, calmGapPacer 94% branch.
+Biome + tsc clean.
