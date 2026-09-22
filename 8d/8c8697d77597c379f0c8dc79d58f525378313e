@@ -1,0 +1,33 @@
+Task: The town-wide invariant (FR8) — Phase 3, task 3
+
+Summary of changes:
+- New kerbInvariant.test.ts, holding the cross-cutting half of FR8 in its own
+  suite so the plan's "write the cross-cutting suite" is visible in the file
+  layout: the reservation's own contract is kerbReservation.test.ts.
+- It covers every mission that places or aims at a world position — litter
+  across 40 seeds (5 fixed park pieces + 3 drawn kerbside), the puppy's four
+  spots, all ten house lot centres (the fire target, the ice-cream order and the
+  puppy's owner all aim there), and the park's props — and asserts none falls
+  inside a parked car's footprint.
+- It also asserts the two properties that make the reservation worth having:
+  every kerbside piece stands on a kerb no car occupies, and every puppy spot is
+  still scoopable with the cars present.
+
+Files created: src/game/mission/kerbInvariant.test.ts (3 tests).
+Files modified: none.
+
+Why:
+The reservation and the litter's yield are each tested where they live, and
+neither test can see the other system. The failure this track exists to prevent
+spans the town's authoring plus every mission at once, so it needs one suite that
+walks them together — which is also why this task is sequenced after the other
+two rather than before.
+
+No violation was found, so no authored car had to move. The kerb counts that made
+that possible are recorded in the previous commit's note.
+
+Verification: pnpm check clean, pnpm typecheck clean, CI=true pnpm test 687
+tests / 55 files green.
+
+Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
