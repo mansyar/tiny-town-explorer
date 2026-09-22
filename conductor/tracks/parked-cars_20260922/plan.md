@@ -93,10 +93,15 @@
 
 ## Phase 5 – Wiring and verification (mixed)
 
-- [ ] Task: Scene and obstacle wiring (FR5, FR7, FR9)
-  - [ ] Wire parked cars and their blob mesh into the mounted town and the obstacle set, then manual-verify: bonk one head-on, graze one, drive the centre line past every car, and drive every street in the town
-- [ ] Task: Full gates + measurements + docs (NFR2, AC8, AC9)
-  - [ ] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage; measure triangles/frame, draw calls (expected +32, 133 → ~165) and precache entries/KiB in the build; record the deltas in `tech-stack.md` including the ~52k budget note, the draw-call rise and the shadow decision, and update `product.md`'s deferred list and roadmap
+- [~] Task: Scene and obstacle wiring (FR5, FR7, FR9) `8310763` — wiring and its fix landed; the manual drive-through is still open (below), so the task stays in progress rather than claiming a verification that was not done
+  - [x] Wire parked cars and their blob mesh into the mounted town and the obstacle set — already in place: Phase 2 put every parked car's box in `collectObstacles`, and the blob mesh joins `town.group` in `main.ts` (Phase 4, Task 2)
+  - [x] **The wiring found a real fault.** The measurement below showed every car was still casting a true shadow-map shadow *as well as* its blob: `createModelLibrary` sets `castShadow` on every mesh it prepares and no placement could opt out, so FR7's premise was unimplemented and each car paid the pass it exists to avoid while its blob double-darkened ground a real shadow already covered. `ModelPlacement.castsShadow` now lets a placement say no (only the cars do; houses say true so the intent is authored, not inherited), with two tests red first — the layout contract and the renderer honouring it. That is the 245 → 171 draw-call drop, measured
+  - [ ] **Manual drive-through still open:** bonk one head-on, graze one, drive the centre line past every car, and drive every street. A tap driven through the browser did not visibly move the truck, so this is unverified here and remains the user's step — the geometry behind it is covered by Phase 2's tests
+- [x] Task: Full gates + measurements + docs (NFR2, AC8, AC9) `e671ba8`
+  - [x] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage — lint and types clean, **712 tests / 57 files**
+  - [x] Measure triangles/frame and draw calls on the running game by counting GL draws (the method the recorded baseline used), with the cars absent and present: **138 draws / 38,310 triangles** with no cars, **245 / 59,768** while the cars still cast real shadows, **171 / 51,130** shipped. Six cars + blob = **+33 draws, +12,820 triangles** against the plan's expected +32 — and 12,796 triangles is the correct six-instance figure, not the 52,056 an earlier note claimed
+  - [x] Precache measured in `pnpm build`: **44 → 48 entries, 3,398.82 → 4,186.67 KiB**, the four car GLBs 783.6 of the 787.9 KiB and all four in the manifest
+  - [x] `tech-stack.md` records all of it including the budget note — the scene is **~1.1k triangles over the spec's ~50k budget**, the first time this project has been over the line, with the levers listed (four cars on the roomiest kerbs, or lower-detail karts) rather than hidden; `product.md` moves static parked cars into the shipped line
 - [ ] Task: Device pass (AC1–AC7, AC10)
   - [ ] Desktop drive of all four missions with parked cars present, then the iPad sitting: legibility at play distance, blobs reading as shadows, muted and unmuted, fps re-judged, the four GLBs confirmed offline; record results in `docs/playtest.md`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
