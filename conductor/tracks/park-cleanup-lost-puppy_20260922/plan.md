@@ -19,11 +19,11 @@
 
 ## Phase 2 – Clean Up the Park mission logic (TDD)
 
-- [~] Task: Litter field + spawn placement (FR1)
-  - [ ] Write failing tests: 8 pieces (5 park, 3 kerbside on road-bordering lots), every piece on a reachable non-road tile, placement deterministic under a seeded random
-  - [ ] Implement `parkLitter.ts` over the town grid's existing `collectTiles`
-  - [ ] Refactor + coverage
-- [ ] Task: Pickup and sweep rules (FR3, FR4, FR5)
+- [x] Task: Litter field + spawn placement (FR1) `044c509`
+  - [x] Write failing tests: 8 pieces (5 park, 3 kerbside on road-bordering lots), every piece on a reachable non-road tile, placement deterministic under a seeded random (7 tests in `parkLitter.test.ts`, red first)
+  - [x] Implement `parkLitter.ts` over the town grid's existing `collectTiles` (via `parkTiles`; kerb draw without replacement from ring-road lots)
+  - [x] Refactor + coverage (97% stmts, 83% branch, 100% lines on `parkLitter.ts`)
+- [~] Task: Pickup and sweep rules (FR3, FR4, FR5)
   - [ ] Write failing tests: drive-over collects at 0.6 and not at 0.61; one gulp per piece; the ≥150 ms gulp rate-limit; the ability sweeps every piece within 1.5 with one gulp for the group at a 0.5 s cadence; completion fires exactly once, on the last piece
   - [ ] Implement `parkPickup.ts` as pure rules
   - [ ] Refactor + coverage
