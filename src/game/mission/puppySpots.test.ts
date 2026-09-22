@@ -3,11 +3,28 @@ import { findPath } from '../path/pathfinder';
 import { createTownGrid, type TownGrid } from '../town/townGrid';
 import type { Vec2 } from '../town/townTypes';
 import { MIN_HOUSE_DISTANCE } from './calmGapPacer';
-import { chooseOwnerHouse, createPuppySpots } from './puppySpots';
+import {
+  chooseOwnerHouse,
+  createPuppySpots,
+  isClearOfHouses,
+  isScoopable,
+} from './puppySpots';
 
 const fixedRandom = (value: number) => () => value;
 
 const grid: TownGrid = createTownGrid();
+
+/** A tile-local offset in world space, the way the spot table expresses one. */
+const at = (
+  tile: { readonly x: number; readonly y: number },
+  offset: { readonly x: number; readonly y: number },
+): Vec2 => {
+  const centre = grid.tileToWorld(tile);
+  return {
+    x: centre.x + offset.x * grid.tileSize,
+    z: centre.z + offset.y * grid.tileSize,
+  };
+};
 
 describe('puppySpots', () => {
   describe('the authored hiding spots (FR6)', () => {
@@ -44,6 +61,35 @@ describe('puppySpots', () => {
       const unit = createPuppySpots({ grid });
       const spot = unit.drawSpot();
       expect(unit.spots.map((s) => s.id)).toContain(spot.id);
+    });
+  });
+
+  describe('every spot is findable and scoopable (FR7, AC8)', () => {
+    it('stands every authored spot clear of every house footprint', () => {
+      for (const spot of createPuppySpots({ grid, random: fixedRandom(0) }).spots) {
+        expect(isClearOfHouses(grid, spot.position), spot.id).toBe(true);
+      }
+    });
+
+    it('leaves a legal car position within the drive-over radius of every spot', () => {
+      for (const spot of createPuppySpots({ grid, random: fixedRandom(0) }).spots) {
+        expect(isScoopable(grid, spot.position), spot.id).toBe(true);
+      }
+    });
+
+    it('rejects the two lot positions the Phase 5 walkthrough caught', () => {
+      // `spot-garden` sat 0.3 by 0.35 inside house-4's lot and `spot-verge` 0.35
+      // inside house-5's — both within a house's capped footprint.
+      const garden = at({ x: 2, y: 3 }, { x: -0.3, y: 0.35 });
+      expect(isClearOfHouses(grid, garden)).toBe(false);
+      // The garden one was worse than hidden: adjacent houses leave gaps
+      // narrower than the car, so no legal car position came within reach and
+      // the errand could never finish — the town's busy gate stays shut for
+      // the rest of the session behind a pup nobody can collect.
+      expect(isScoopable(grid, garden)).toBe(false);
+
+      const verge = at({ x: 1, y: 4 }, { x: -0.35, y: 0 });
+      expect(isClearOfHouses(grid, verge)).toBe(false);
     });
   });
 

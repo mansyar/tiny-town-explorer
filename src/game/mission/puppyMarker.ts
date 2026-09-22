@@ -7,7 +7,15 @@
  *
  * Same shape as `orderMarker`: primitives in the icon family, the shared
  * bounce and sway, a `place/show/hide/update` surface `main.ts` drives.
- * Scene code — manual-verify per the workflow's Guiding Principle.
+ *
+ * **The paw print draws over town geometry** (FR7, after the Phase 5
+ * walkthrough). The pup is meant to hide behind houses, trees and the
+ * dumpster — but it is the paw print that tells the kid where to drive, and at
+ * `PAW_BASE_HEIGHT` it is the mission's only ground-level marker, so the very
+ * prop hiding the pup was hiding the signpost too. It now renders after the
+ * scene with depth testing off: an objective marker rather than scenery. The
+ * heart needs no such exemption — it floats above the roofline, like the order
+ * cone.
  */
 
 import {
@@ -27,6 +35,12 @@ const PAW_COLOR = 0xc98a4b;
 const HEART_COLOR = 0xe85d75;
 /** The paw sits on the grass at the spot, not on a roof. */
 const PAW_BASE_HEIGHT = 0.06;
+/**
+ * Draw order for a marker that must not be occluded. Any positive value puts
+ * it after the town's meshes (all at the default 0); the exact number only
+ * decides where it sits among the other on-top effects.
+ */
+const ON_TOP_RENDER_ORDER = 10;
 
 export interface PuppyMarker {
   readonly object: Object3D;
@@ -38,11 +52,35 @@ export interface PuppyMarker {
   update(deltaSeconds: number): void;
 }
 
-function createMarker(name: string, baseHeight: number, build: () => Group): PuppyMarker {
+/**
+ * Builds one marker. `onTop` exempts it from depth testing so town geometry
+ * can never hide it — see the module note on why the paw needs it.
+ */
+function createMarker(
+  name: string,
+  baseHeight: number,
+  build: () => Group,
+  onTop = false,
+): PuppyMarker {
   const object = new Group();
   object.name = name;
   object.visible = false;
-  object.add(build());
+  const built = build();
+  if (onTop) {
+    built.traverse((child) => {
+      if (child instanceof Mesh) {
+        // Both halves are needed: `depthTest: false` stops a wall's depth from
+        // rejecting the print, and the render order is what draws it after the
+        // wall has already been painted.
+        child.renderOrder = ON_TOP_RENDER_ORDER;
+        if (child.material instanceof MeshBasicMaterial) {
+          child.material.depthTest = false;
+          child.material.depthWrite = false;
+        }
+      }
+    });
+  }
+  object.add(built);
 
   let showing = false;
   let seconds = 0;
@@ -79,29 +117,37 @@ function createMarker(name: string, baseHeight: number, build: () => Group): Pup
   };
 }
 
-/** A flat paw print: a pad and four toes, hovering a breath off the grass. */
+/**
+ * A flat paw print: a pad and four toes, hovering a breath off the grass, and
+ * drawn over whatever the pup is hiding behind (FR7).
+ */
 export function createPawMarker(): PuppyMarker {
-  return createMarker('pawMarker', PAW_BASE_HEIGHT, () => {
-    const group = new Group();
-    group.name = 'pawPrint';
-    const material = new MeshBasicMaterial({ color: PAW_COLOR });
+  return createMarker(
+    'pawMarker',
+    PAW_BASE_HEIGHT,
+    () => {
+      const group = new Group();
+      group.name = 'pawPrint';
+      const material = new MeshBasicMaterial({ color: PAW_COLOR });
 
-    const pad = new Mesh(new SphereGeometry(0.13, 8, 6), material);
-    pad.name = 'pawPrint-pad';
-    pad.scale.set(1, 0.3, 1.1);
-    group.add(pad);
+      const pad = new Mesh(new SphereGeometry(0.13, 8, 6), material);
+      pad.name = 'pawPrint-pad';
+      pad.scale.set(1, 0.3, 1.1);
+      group.add(pad);
 
-    const toeOffsets = [-0.1, -0.035, 0.035, 0.1];
-    toeOffsets.forEach((x, index) => {
-      const toe = new Mesh(new SphereGeometry(0.05, 6, 4), material);
-      toe.name = `pawPrint-toe-${index}`;
-      toe.scale.set(1, 0.3, 1);
-      toe.position.set(x, 0, -0.16 - Math.abs(x) * 0.25);
-      group.add(toe);
-    });
+      const toeOffsets = [-0.1, -0.035, 0.035, 0.1];
+      toeOffsets.forEach((x, index) => {
+        const toe = new Mesh(new SphereGeometry(0.05, 6, 4), material);
+        toe.name = `pawPrint-toe-${index}`;
+        toe.scale.set(1, 0.3, 1);
+        toe.position.set(x, 0, -0.16 - Math.abs(x) * 0.25);
+        group.add(toe);
+      });
 
-    return group;
-  });
+      return group;
+    },
+    true,
+  );
 }
 
 /** A heart: two lobes over a turned square, floating above the door. */
