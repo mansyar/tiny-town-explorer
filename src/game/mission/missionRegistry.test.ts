@@ -130,6 +130,38 @@ describe('the mission registry contract', () => {
     expect(seen).toEqual([car, car]);
   });
 
+  it('lets a town-wide resolver answer focus, marker and all, over the per-entry pass', () => {
+    const asked: string[] = [];
+    const registry = createMissionRegistry(
+      [
+        {
+          id: 'fire',
+          focus: () => {
+            asked.push('fire');
+            return { awaiting: true, destination: { x: 1, z: 1 } };
+          },
+        },
+        {
+          id: 'iceCream',
+          focus: () => {
+            asked.push('iceCream');
+            return { awaiting: true, destination: { x: 2, z: 2 } };
+          },
+        },
+      ],
+      // FR12: `missionFocus` is *the* resolver — one four-mission answer,
+      // including the HUD siren target, rather than the first awaiting entry.
+      () => ({ awaiting: true, destination: { x: 9, z: 9 }, target: 'siren' }),
+    );
+
+    expect(registry.focus({ x: 0, z: 0 })).toEqual({
+      awaiting: true,
+      destination: { x: 9, z: 9 },
+      target: 'siren',
+    });
+    expect(asked).toEqual([]);
+  });
+
   it('reports the town busy unless every mission is idle', () => {
     const registry = createMissionRegistry([
       { id: 'fire', isIdle: () => true },

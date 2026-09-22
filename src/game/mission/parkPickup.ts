@@ -28,6 +28,8 @@ export interface ParkPickup {
   ): PickupResult;
   /** Ability press: sweeps every piece in range in one gulp (FR4). */
   sweep(carPosition: Vec2, pieces: readonly LitterPiece[]): PickupResult;
+  /** A new litter field is down: forget the last round's pieces (FR1). */
+  reset(): void;
 }
 
 /**
@@ -88,6 +90,13 @@ export function createParkPickup(): ParkPickup {
         (entry) => entry.piece,
       );
       return finish(taken, pieces, true);
+    },
+
+    reset(): void {
+      // The next field reuses the `litter-N` ids, so the collector's memory
+      // must not outlive the round it collected (FR1's repeatable layout).
+      collectedIds.clear();
+      lastGulp = Number.NEGATIVE_INFINITY;
     },
   };
 }

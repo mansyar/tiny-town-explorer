@@ -20,6 +20,7 @@ import {
   MeshLambertMaterial,
   SphereGeometry,
 } from 'three';
+import type { LitterPiece } from './parkLitter';
 
 /** Lifted just above the grass so a piece never z-fights its tile. */
 export const LITTER_SURFACE_HEIGHT = 0.02;
@@ -63,4 +64,71 @@ export function createCrumpledPaper(): Group {
   group.add(wad);
 
   return group;
+}
+
+/** Seconds per idle bounce — slow enough to read as waiting, not jumping. */
+const FIELD_BOUNCE_SECONDS = 1.1;
+/** How far a bounce lifts a piece, in world units. */
+const FIELD_BOUNCE_HEIGHT = 0.045;
+
+/** One laid-out piece of litter: a mesh bobbing on its own phase. */
+interface FieldEntry {
+  readonly node: Group;
+  readonly base: number;
+  readonly phase: number;
+}
+
+/**
+ * The whole field as one scene object (FR1's pieces "bounce gently"): pieces
+ * sit at their `spawnParkLitter` positions, each bobs on a staggered phase,
+ * and a collected piece simply leaves. `main.ts` owns *when* it is built.
+ */
+export interface LitterField {
+  readonly object: Group;
+  /** A piece was collected: it stops bouncing and leaves the show. */
+  remove(id: string): void;
+  /** Advances every remaining piece's bounce. */
+  update(deltaSeconds: number): void;
+}
+
+export function createLitterField(pieces: readonly LitterPiece[]): LitterField {
+  const object = new Group();
+  object.name = 'parkLitterField';
+
+  const active = new Map<string, FieldEntry>();
+  pieces.forEach((piece, index) => {
+    const node = index % 2 === 0 ? createTiedBag() : createCrumpledPaper();
+    node.position.set(piece.position.x, LITTER_SURFACE_HEIGHT, piece.position.z);
+    object.add(node);
+    active.set(piece.id, {
+      node,
+      base: LITTER_SURFACE_HEIGHT,
+      phase: (index / Math.max(1, pieces.length)) * FIELD_BOUNCE_SECONDS,
+    });
+  });
+
+  let seconds = 0;
+  return {
+    object,
+
+    remove(id): void {
+      const entry = active.get(id);
+      if (entry === undefined) {
+        return;
+      }
+      entry.node.visible = false;
+      active.delete(id);
+    },
+
+    update(deltaSeconds): void {
+      seconds += Math.max(0, deltaSeconds);
+      for (const entry of active.values()) {
+        const cycle =
+          ((seconds + entry.phase) % FIELD_BOUNCE_SECONDS) / FIELD_BOUNCE_SECONDS;
+        // Half-cosine: always back at the surface each cycle, never drifting.
+        entry.node.position.y =
+          entry.base + FIELD_BOUNCE_HEIGHT * (0.5 - 0.5 * Math.cos(cycle * Math.PI * 2));
+      }
+    },
+  };
 }

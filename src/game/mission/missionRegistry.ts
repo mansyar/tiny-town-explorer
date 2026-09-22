@@ -5,7 +5,9 @@
  * Each mission contributes optional `{ tick, tap, focus, isIdle, trySpawn }`
  * hooks. The registry runs them in a stable registration order behind the one
  * existing pass: ticks always, taps until one claims the aim, focus until one
- * is awaiting, and at most one successful spawn per busy-gated pass.
+ * is awaiting, and at most one successful spawn per busy-gated pass. A caller
+ * may instead hand the registry one town-wide focus resolver (FR12's
+ * `missionFocus`) and it becomes the single focus answer, marker and all.
  *
  * Deliberately bounded (spec FR13): a seam, not a rewrite of the FSM modules.
  * Fire and ice-cream keep their own managers; this only decides *who* gets the
@@ -13,6 +15,7 @@
  */
 
 import type { Vec2 } from '../town/townTypes';
+import type { MissionFocus } from './missionFocus';
 
 /** Closed set of missions the town can run today. */
 export type MissionId = 'fire' | 'iceCream' | 'park' | 'puppy';
@@ -29,12 +32,10 @@ export interface MissionContribution {
   readonly tap?: (aim: Vec2) => boolean | Promise<boolean>;
   /**
    * Where the helper hand should point. The first `awaiting` mission wins;
-   * with none awaiting the registry falls back to the car itself.
+   * with none awaiting the registry falls back to the car itself. Ignored
+   * when the registry was built with a town-wide resolver.
    */
-  readonly focus?: (carPosition: Vec2) => {
-    awaiting: boolean;
-    destination: Vec2;
-  };
+  readonly focus?: (carPosition: Vec2) => MissionFocus;
   /** Whether this mission is idle, for the town-at-a-time busy gate. */
   readonly isIdle?: () => boolean;
   /**
@@ -53,8 +54,8 @@ export interface MissionRegistry {
   tick(deltaSeconds: number): void;
   /** Offers `aim` to each mission until one claims it. */
   tap(aim: Vec2): Promise<boolean>;
-  /** Resolves exactly one focus destination (first awaiting, else the car). */
-  focus(carPosition: Vec2): { awaiting: boolean; destination: Vec2 };
+  /** Resolves exactly one focus destination (resolver, first awaiting, else the car). */
+  focus(carPosition: Vec2): MissionFocus;
   /** True when any registered mission is not idle. */
   isBusy(): boolean;
   /**
@@ -66,6 +67,7 @@ export interface MissionRegistry {
 
 export function createMissionRegistry(
   entries: readonly MissionRegistryEntry[],
+  resolveFocus?: (carPosition: Vec2) => MissionFocus,
 ): MissionRegistry {
   return {
     tick(deltaSeconds): void {
@@ -83,7 +85,13 @@ export function createMissionRegistry(
       return false;
     },
 
-    focus(carPosition): { awaiting: boolean; destination: Vec2 } {
+    focus(carPosition): MissionFocus {
+      // The town-wide resolver (FR12's `missionFocus`) is *the* answer when
+      // present: one four-mission decision, including the siren marker, with
+      // no per-entry vote to disagree with it.
+      if (resolveFocus !== undefined) {
+        return resolveFocus(carPosition);
+      }
       for (const entry of entries) {
         const result = entry.focus?.(carPosition);
         if (result?.awaiting === true) {

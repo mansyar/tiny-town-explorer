@@ -174,4 +174,19 @@ describe('createParkPickup', () => {
       expect(pickup.update(1 / 60, { x: 0, z: 0 }, []).complete).toBe(false);
     });
   });
+
+  describe('a fresh round (FR1)', () => {
+    it('collects a reset field again — the next round reuses the litter ids', () => {
+      const pickup = createParkPickup();
+      const only = piece('litter-1', 0.3, 0);
+      expect(pickup.update(1 / 60, { x: 0, z: 0 }, [only]).collected).toHaveLength(1);
+
+      // The calm gap passes between rounds before the new field is laid out.
+      driveFor(pickup, 0.6, { x: 50, z: 50 }, []);
+      pickup.reset();
+
+      const again = pickup.update(1 / 60, { x: 0, z: 0 }, [only]);
+      expect(again.collected.map((p) => p.id)).toEqual(['litter-1']);
+    });
+  });
 });
