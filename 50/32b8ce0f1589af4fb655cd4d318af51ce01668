@@ -1,0 +1,38 @@
+Task: Reservation source + the missions' declared kerbs (FR8) — Phase 3, task 1
+
+Summary of changes:
+- New kerbReservation.ts: a kerb edge is (street tile, the way it faces), read
+  from an item's POSITION rather than from a prop's authored offset, so a piece
+  of litter and a parked car agree about which kerb they are on from the only
+  thing they share — where they are. `kerbEdgesOfPoint` reports every band a
+  point stands in (a park corner slot is genuinely in two), nearest first, and
+  ignores both the driving surface (inside 0.30 of the centre line) and open
+  ground (beyond 0.80).
+- declaredKerbs() derives the missions' kerbs from their own layout data: the
+  park's two north-edge slots (via fixedParkItems) and the puppy's two kerbside
+  spots, so nothing is hand-copied and a move in either mission moves the
+  declaration with it.
+- parkedCarKerbEdges() derives each car's kerb the same way; takenKerbKeys() is
+  the union — what a dynamic placer must skip.
+- declaredKerbViolations() makes "a car may not park on a declared kerb"
+  checkable at all. Empty for the shipped town; a synthetic car on the puppy's
+  kerb is caught, which is what proves the check has teeth.
+- New parkSlots.ts: the park's fixed slot layout moved out of parkLitter so the
+  reservation can read it without an import cycle.
+
+Files created: src/game/mission/kerbReservation.ts, parkSlots.ts, and
+kerbReservation.test.ts (11 tests, written first — they failed on a missing
+module).
+
+Why:
+The intermediate state is deliberately un-green in one respect: the litter draw
+does not yield to the cars until task 2 of this phase. This commit adds the
+reservation and the declaration, changes no existing code path, and leaves the
+existing suites untouched.
+
+Verification: pnpm check clean, pnpm typecheck clean, CI=true pnpm test green;
+coverage kerbReservation.ts 100% statements/lines, 96.66% branches, parkSlots.ts
+100% statements/lines.
+
+Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
