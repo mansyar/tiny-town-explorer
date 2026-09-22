@@ -22,6 +22,10 @@ import { createHelperHand } from './game/mission/helperHand';
 import { createHelperTrace } from './game/mission/helperTrace';
 import { createIceCreamMission, ORDER_CONE } from './game/mission/iceCreamMission';
 import { createIceCreamPacer } from './game/mission/iceCreamPacer';
+import {
+  createCelebration,
+  type MissionCelebrationDeps,
+} from './game/mission/missionCelebration';
 import { missionFocus } from './game/mission/missionFocus';
 import {
   createMissionManager,
@@ -163,6 +167,27 @@ async function main(): Promise<void> {
   const sun = createSunFx();
   scene.add(sun.object);
 
+  /**
+   * One celebration per mission (FR3): recipes run through the shared module
+   * so every completion is confetti/sun/cheer exactly as today, plus the
+   * unified sparkle (FR4) — one extra burst at the same site, right after the
+   * recipe's cheer, so the reward is never sound-only. The module's latch
+   * makes it once per completion; rearms happen at each mission's start.
+   */
+  const celebrationDeps: MissionCelebrationDeps = {
+    play: (what, at) => {
+      if (what === 'sun') sun.show(at);
+      else if (what === 'cheer') audio.play('cheer');
+      else if (what === 'drop') audio.play('drop');
+      else fx.burst(what, at, 0);
+    },
+    sparkle: (at) => fx.burst('confetti', at, 0),
+  };
+  const fireCelebration = createCelebration('fire', celebrationDeps);
+  const orderCelebration = createCelebration('iceCream', celebrationDeps);
+  const parkCelebration = createCelebration('park', celebrationDeps);
+  const puppyCelebration = createCelebration('puppy', celebrationDeps);
+
   // The second mission: a house that wants ice cream. The pacer decides when
   // and where, the state machine owns the delivery, the marker shows the order,
   // and the beats keep its cue and its celebration to one each per order.
@@ -208,7 +233,6 @@ async function main(): Promise<void> {
   // Bursts the fire started with, for the flame's size; one celebration per
   // fire; whether the ability button is on screen; the demo tap the hand owes.
   let fireTotal = 0;
-  let celebrated = false;
   let abilityVisible = true;
   let serveArmed = false;
   let pendingDemo: Vec2 | undefined;
@@ -812,12 +836,8 @@ async function main(): Promise<void> {
       fire.setBursts(snapshot.burstsLeft, fireTotal);
     }
 
-    if (snapshot.state === 'complete' && !celebrated) {
-      celebrated = true;
-      const where = firePoint() ?? carPosition;
-      fx.burst('confetti', where, 0);
-      sun.show(where);
-      audio.play('cheer');
+    if (snapshot.state === 'complete') {
+      fireCelebration.fire(firePoint() ?? carPosition);
     }
   }
 
@@ -856,15 +876,9 @@ async function main(): Promise<void> {
     if (beats.served) {
       // Two pairs, both complete: the cone handoff is the `cones` burst the
       // free-play ability throws, with the same one-shot it sounds for `cones`
-      // there, and the win is confetti plus the sun plus a cheer - the exact
-      // celebration a doused fire gets. Nothing here is heard without being
-      // seen, and nothing is seen without being heard.
-      const where = orderPoint() ?? carPosition;
-      fx.burst('confetti', where, 0);
-      fx.burst('cones', where, 0);
-      sun.show(where);
-      audio.play('drop');
-      audio.play('cheer');
+      // there, and the win is the shared celebration plus the unified sparkle
+      // - nothing here is heard without being seen, or seen without a sound.
+      orderCelebration.fire(orderPoint() ?? carPosition);
     }
   }
 
@@ -913,7 +927,7 @@ async function main(): Promise<void> {
     if (result.complete && park.finish() && last !== undefined) {
       // `complete` only ever rides with a non-empty take (parkPickup's rule),
       // so the last piece — and where it fell — is always here to celebrate.
-      celebrate(last.position);
+      parkCelebration.fire(last.position);
     }
   }
 
@@ -1006,7 +1020,7 @@ async function main(): Promise<void> {
     spotPup.position.set(frameCarPosition.x, 0, frameCarPosition.z);
     spotPup.visible = true;
     doorRun = { from: { ...frameCarPosition }, to: ownerAt, t: 0 };
-    celebrate(ownerAt);
+    puppyCelebration.fire(ownerAt);
   }
 
   /** Opens a clean-up: a fresh field, a reset collector, the town's chime. */
@@ -1022,6 +1036,7 @@ async function main(): Promise<void> {
     litterField = createLitterField(litter);
     scene.add(litterField.object);
     audio.play('chime');
+    parkCelebration.rearm();
   }
 
   /**
@@ -1047,13 +1062,7 @@ async function main(): Promise<void> {
     audio.play('bark');
     // FR6: the pulse is the quiet town's ask; the siren's answer clears it.
     hud?.setPolicePulse(true);
-  }
-
-  /** Confetti + cheer + sun — the exact trio FR5, FR9 and FR10 ask for. */
-  function celebrate(where: Vec2): void {
-    fx.burst('confetti', where, 0);
-    sun.show(where);
-    audio.play('cheer');
+    puppyCelebration.rearm();
   }
 
   /** The nearest live piece of litter, for the hand's destination (FR12). */
@@ -1094,7 +1103,7 @@ async function main(): Promise<void> {
     fire.place(lot.position);
     fireTotal = mission.snapshot().burstsLeft;
     fire.setBursts(fireTotal, fireTotal);
-    celebrated = false;
+    fireCelebration.rearm();
     sun.hide();
     audio.play('chime');
     return true;
@@ -1111,6 +1120,7 @@ async function main(): Promise<void> {
     // A fresh order starts with no jingle: the one that served the last cone
     // must not carry over into this delivery.
     serveGate.noteOrderOpened();
+    orderCelebration.rearm();
     return true;
   }
 
