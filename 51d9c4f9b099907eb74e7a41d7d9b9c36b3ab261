@@ -1,0 +1,30 @@
+Task: Source and transcode the CC0 bark (FR15)
+
+Summary:
+- Licence check: "Barking of a Spitz" (sound #0682) by Joseph SARDIN,
+  https://bigsoundbank.com/barking-of-a-spitz-s0682.html - the page states
+  "CC0 (public domain): Free and royalty-free". Small dog (growl+bark),
+  1.35 s, mono 48 kHz - puppy-sized voice for the lost-puppy whine.
+- Downloaded the site's official MP3 (54,848 B; /UPLOAD/wav/ path returns
+  HTML, the /UPLOAD/mp3/ file matches the advertised 54 KB download).
+- Transcoded with the README's house recipe:
+  ffmpeg -i spitz-0682.mp3 -ac 1 -ar 44100 -af loudnorm=I=-19:TP=-2:LRA=8
+  -c:a libmp3lame -b:a 96k bark.mp3
+  -> src/assets/audio/bark.mp3: mono, 44,100 Hz, MP3, 1.344 s, 16,989 bytes.
+- Provenance recorded beside the clip in src/assets/audio/README.md: new
+  source-table row, a non-Kenney prose paragraph (mirroring engine-loop's),
+  a clip-table row, and the Cost line updated to "Nine clips, 384 KiB".
+- Registered: SampledSound union gains 'bark' (audioEngine.ts) and
+  SOUND_MODELS.bark = bark.mp3?url (audioRegistry.ts) - the Record type
+  forces registry completeness at compile time. Playback wiring is Phase 5.
+
+Precache byte delta (for the tech-stack note): +16,989 B (+16.6 KiB); clip
+total 375,759 B -> 392,748 B (367 -> 384 KiB, +4.5%); engine loop still
+~90% of the audio payload.
+
+Manual steps (recorded; bark becomes audible in Phase 5):
+1. After Phase 5 wiring: draw the puppy into rotation while a mission is
+   busy -> one short bark plays (first-tap unlock, mute, kid-safe cap).
+2. Repeat muted: no bark, no crash.
+
+Gates: biome clean, tsc clean, 514/514 tests (44 files).
