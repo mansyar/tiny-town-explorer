@@ -1,4 +1,4 @@
-import type { MarkerAdapter } from './missionMarkers';
+import { type MarkerAdapter, markerTap } from './missionMarkers';
 import { PICKUP_RADIUS } from './parkPickup';
 
 /**
@@ -152,8 +152,9 @@ export interface PuppyTapContext {
  * hop-out and celebration fire exactly once. Every other tap is `'ignore'`.
  */
 export function resolvePuppyTap(context: PuppyTapContext): PuppyTapAction {
-  if (context.state === 'carrying' && context.onOwnerHouse && context.armed) {
-    return 'deliver';
-  }
-  return 'ignore';
+  return markerTap(PUPPY_HEART, {
+    state: context.state,
+    onTarget: context.onOwnerHouse,
+    armed: context.armed,
+  });
 }

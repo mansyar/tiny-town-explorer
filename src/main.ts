@@ -20,14 +20,21 @@ import { createFireFx } from './game/mission/fireFx';
 import { createFirePacer } from './game/mission/firePacer';
 import { createHelperHand } from './game/mission/helperHand';
 import { createHelperTrace } from './game/mission/helperTrace';
-import { createIceCreamMission } from './game/mission/iceCreamMission';
+import { createIceCreamMission, ORDER_CONE } from './game/mission/iceCreamMission';
 import { createIceCreamPacer } from './game/mission/iceCreamPacer';
 import { missionFocus } from './game/mission/missionFocus';
 import {
   createMissionManager,
   distanceBetween,
+  FIRE_FLAME,
   fireAwaitsKid,
 } from './game/mission/missionManager';
+import {
+  markerArmed,
+  markerTap,
+  markerVisible,
+  syncMarker,
+} from './game/mission/missionMarkers';
 import { createMissionRegistry } from './game/mission/missionRegistry';
 import { createMissionRotation } from './game/mission/missionRotation';
 import {
@@ -40,11 +47,20 @@ import {
 import { createOrderMarker } from './game/mission/orderMarker';
 import { type LitterPiece, spawnParkLitter } from './game/mission/parkLitter';
 import { createLitterField, type LitterField } from './game/mission/parkLitterFx';
-import { createParkMission, resolveParkTap } from './game/mission/parkMission';
+import {
+  createParkMission,
+  PARK_FIELD,
+  resolveParkTap,
+} from './game/mission/parkMission';
 import { createParkPickup, type PickupResult } from './game/mission/parkPickup';
 import { createPuppy } from './game/mission/puppyFx';
 import { createHeartMarker, createPawMarker } from './game/mission/puppyMarker';
-import { createPuppyMission, resolvePuppyTap } from './game/mission/puppyMission';
+import {
+  createPuppyMission,
+  PUPPY_HEART,
+  PUPPY_PAW,
+  resolvePuppyTap,
+} from './game/mission/puppyMission';
 import { createPuppySpots, type PuppySpot } from './game/mission/puppySpots';
 import { createServeGate } from './game/mission/serveGate';
 import { createSunFx } from './game/mission/sunFx';
@@ -221,11 +237,14 @@ async function main(): Promise<void> {
         },
         tap: async (aim) => {
           const burning = firePoint();
-          if (
-            mission.snapshot().state !== 'spawned' ||
-            burning === undefined ||
-            distanceBetween(aim, burning) > MISSION_SNAP_RADIUS
-          ) {
+          const claimed =
+            markerTap(FIRE_FLAME, {
+              state: mission.snapshot().state,
+              onTarget:
+                burning !== undefined &&
+                distanceBetween(aim, burning) <= MISSION_SNAP_RADIUS,
+            }) === 'respond';
+          if (!claimed) {
             return false;
           }
           mission.respond();
@@ -812,7 +831,7 @@ async function main(): Promise<void> {
     // The serve affordance: the ring blooms on the house on the frame serve is
     // first armed, so "you are close enough, on the right truck, and it sang"
     // reads as a place to tap rather than a state the kid has to deduce.
-    const armed = serveArmedNow();
+    const armed = markerArmed(ORDER_CONE, snapshot.state, serveArmedNow());
     if (armed && !serveArmed) {
       const waiting = orderPoint();
       if (waiting !== undefined) {
@@ -822,15 +841,9 @@ async function main(): Promise<void> {
     serveArmed = armed;
 
     // The cone icon floats over the ordering house while the order is open, and
-    // the celebration clears it: one order, one beat of attention.
-    const marker = orderIsOpen(snapshot.state);
-    if (marker !== orderMarker.isShowing()) {
-      if (marker) {
-        orderMarker.show();
-      } else {
-        orderMarker.hide();
-      }
-    }
+    // the celebration clears it: one order, one beat of attention. Level-synced
+    // through the shared marker layer (FR2).
+    syncMarker(orderIsOpen(snapshot.state), orderMarker);
 
     // Cues fire on the edge, never on the state: `spawned` lasts as long as the
     // kid takes, but the jingle is owed once.
@@ -862,7 +875,9 @@ async function main(): Promise<void> {
    * them — poofs, gulps, and the one celebration.
    */
   function tickParkMission(delta: number, carPosition: Vec2): void {
-    litterField?.update(delta);
+    if (markerVisible(PARK_FIELD, park.snapshot().state)) {
+      litterField?.update(delta);
+    }
     if (litter.length > 0) {
       absorb(parkPickup.update(delta, carPosition, litter), true);
     }
@@ -937,16 +952,16 @@ async function main(): Promise<void> {
     );
     const after = puppy.snapshot().state;
 
+    // One marker at a time, by state — the shared layer owns which (FR2):
+    // the paw while searching, the heart while carrying, neither otherwise.
+    syncMarker(markerVisible(PUPPY_PAW, after), pawMarker);
+    syncMarker(markerVisible(PUPPY_HEART, after), heartMarker, ownerAt);
+
     if (before === 'searching' && after === 'carrying') {
-      // FR8/FR9: the paw was the last thing to point at; now the pup rides
-      // and the heart blooms — one marker at a time, by state.
-      pawMarker.hide();
+      // FR8/FR9: the paw was the last thing to point at; now the pup rides —
+      // the markers themselves followed the state rule above; this is the bark.
       spotPup.visible = false;
       riderPup.visible = true;
-      if (ownerAt !== undefined) {
-        heartMarker.place(ownerAt);
-      }
-      heartMarker.show();
       audio.play('bark');
     }
     if (after === 'carrying') {

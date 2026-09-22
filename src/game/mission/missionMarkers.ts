@@ -11,6 +11,8 @@
  * gate that behaviour never moves.
  */
 
+import type { Vec2 } from '../town/townTypes';
+
 /** One tap claim: fires when the state matches and every requirement holds. */
 export interface MarkerTapRule<S extends string, O extends string> {
   readonly inState: S;
@@ -64,4 +66,32 @@ export function markerTap<S extends string, O extends string>(
     return rule.outcome;
   }
   return 'ignore' as O;
+}
+
+/**
+ * Level-syncs a marker to a visibility rule: transitions once into `wanted`
+ * and does nothing while already there. `place` (if given) runs just before
+ * the show, so a marker blooms where the rule first owes it.
+ */
+export function syncMarker(
+  wanted: boolean,
+  marker: {
+    isShowing(): boolean;
+    show(): void;
+    hide(): void;
+    place?: (point: Vec2) => void;
+  },
+  place?: Vec2,
+): void {
+  if (wanted === marker.isShowing()) {
+    return;
+  }
+  if (!wanted) {
+    marker.hide();
+    return;
+  }
+  if (place !== undefined) {
+    marker.place?.(place);
+  }
+  marker.show();
 }

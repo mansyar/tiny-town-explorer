@@ -1,4 +1,4 @@
-import type { MarkerAdapter } from './missionMarkers';
+import { type MarkerAdapter, markerTap } from './missionMarkers';
 
 /**
  * The park clean-up's state machine: litter is out, the kid has answered it,
@@ -137,8 +137,5 @@ export interface ParkTapContext {
  * once, no matter how enthusiastically the piece is re-tapped.
  */
 export function resolveParkTap(context: ParkTapContext): ParkTapAction {
-  if (context.onPiece && context.state === 'spawned') {
-    return 'respond';
-  }
-  return 'ignore';
+  return markerTap(PARK_FIELD, { state: context.state, onTarget: context.onPiece });
 }

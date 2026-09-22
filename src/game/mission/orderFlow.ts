@@ -17,7 +17,8 @@
  */
 
 import type { Vec2 } from '../town/townTypes';
-import type { IceCreamSnapshot, IceCreamState } from './iceCreamMission';
+import { type IceCreamSnapshot, type IceCreamState, ORDER_CONE } from './iceCreamMission';
+import { markerTap, markerVisible } from './missionMarkers';
 
 /**
  * How close a tap must land to count as aiming at a mission's house.
@@ -58,21 +59,16 @@ export interface OrderTapContext {
  * deliver a cone the kid was not shown was available.
  */
 export function resolveOrderTap(context: OrderTapContext): OrderTapAction {
-  if (!context.onOrderHouse) {
-    return 'ignore';
-  }
-  if (context.state === 'spawned') {
-    return 'respond';
-  }
-  if (context.state === 'active' && context.armed) {
-    return 'serve';
-  }
-  return 'ignore';
+  return markerTap(ORDER_CONE, {
+    state: context.state,
+    onTarget: context.onOrderHouse,
+    armed: context.armed,
+  });
 }
 
 /** Whether an order is out: shown to the kid, not yet served. */
 export function orderIsOpen(state: IceCreamState): boolean {
-  return state === 'spawned' || state === 'driving' || state === 'active';
+  return markerVisible(ORDER_CONE, state);
 }
 
 /**

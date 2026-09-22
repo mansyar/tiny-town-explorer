@@ -17,6 +17,7 @@ import {
   markerArmed,
   markerTap,
   markerVisible,
+  syncMarker,
 } from './missionMarkers';
 import { PARK_FIELD, type ParkState } from './parkMission';
 import { PUPPY_HEART, PUPPY_PAW, type PuppyState } from './puppyMission';
@@ -228,5 +229,51 @@ describe('cross-adapter isolation (AC3)', () => {
     expect(markerVisible(PUPPY_PAW, 'idle')).toBe(false);
     expect(markerVisible(PUPPY_HEART, 'idle')).toBe(false);
     expect(markerTap(FIRE_FLAME, { state: 'idle', onTarget: true })).toBe('ignore');
+  });
+});
+
+describe('syncMarker levels a marker to its rule', () => {
+  function fakeMarker() {
+    let showing = false;
+    const calls: string[] = [];
+    return {
+      isShowing: () => showing,
+      show: () => {
+        showing = true;
+        calls.push('show');
+      },
+      hide: () => {
+        showing = false;
+        calls.push('hide');
+      },
+      place: (point: { x: number; z: number }) => {
+        calls.push(`place:${point.x}`);
+      },
+      calls,
+    };
+  }
+
+  it('transitions into wanted exactly once', () => {
+    const marker = fakeMarker();
+    syncMarker(true, marker);
+    syncMarker(true, marker);
+    expect(marker.isShowing()).toBe(true);
+    expect(marker.calls).toEqual(['show']);
+  });
+
+  it('hides on the way out, then leaves a hidden marker alone', () => {
+    const marker = fakeMarker();
+    syncMarker(true, marker);
+    syncMarker(false, marker);
+    syncMarker(false, marker);
+    expect(marker.isShowing()).toBe(false);
+    expect(marker.calls).toEqual(['show', 'hide']);
+  });
+
+  it('places just before the first show when given a point', () => {
+    const marker = fakeMarker();
+    syncMarker(true, marker, { x: 3, z: 5 });
+    syncMarker(true, marker, { x: 9, z: 9 });
+    expect(marker.calls).toEqual(['place:3', 'show']);
   });
 });
