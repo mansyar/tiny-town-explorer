@@ -1,0 +1,45 @@
+Task: Kerbside placement and clearance contracts (FR2, FR3, FR4) — Phase 1, task 2
+
+Summary of changes:
+- The house a lot owns is now authored data: each row in townMap.ts names its
+  model, BUILDING_MODELS became a Record<BuildingKind, url> instead of a cycled
+  array, and townTypes gains BUILDING_EXTENTS, houseFootprint() and
+  houseWallDistance(). That makes "which kerbs can host a car at all" a
+  computed, testable rule instead of a number written down: wall = 1.00 minus
+  half the fitted house's depth, measured 0.574 to 0.748 across the ten houses.
+- MIN_KERB_WALL (0.652), KERB_CLEARANCE (0.03), PARKED_CAR_SEAT_HEIGHT (0.02)
+  and widestParkedHalfWidth() name the placement rule's constants; the seat
+  moved to the kerb top because a car's footprint crosses lawn, kerb and
+  asphalt.
+- Three props step 0.45 along their own kerb to their lot's corner. They were
+  authored at the lot's centre along the street, which is exactly where a
+  parked car's body goes, and the lane/wall band leaves nowhere to retreat to:
+  a prop would need >= 0.772 while the house wall is at 0.657-0.659. Same kerb,
+  same perpendicular offset, 0.045 of daylight from the car.
+- The lane-clearance test samples every street tile centre and 20 points along
+  every leg, and collects offending points so one failure lists them all.
+
+Files created:
+- src/game/town/parkedCarsPlacement.test.ts (10 tests: straight-segment only,
+  wall eligibility, wall gap, seat height, lane clearance, spawn clearance,
+  house/other-car/prop non-overlap, widest-model binding)
+
+Files modified:
+- src/game/town/townTypes.ts, townMap.ts, townGrid.ts, townLayout.ts
+- src/game/assets/modelRegistry.ts (+ its group enumeration test)
+
+Why:
+My hand-derived placement numbers had already been wrong once (the 0.93 wall),
+so the point of this task is evidence rather than arithmetic: every rule that
+decides where a car may stand is now derived from measured kit extents and
+asserted against the shipped map, and a future map or art change resurfaces as
+a failure instead of a car standing in the road, inside a wall, or across a
+cone.
+
+Verification: pnpm check clean, pnpm typecheck clean, CI=true pnpm test 644
+tests / 52 files green; coverage on the touched logic — townTypes.ts 100%,
+townMap.ts 100%, townGrid.ts 94.59% branch (two pre-existing nullish fallbacks),
+townLayout.ts 97.5% branch.
+
+Deviation: the prop positions above are visible content and were changed along
+the kerb rather than by relocating the props to other streets.
