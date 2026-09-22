@@ -168,3 +168,66 @@ Both were found by the pass and both are fixed in the review that followed it:
   and where the finger actually landed, and both missions are answered against
   the aim. Still worth a tap or two on the device where a cone sits beside an
   ordered house: a serve must always be a serve.
+
+## Park clean-up and lost puppy (track `park-cleanup-lost-puppy_20260922`)
+
+The third and fourth missions: litter you collect by *driving over it*, and a
+lost pup found with the siren, carried home and delivered to its door. Four
+missions now share one town, drawn so the same one never repeats back to back.
+
+### The criteria
+
+| # | Criterion | Verdict | Evidence |
+| --- | --- | --- | --- |
+| AC1 | Litter spawns bouncing in the park and on the kerbs; a tap on a piece morphs to the garbage truck and drives there | **Met** | `parkMission` 9 tests ("answers only a tap that lands on a piece, and only once"; a miss is ignored) and `parkLitter` 7 (the eight fixed slots — five park, three kerb). Desktop and iPad: pieces bounce, tap → poof-morph → truck drives. |
+| AC2 | Driving over litter collects it with a gulp; the ability press sweeps a nearby cluster; the park empties either way | **Met** | `parkPickup` 14 tests (0.6-unit drive-over, ≥150 ms per-piece gulp cadence, 1.5-unit sweep at ≥0.5 s voiced once for the group). iPad: gulp rhythm on a run, one gulp per sweep, emptied both ways. |
+| AC3 | Last piece cleared → confetti + cheer + sun → idle → calm gap | **Met** | Celebration reuses the fire recipe; `missionRotation` 12 + the calm-gap pacers hold the 60–90 s gap. Confirmed on the desktop drive and the iPad sitting. |
+| AC4 | Puppy spawns hidden — no marker, one whine, the police HUD button pulses | **Met** | `puppyMission` spawn state; `startPuppy` whine + `setPolicePulse` (feat `f333325`). iPad: the pulse reads as an invitation and never competes with the ability button. |
+| AC5 | Siren → yip + paw marker blooms, and the helper hand retargets to it | **Met** | `puppyMission` siren latch-once; `missionFocus` 13 tests (four-way retarget) + `helperHand` 13. Confirmed: yip + paw + hand trace; a second press blooms nothing. |
+| AC6 | Driving over the puppy picks it up with a yip; the heart marker appears only then | **Met** | `puppyMission` pickup/deliver gates; two pup instances (roof rider, door runner). Confirmed both passes: roof hop with yip, heart only once aboard. |
+| AC7 | Tapping the owner house in range delivers with confetti + cheer → idle | **Met** | `resolvePuppyTap` "deliver only when carrying, on the house, and in range" (1.9 units) plus the disarm-on-leave test; door run → confetti confirmed desktop and iPad. |
+| AC8 | Four missions never overlap; the 60–90 s calm gap holds; no mission repeats back to back | **Met** | `missionBusy` 5, `missionRotation` 12 (pool of four; the next draw excludes the one just played), both pacers' gap rules. |
+| AC9 | One marker at a time in both missions; after 10 s idle the hand demos the current step once | **Met** | paw clears when the pup boards, so heart and paw never coexist; litter focus only while the round waits. Both drives saw the hand demo exactly once per idle stretch, then cool down. |
+| AC10 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green; logic coverage >80% | **Met** | Biome 106 files clean, `tsc --noEmit` clean, **516 tests across 43 files**; every NFR4-named module ≥94.5% statements, and `game/mission` excluding the three workflow-exempt visual files computes to **98.18%** (649/661). `main.ts`/`vehicleHud.ts` stay exempt DOM glue. |
+| AC11 | iPad pass — both missions audible and completable hands-on (bark, gulp, cheer), and again with sound off | **Met** | One LAN sitting on the iPad: park and puppy each completed with sound on (bark, gulp rhythm, both cheers) and again muted with every cue reading visually; the desktop half rode the Phase 5 browser drive. |
+
+### How the desktop pass was driven
+
+Same shape as the ice-cream pass: the real render loop in the browser, driven
+with real inputs — the Phase 5 verification played both missions end to end
+(including the muted beat), and the Phase 6 gate sitting confirmed the gates
+around it. Nothing needed accelerating this time: both missions draw from the
+rotation whenever the town is idle, so a patient session reaches them in
+shipped time.
+
+### The park and puppy device pass — one sitting
+
+The v1 and ice-cream sittings above still stand for town, vehicles, panel and
+offline play. What these two missions add, on an iPad over a LAN dev server:
+
+1. **Wait for the park chime.** Litter bounces on the two park tiles and the
+   ring-road kerbs; the dumpster sits on the park's south-east corner.
+2. **Tap a piece, then drive.** Poof-morph to the garbage truck; a run over
+   litter gulps per piece — a rhythm, not a stutter.
+3. **Sweep once.** The gulp ability near a cluster voices the group once and
+   empties it; the last piece anywhere → confetti + cheer + sun.
+4. **Wait for the whine** (never the same mission twice back to back): no paw
+   marker, and the police button breathes — an invitation, not an alarm.
+5. **Siren → yip + paw**, pulse stops; idle ten seconds and the hand retargets.
+6. **Board and deliver.** Drive close: the pup hops aboard with a yip and a
+   heart. Tap the owner house in range: the door run, then cheer + confetti.
+7. **Mute and replay one of each.** Every cue must still read — poof, gulp
+   burst, pulse, paw, heart, confetti. Silence, never confusion.
+
+### What to report back (park and puppy)
+
+- Anything silent that should have sounded, or the bark reading harsh.
+- Any gulp that stutters at close range, or a sweep that misses a visible piece.
+- Whether the police pulse reads as "someone needs help" at a glance.
+- Anything a small child would have got wrong — especially reaching the
+  siren before finding the pup.
+
+### Issues the passes turned up
+
+None. The desktop drive and the iPad sitting both completed both missions
+clean on the first try; nothing was found to file or fix.
