@@ -363,3 +363,119 @@ Spec and plan for the track carry the change as FR7/AC8, with the marker-visual
 line in "Out of Scope" carrying an explicit exception — the fault broke the
 zero-failure pillar rather than changing a look. Nothing device-specific was
 touched, so the sittings above still stand as written.
+
+## Static parked cars (track `parked-cars_20260922`)
+
+Six cars park on the town's kerbs, from four Car Kit models, on the kerbs whose
+house walls measure wide enough to hold them. They are **crashable rather than
+solid**: drive into one and the truck squishes, honks and carries on, so a car
+is never a wall a small child can get stuck behind. They are also not tappable —
+a tap beside a car means the ground beside it, never the car's centre.
+
+### The criteria
+
+| # | Criterion | Verdict | Evidence |
+| --- | --- | --- | --- |
+| AC1 | Six cars, four models, parallel to the kerb on straight segments only, seated on the kerb top, overlapping no house, prop, car or spawn capsule | **Met** | `parkedCars` 14 + `parkedCarsPlacement` 10 tests (kerb eligibility derived from each house's measured wall; every car on a `straight` tile; centre-line samples along every street leg collected, not just stopped at the first offender). Desktop and iPad: six cars, four shapes, each lying along its street. |
+| AC2 | A centre-line drive along every street never bonks a car; a leg ending beside one still completes | **Met** | Tested per street tile and along every leg; confirmed on the desktop drive — the centre-line pass touched nothing. |
+| AC3 | Driving into one squishes, bonks, honks and resumes; never strands a leg; never makes a pup unreachable | **Met** | `collision` 100% with the box shape, `vehicleMotor` box-hitbox suite; desktop drive: head-on bonk and graze both honked and re-routed to the tap, no leg abandoned. |
+| AC4 | A tap on a car drives to the finger's ground point with no snap, and the car never reacts | **Met** | `inputRouter` 4 tests (no `propId`, ground point kept; cones and poles still snap). Confirmed on the iPad: tapping beside a car sends the truck to the tap. |
+| AC5 | Cars absent from the shadow-map pass; blobs sun-aligned, merged into one mesh, grounded without z-fighting, reading as the same shadow family as the houses' | **Met** | Measured: 245 → 171 draw calls once the cars stopped casting (below). `parkedShadows` 13 tests, including the offset asserted *away from the sun* rather than against a constant. iPad: blobs read as shadows, not holes. |
+| AC6 | Kerb reservation holds both ways; litter still varies its kerbside lots by seed | **Met** | `kerbReservation` 11 + `kerbInvariant` 3 + `parkLitter` 5 (four lots for three pieces; the same seed reproduces, different seeds vary). Missions played with the cars present on both passes. |
+| AC7 | All four missions complete untouched on the shipped map | **Met** | No mission file changed except `parkLitter`'s candidate filter; missions played through on the device sitting with the cars standing. |
+| AC8 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green; >80% coverage on the logic touched | **Met** | Biome 129 files clean, `tsc --noEmit` clean, **712 tests across 57 files**; `parkedShadows.ts`, `collision.ts`, `inputRouter.ts`, `kerbReservation.ts`, `parkSlots.ts` and `townMap.ts` at 100%, `townTypes.ts` 95%+ branch. |
+| AC9 | Triangles/frame, draw calls and precache entries/KiB measured and recorded in `tech-stack.md` with the budget note | **Met** | `tech-stack.md` carries the three-way measurement and the over-budget note; `pnpm build` 48 entries / 4,186.67 KiB. |
+| AC10 | iPad pass — cars read as parked cars at play distance, blobs read as shadows, missions unaffected, fps unchanged, all four GLBs present offline | **Met** | One sitting: cars read as parked cars and the blobs as shadows, no new stutter while the town was busiest, and all four car models load with the network off. |
+
+### How the desktop pass was driven
+
+The drive-through was driven in the real render loop in the browser at the dev
+server: a head-on bonk and a graze at the six cars, then a centre-line run along
+every street, then taps beside a car. All clean.
+
+The performance figures came from counting GL draws per frame — the same method
+the earlier sweeps used, but reached differently and more honestly than before:
+a hook on the WebGL draw calls installed *from the browser*, needing **no source
+edit at all** (the v1 and consolidation sweeps each needed a temporary probe in
+the entry file, restored afterwards). The control run — the same page with the
+six parked cars temporarily removed from the town map — did need a source edit,
+which was reverted and verified with `git diff --exit-code` on `townMap.ts`
+before anything else was done.
+
+### The performance budget, re-measured
+
+| | No parked cars | As first shipped | **Shipped** |
+| --- | --- | --- | --- |
+| Triangles per frame | 38,310 | 59,768 | **51,130** |
+| Draw calls | 138 | 245 | **171** |
+
+So the six cars and their merged blob cost **+33 draw calls and +12,820
+triangles** over the car-free scene — against the +32 draws and +12,808
+triangles the spec predicted before implementation. The middle column is not a
+variant that shipped: it is what the scene actually cost while the cars were
+casting a real shadow *as well as* their blob, which the measurement is what
+found.
+
+**Stated plainly: 51,130 triangles per frame is about 1.1k over the spec's ~50k
+heuristic — the first time this project has been over that line.** The frame rate
+is unchanged on the floor device in this sitting, so nothing needs ratcheting
+down yet; `tech-stack.md` lists the levers (four cars on the roomiest kerbs, or
+lower-detail karts for two of the six) for whenever a sitting says otherwise.
+The no-car baseline also drifted for the first time here — 138 draws / 38,310
+triangles against the 133 / 37,802 recorded before this track — because the park
+track's trees, dumpster and props landed in between.
+
+### The parked-cars device pass — one sitting
+
+The v1 sitting above still covers town, vehicles, panel and offline play. What
+six parked cars add, on an iPad:
+
+1. **Load it and look down a street.** Six cars, four shapes, each sitting on
+the kerb *beside* a house rather than in the road, each lying along its own
+street.
+2. **Drive into one.** It should squish, honk, and carry on to where you tapped
+— never stop the truck, never leave it stuck inside the car.
+3. **Graze one.** Same again, clipping a corner.
+4. **Drive the middle of every street.** The centre line must be clear; nothing
+should bonk.
+5. **Tap the ground just beside a car.** The truck should head for your finger,
+not for the car's centre, and the car itself must not react.
+6. **Look at the shadows.** Each car's shadow should fall to the same side as
+the houses' — away from the sun — and read as a shadow rather than a dark patch
+floating under the car.
+7. **Play a mission through** with the cars standing, including the park
+clean-up, whose kerbside litter must never sit inside a car.
+8. **Go offline** (airplane mode, app closed and reopened) and confirm the four
+car models still appear — they are 783.6 KiB of the precache.
+
+### What to report back (parked cars)
+
+- Any car that reads as "in the way" rather than "parked" — a kerb that leaves
+  it looking abandoned mid-road.
+- Any bonk that felt unfair, or any leg that seemed to give up beside a car.
+- Whether the blobs still read as shadows at an angle, or from the far side of
+  the town.
+- Anything a small child would have got wrong driving past a car.
+
+### Issues the pass turned up
+
+Nothing visible, and that is the interesting part: the desktop drive and the
+iPad sitting both came back clean, while the *measurement* found the fault this
+track had shipped with.
+
+- **The cars were in the shadow-map pass after all.** FR7 says they carry a blob
+  *instead of* a real shadow, and the reason given is the cost — six more casters
+  means re-rendering the town per frame into the 1024 map. But the model library
+  sets `castShadow` on every mesh it prepares and no placement could opt out, so
+  each car was drawn twice and its blob double-darkened ground a real shadow
+  already covered. Nothing about the picture said so; the draw-call count did
+  (245 where the plan predicted ~165). **Fixed:** `ModelPlacement.castsShadow`,
+  with the cars the only placement that says no — the 245 → 171 drop is that fix
+  measured. Tests were written red first for both halves (the layout contract and
+  the renderer honouring it).
+- **Two claims were corrected rather than shipped.** The spec's budget row said
+  "delta ~600 triangles, budget ~52k", and an interim note in this track put the
+  six cars at 52,056 triangles; both were written before anything was measured.
+  The real figures are +12,820 and 12,796 respectively — the earlier one had
+  multiplied the four-*model* sum by six — and the spec now records the measured
+  numbers beside its (correct) prediction.
