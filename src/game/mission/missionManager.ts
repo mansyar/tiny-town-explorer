@@ -1,4 +1,5 @@
 import type { Vec2 } from '../town/townTypes';
+import type { MarkerAdapter } from './missionMarkers';
 
 /**
  * The fire mission's state machine: what is burning, whether the kid has
@@ -51,6 +52,18 @@ export interface MissionManagerOptions {
 export function fireAwaitsKid(state: MissionState): boolean {
   return state === 'spawned' || state === 'driving';
 }
+
+/**
+ * The fire target (flame) adapter for the shared marker layer (FR2): shows
+ * while the fire has bursts left (spawned/driving/active), arms the hose in
+ * `active`, and answers a tap on the burning house only before the kid has
+ * driven over (the hose is a button, not a tap, once active).
+ */
+export const FIRE_FLAME: MarkerAdapter<MissionState, 'ignore' | 'respond'> = {
+  showIn: ['spawned', 'driving', 'active'],
+  armIn: ['active'],
+  taps: [{ inState: 'spawned', needsTarget: true, outcome: 'respond' }],
+};
 
 export interface MissionManager {
   snapshot(): MissionSnapshot;

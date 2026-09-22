@@ -1,3 +1,5 @@
+import type { MarkerAdapter } from './missionMarkers';
+
 /**
  * The park clean-up's state machine: litter is out, the kid has answered it,
  * the truck is among it, and the town's patient resolution afterwards.
@@ -33,6 +35,16 @@ export type ParkState = 'collecting' | 'complete' | 'idle' | 'responding' | 'spa
 export function parkAwaitsKid(state: ParkState): boolean {
   return state === 'spawned' || state === 'responding';
 }
+
+/**
+ * The litter-field adapter for the shared marker layer (FR2): the field is
+ * present exactly while the clean-up runs, and a tap on a piece only claims
+ * before the truck set off — under the wheels, collection is drive-over.
+ */
+export const PARK_FIELD: MarkerAdapter<ParkState, 'ignore' | 'respond'> = {
+  showIn: ['spawned', 'responding', 'collecting'],
+  taps: [{ inState: 'spawned', needsTarget: true, outcome: 'respond' }],
+};
 
 export interface ParkSnapshot {
   readonly state: ParkState;

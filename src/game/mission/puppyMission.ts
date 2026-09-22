@@ -1,3 +1,4 @@
+import type { MarkerAdapter } from './missionMarkers';
 import { PICKUP_RADIUS } from './parkPickup';
 
 /**
@@ -35,6 +36,29 @@ export { PICKUP_RADIUS };
 export const DELIVERY_RANGE = 1.9;
 /** Confetti, cheer, then back to the calm gap (FR10). */
 export const COMPLETE_LINGER_SECONDS = 2.5;
+
+/**
+ * The puppy spot (paw) adapter for the shared marker layer (FR2): the
+ * signpost while the pup is out. It answers no taps — finding the pup is
+ * driving, not tapping.
+ */
+export const PUPPY_PAW: MarkerAdapter<PuppyState, 'ignore'> = {
+  showIn: ['searching'],
+  taps: [],
+};
+
+/**
+ * The heart (delivery target) adapter for the shared marker layer (FR2):
+ * shows while carrying, arms the door tap in range, answers a tap on the
+ * owner's house only when armed.
+ */
+export const PUPPY_HEART: MarkerAdapter<PuppyState, 'ignore' | 'deliver'> = {
+  showIn: ['carrying'],
+  armIn: ['carrying'],
+  taps: [
+    { inState: 'carrying', needsTarget: true, needsArmed: true, outcome: 'deliver' },
+  ],
+};
 
 export interface PuppyMission {
   snapshot(): PuppySnapshot;

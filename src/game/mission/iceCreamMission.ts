@@ -1,4 +1,5 @@
 import type { Vec2 } from '../town/townTypes';
+import type { MarkerAdapter } from './missionMarkers';
 
 /**
  * The ice-cream order's state machine: which house ordered, whether the kid
@@ -23,6 +24,20 @@ export const SERVE_RANGE = 1.9;
 export const COMPLETE_LINGER_SECONDS = 2.5;
 
 export type IceCreamState = 'active' | 'complete' | 'driving' | 'idle' | 'spawned';
+
+/**
+ * The order cone (and serve-ring arm) adapter for the shared marker layer
+ * (FR2): shows while the order is open, arms the ring in `active`, answers a
+ * house tap with `respond` before the truck set off and `serve` once armed.
+ */
+export const ORDER_CONE: MarkerAdapter<IceCreamState, 'ignore' | 'respond' | 'serve'> = {
+  showIn: ['spawned', 'driving', 'active'],
+  armIn: ['active'],
+  taps: [
+    { inState: 'spawned', needsTarget: true, outcome: 'respond' },
+    { inState: 'active', needsTarget: true, needsArmed: true, outcome: 'serve' },
+  ],
+};
 
 export interface IceCreamSnapshot {
   readonly state: IceCreamState;
