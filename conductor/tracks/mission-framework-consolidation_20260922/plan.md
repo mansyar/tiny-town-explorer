@@ -21,7 +21,7 @@ phase.*
   - [x] Verify `missionBusy` / `calmGapPacer` / `missionFocus` suites pass **unmodified**; record their test counts as the frozen baseline (no code changes)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `ad610d6`
 
-## Phase 2 – Generic mission FSM (TDD)
+## Phase 2 – Generic mission FSM (TDD) [checkpoint: a71f890]
 
 - [x] Task: FSM core module `f78bbf3`
   - [x] Write failing tests for the state machine contract: declared states, guarded transitions, tick/tap delegation, exactly-one transition per update, celebration entry fires once (red first)
@@ -30,11 +30,11 @@ phase.*
 - [x] Task: Abort/teardown semantics in the FSM (FR6) `f78bbf3` (abort landed in the same red-green cycle as the core; see task note)
   - [x] Write failing tests: `abort()` from any state returns to idle and emits cleanup, including mid-celebration (red first)
   - [x] Implement + coverage
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `a71f890`
 
 ## Phase 3 – Shared marker layer (TDD)
 
-- [ ] Task: Marker adapter contract
+- [~] Task: Marker adapter contract
   - [ ] Write failing tests: one adapter interface covers cone/ring, litter, puppy spot, fire target — show/hide/arm/disarm/tap-resolution driven by FSM state (red first)
   - [ ] Implement the shared marker module
   - [ ] Refactor + coverage (>80%)
