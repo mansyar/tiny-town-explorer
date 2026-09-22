@@ -18,7 +18,7 @@
 > phases may adjust; Phase 3's invariant is the cross-cutting guard, so it is
 > written after both the cars (Phase 1) and their hitboxes (Phase 2) exist.
 
-## Phase 1 – Parking data and placement rules (TDD)
+## Phase 1 – Parking data and placement rules (TDD) [checkpoint: f91ae7a]
 
 - [x] Task: Parked-car kinds + authored map instances (FR1, FR9) `f242c5d`
   - [x] Write failing tests for the data contract: the map authors six parked cars across four models; each instance carries a model, a kerb offset and a yaw; the grid publishes the fitted footprint (half extents + yaw) alongside position; existing prop kinds keep their current shape and defaults (12 tests in `parkedCars.test.ts`, red first — the suite died on `isParkedCarKind is not a function` before the data layer existed)
@@ -30,7 +30,12 @@
   - [x] Implement the placement rule — offset ≈0.46 from the street's centre line, orientation from the street axis, straight-segment and wall eligibility validation — and tune the authored instances until every contract holds (all six pass lane, wall, spawn and non-overlap checks with 0.038–0.075 of lane margin and 0.037–0.147 of wall gap; `MIN_KERB_WALL` 0.652, `KERB_CLEARANCE` 0.03 and `PARKED_CAR_SEAT_HEIGHT` 0.02 are now named constants)
   - [x] Refactor + coverage (644/644 tests, 52 files; `townTypes.ts` 100%, `townMap.ts` 100%, `townGrid.ts` 94.59% branch — its two uncovered lines are pre-existing nullish fallbacks in `collectTiles` and the parked yaw default; the diagonal-yaw throw now has its test)
   - [x] **Deviation, flagged for review:** three props (the pole on lot (1,2), the cones on (1,3) and (2,2)) sat at their lot's *centre* along the street, exactly where a parked car's body goes, and the lane/wall band leaves nowhere for them to retreat to. Rather than move them to other streets they now step **0.45 along their own kerb** to the lot's corner — same kerb, same perpendicular offset, 0.045 of daylight from the car. This changes visible prop positions, so it is called out rather than buried.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Phase scope listed (`git diff --name-only f242c5d~1 HEAD`), a test file verified for every changed code file, and `townMap.test.ts` created for the one gap (7 tests; the authored map's own intent)
+  - [x] Automated verification: `pnpm check && pnpm typecheck && CI=true pnpm test` — lint and types clean, **651 tests / 53 files** green (one Biome format fix in `townMap.test.ts` caught and re-run before the checkpoint)
+  - [x] Manual verification plan presented, including the disclosed intermediate state: parked-car placements carry no `fitWithin` yet, so the cars render at kit scale with real shadows until Phase 4
+  - [x] User confirmed the phase on the automated evidence, deferring the visual judgement of parking to Phase 4's checkpoint
+  - [x] Verification report attached as a git note to `f91ae7a`
 
 ## Phase 2 – Collision and tap rules (TDD)
 
