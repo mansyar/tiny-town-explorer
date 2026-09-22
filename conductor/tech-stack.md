@@ -58,6 +58,40 @@
   budget. The paw/heart markers and celebration FX are primitives reusing
   the marker and burst patterns of the first two missions, and both mission
   FSMs cost no rendering time of their own.
+- **Static parked cars (added 2026-09-22):** six cars on the street kerbs, four
+  Car Kit models (sedan, hatchback-sports, van, suv) added to the registry and
+  precached, plus one merged blob-shadow mesh. Measured by counting GL draws per
+  frame on the running game — the same method as the 37,802-triangle baseline
+  above — with the cars absent from the map and then present:
+
+  | Scene | Draw calls | Triangles/frame |
+  | --- | --- | --- |
+  | No parked cars | 138 | 38,310 |
+  | Cars casting real shadows (the bug below) | 245 | 59,768 |
+  | **Shipped: cars with blobs only** | **171** | **51,130** |
+
+  So the six cars and their blob cost **+33 draw calls and +12,820 triangles**
+  over the no-car scene, against the +32 the plan expected — the plan's estimate
+  was sound. Six instances are sedan ×2 + hatchback ×2 + van + suv = **12,796
+  triangles**; an earlier note in this track claimed 52,056 by multiplying the
+  four-*model* sum by six, and that figure was wrong.
+
+  The first measurement found a real fault rather than confirming the plan: the
+  model library sets `castShadow` on every mesh it prepares and no placement
+  could opt out, so each car was drawn twice — paying in full the shadow pass
+  FR7 exists to avoid, while its blob double-darkened ground that already had a
+  real shadow on it. `ModelPlacement.castsShadow` now lets a placement say no,
+  and the 245 → 171 draw-call drop is that fix measured.
+
+  **Budget note, stated plainly:** the scene now measures **51,130 triangles per
+  frame against the spec's ~50k budget — about 1.1k over**, the first time this
+  project has been over the line. The cars cost what four extra models cost; at
+  0.55 fit their art is *smaller* than the town's houses, which is why six of
+  them are affordable at all. Levers, in the order I would pull them: drop to
+  four cars on the four roomiest kerbs (−2 models, about −4.1k triangles), or
+  use the Car Kit's lower-detail karts for two of the six. Nothing needs
+  ratcheting down for the floor device until a playtest says otherwise, but the
+  number is over budget and should not be presented as inside it.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
@@ -148,10 +182,13 @@ running through a town street. Full table:
 ## Compatibility Notes (closed 2026-09-22)
 - vite-plugin-pwa 1.x peer range vs Vite 8 — **verified**: builds and precaches
   (44 entries, 3,398.82 KiB as of the consolidation track — the bark clip and
-  mounted `dumpster.glb` added ~51.6 KiB over the earlier 42-entry, 3.3 MiB
-  baseline).
-- Vitest 5 peer range vs Vite 8 — **verified**: 621 tests across 50 files
-  (consolidation track; was 516 across 43 at the park/puppy track, 361 across 28
-  before that).
+  mounted  `dumpster.glb` added ~51.6 KiB over the earlier 42-entry, 3.3 MiB
+  baseline). The parked-cars track takes it to **48 entries, 4,186.67 KiB**: the
+  four Car Kit cars (sedan 180.2, hatchback-sports 205.2, van 183.6, suv 214.7
+  KiB) are 783.6 of the 787.9 KiB rise, and all four are in the precache
+  manifest, so the game still plays offline with the cars present.
+- Vitest 5 peer range vs Vite 8 — **verified**: 712 tests across 57 files
+  (parked-cars track; was 621 across 50 at the consolidation track, 516 across
+  43 at the park/puppy track, 361 across 28 before that).
 - TypeScript 7 interop with Vite's transformer, `tsc --noEmit` gate — **verified**
   in both places; the native compiler runs the build's type-check step.
