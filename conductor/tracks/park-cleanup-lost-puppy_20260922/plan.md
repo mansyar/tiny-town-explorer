@@ -51,7 +51,7 @@
 
 ## Phase 4 – Art and audio assets (manual-verify, exempt from TDD)
 
-- [ ] Task: Litter meshes + park dumpster mount (FR1)
+- [~] Task: Litter meshes + park dumpster mount (FR1)
   - [ ] Build the tied-bag and crumpled-paper primitives, mount the vendored `dumpster.glb` through the existing registry/pack path (its tests may need the new entry), and record the manual steps — readable at 48px, bounces, sits flush on the ground
 - [ ] Task: The puppy mesh (FR14)
   - [ ] Build the pup from primitives in the props' lit material family, ≤4 shared materials, ~200–300 triangles; record the manual steps — reads as a puppy at play distance, hops aboard, runs to the door

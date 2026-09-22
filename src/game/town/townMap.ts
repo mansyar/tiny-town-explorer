@@ -49,6 +49,9 @@ export const TOWN_MAP: TownMapSpec = {
     { kind: 'powerPole', tile: { x: 1, y: 4 }, offset: { x: -0.3, y: 0 } },
     { kind: 'tree', tile: { x: 1, y: 1 }, offset: { x: 0.2, y: 0.2 } },
     { kind: 'tree', tile: { x: 2, y: 1 }, offset: { x: -0.2, y: 0.2 } },
+    // The park's trash landmark (FR1): south-east corner of the east park
+    // tile, clear of the tree, the litter slots and spot-dumpster's corner.
+    { kind: 'dumpster', tile: { x: 2, y: 1 }, offset: { x: 0.3, y: 0.3 } },
   ],
   spawnPoints: [
     { x: 3, y: 2 },

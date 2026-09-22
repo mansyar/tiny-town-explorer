@@ -2,6 +2,7 @@ import carKitFiretruck from '../../assets/kits/car-kit/firetruck.glb?url';
 import carKitGarbageTruck from '../../assets/kits/car-kit/garbage-truck.glb?url';
 import carKitIceCreamTruck from '../../assets/kits/car-kit/ice-cream-truck.glb?url';
 import carKitPolice from '../../assets/kits/car-kit/police.glb?url';
+import dumpster from '../../assets/kits/city-kit-roads/dumpster.glb?url';
 import electricityPole from '../../assets/kits/city-kit-roads/electricity-pole.glb?url';
 import roadBend from '../../assets/kits/city-kit-roads/road-bend-square.glb?url';
 import roadCrossroad from '../../assets/kits/city-kit-roads/road-crossroad.glb?url';
@@ -77,6 +78,7 @@ export const NATURE_MODELS = {
  * cone does not, the pole and street tree come from the city kits. */
 export const PROP_MODELS = {
   cone,
+  dumpster,
   powerPole: electricityPole,
   tree: treeLarge,
 } as const;

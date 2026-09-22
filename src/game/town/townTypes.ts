@@ -28,7 +28,7 @@ export type RoadShape = 'isolated' | 'end' | 'straight' | 'curve' | 'tee' | 'cro
  * cone takes that role (chunkier, and squarely toddler-bonkable). Poles and
  * trees come from City Kit (Roads) and City Kit (Suburban).
  */
-export type PropKind = 'cone' | 'powerPole' | 'tree';
+export type PropKind = 'cone' | 'dumpster' | 'powerPole' | 'tree';
 
 /** World-space position on the ground plane (x = east, z = south). */
 export interface Vec2 {
@@ -103,6 +103,7 @@ export function tileKindForCharacter(character: string): TileKind | undefined {
  */
 export const PROP_COLLISION_RADIUS: Readonly<Record<PropKind, number>> = {
   cone: 0.13,
+  dumpster: 0.18,
   powerPole: 0.12,
   tree: 0.16,
 };
