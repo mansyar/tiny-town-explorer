@@ -17,14 +17,20 @@ traffic remains its own future track.
 the shipped code.** Two findings reshaped this spec rather than being noted as
 caveats:
 
-1. **A parked car cannot park on the asphalt.** `road-straight`'s driving
-   surface is a 0.60-wide band centred on the tile, while the player's capsule
-   is 0.52 wide — 0.04 of slack per side. A parked car therefore occupies the
-   **0.32–0.70 band** measured from the street's centre line: it cannot come
-   inward of 0.26 (the player's own radius) or outward of ~0.70 (the house wall
-   sits at 0.93). That band is the same band the missions already use for every
-   kerb-placed item — litter's kerbside pieces sit at exactly **0.65** from the
-   ring road's centre line and the puppy's two lot spots at **0.52** — so the
+1. **A parked car cannot park on the asphalt, and the kerb band is narrow.**
+   `road-straight`'s driving surface is a 0.60-wide band centred on the tile,
+   while the player's capsule is 0.52 wide — 0.04 of slack per side. A parked
+   car's inner edge must therefore stay at least 0.26 from the street's centre
+   line, and its outer edge must clear the house wall. That wall is **not** a
+   fixed distance: the lot centre is 1.00 from the centre line, so the wall sits
+   at `1.00 − fitted depth ÷ 2`, and every house fits differently. Measured from
+   the committed kit extents and the renderer's 0.86 cap, the walls run from
+   **0.574** (house-8, type-r) to **0.748** (house-4, type-d). Two kerbs cannot
+   host a parked car at any offset, one of the roomiest belongs to the puppy,
+   and the rest leave a feasible band only if the cars are fitted smaller than
+   first planned — hence FR2's ≈0.55. The band is also shared with every mission
+   item placed at a kerb: litter's kerbside pieces sit at exactly **0.65** from
+   the ring road's centre line and the puppy's two lot spots at **0.52**, so the
    conflict is structural, and this track grows a **kerb reservation** (FR8)
    that touches `parkLitter` and `puppySpots`.
 2. **Every mounted mesh casts a shadow, so the shadow pass doubles a car's
@@ -41,13 +47,21 @@ caveats:
   deterministic, no RNG, one row per instance.
 - **FR2 — Fit.** Car Kit art is authored ~4× town scale, so each model is fitted
   at mount time with the existing `fitWithin` cap to a longest horizontal extent
-  of **≈0.65** — deliberately smaller than the player's own 0.86 fit, which is
-  what keeps the lane clearance of FR4 a real margin rather than a shave. The
-  plan measures each fitted model rather than trusting the kit's extents.
-- **FR3 — Placement geometry.** Each car is parked **parallel to the kerb, in
-  the 0.32–0.70 band, spanning the kerb strip and the lawn edge** outside its
-  house. Two authoring constraints fall out of that band and must be asserted,
-  not trusted:
+  of **≈0.55**. The constant comes from the measured walls, not from taste: at
+  0.55 the widest model (the sedan, width/length 0.588) has a half-width of
+  0.162, so a car needs a wall at **≥0.652** — which every kerb but the two
+  impossible ones provides. At the 0.65 first planned, the same sedan needed a
+  wall of 0.672 and only four kerbs in town qualified. The cost is visible: at
+  0.55 a parked car is ~64% of the player's own 0.86-length car, so it reads as
+  a smaller car of the same family rather than a same-size one. The plan
+  measures each fitted model rather than trusting the kit's extents.
+- **FR3 — Placement geometry.** Each car is parked **parallel to the kerb,
+  spanning the kerb strip and the lawn edge** outside its house: offset ≈0.46
+  from the street's centre line, which puts its inner edge 0.298 clear of the
+  lane and its outer edge 0.622, inside the tightest eligible wall of 0.657.
+  Kerb eligibility is therefore a real rule, not a formality: a kerb qualifies
+  only if its wall is ≥0.652 — measured, per house, from the art. Three further
+  constraints fall out and must be asserted, not trusted:
   - **Straight segments only.** A 0.65-long box cannot sit parallel on a 1.00
     tile whose kerb is curved, so no car may occupy a kerb alongside a bend,
     junction or end tile — only alongside `straight` road tiles.
@@ -55,8 +69,16 @@ caveats:
     (+0.02) and asphalt (+0.01), so the ground seat this spec originally assumed
     would sink the wheels 0.02 into the kerb. Parked cars seat at the **kerb top
     (+0.02)**, which floats them 0.02 over the lawn — below visual notice.
+  - **Walls are measured, never assumed.** The wall each car must clear is
+    `1.00 − fitted depth ÷ 2` for the house on that lot, so eligibility is
+    checked against the house's own fitted depth (kit extents + the renderer's
+    0.86 cap) and, at runtime, against the footprint the renderer publishes.
+    Collision.ts's square cap fallback is too pessimistic for this: it would
+    wall every lot at 0.57 and rule out every kerb.
 - **FR4 — Lane-clearance contract.** The contract is asserted against the
-  paths the game actually drives, not just a geometric line:
+  mounted art and the paths the game actually drives, not just a geometric
+  line: no parked-car footprint may overlap a house's fitted footprint, and no
+  centre-line drive may touch one.
   - a drive along every street's centre line never impacts a parked car;
   - **no parked car overlaps a spawn capsule** — all four authored spawn points
     are road-tile centres only 0.51 from the band, i.e. 0.06 of clearance;
@@ -178,8 +200,8 @@ caveats:
 | Decision | Chosen | Why, and what it cost |
 | --- | --- | --- |
 | Hitbox | Crashable, bonk-and-resume | Zero-failure pillar; reuses the prop collision path. Solid would abandon legs mid-street *and* break `puppySpots.isScoopable`'s assumption that only buildings block a pup. |
-| Placement | The 0.32–0.70 kerb-and-lawn band | Measured: 0.60 asphalt band against a 0.52-wide player capsule leaves nothing to park on. Straddling the kerb is what parallel parking looks like from a near-top-down camera. |
-| Fit | ~0.65 long, smaller than the player's 0.86 | Turns lane clearance into a real margin instead of a shave. Cost: parked cars are visibly a size smaller than the fleet. |
+| Placement | Kerb-and-lawn straddle at offset ≈0.46, walls ≥0.652 only | Measured: the 0.60 asphalt band against a 0.52-wide player capsule leaves nothing to park on, and the house walls sit between 0.574 and 0.748 from the centre line depending on the model fitted. Straddling the kerb is what parallel parking looks like from a near-top-down camera. |
+| Fit | ~0.55 long, smaller than the player's 0.86 | Derived from the measured walls: at 0.55 every kerb with a wall ≥0.652 works, where 0.65 left only four kerbs in town (and the roomiest is the puppy's). Cost: parked cars are ~64% of the player's car length, visibly a smaller car rather than a same-size one. |
 | Obstacle | Axis-aligned box from the mounted footprint | A circle covering the length would protrude into the lane. Boxes already exist for houses — this adds a non-solid one, and diagonal yaws are rejected by test. |
 | Seat height | Kerb top (+0.02) | The footprint crosses three surface heights; seating at ground would bury the wheels 0.02 in the kerb. |
 | Kerb conflict | Reservation: cars declare, missions skip | The band is shared with litter (0.65) and the pup's spots (0.52) by construction, so one side must yield. The missions' fixed items are declared and the dynamic litter draw filters — keeping 6 spread-out cars instead of surrendering every ring kerb to the missions. Cost: this track touches `parkLitter` and `puppySpots` and must re-verify the puppy's spots. |
@@ -204,9 +226,14 @@ caveats:
 
 ## Flagged Assumptions
 
-- The 0.65 fit and the ~0.51 kerbside offset remain measured starting points; the
-  tests hold the contract (lane clearance, spawn clearance, non-overlap,
-  reservation) rather than the constants.
+- The 0.55 fit and the ≈0.46 kerbside offset are measured starting points; the
+  tests hold the contract (lane clearance, wall clearance, spawn clearance,
+  non-overlap, reservation) rather than the constants.
+- The measured walls above come from the kit extents and the renderer's fit
+  math, computed by hand for this revision. Deriving them in the pure layer
+  needs each house's model identity, which today is chosen by index in
+  `townLayout` — the plan's Phase 1 task covers making that derivable so the
+  eligibility rule can be tested rather than trusted.
 - The reservation's shape (a declared edge list consulted by the missions) is the
   spec's requirement; the plan picks the module that owns it and how the filter
   reads, without changing litter's seeded character.

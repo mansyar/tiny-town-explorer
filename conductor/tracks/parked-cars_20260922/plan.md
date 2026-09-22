@@ -7,9 +7,11 @@
 >
 > Revised before implementation (2026-09-22) after measuring the design against
 > the shipped code: the 0.32–0.70 kerb band is shared with `parkLitter` and
-> `puppySpots` by construction, so Phase 3 adds a **kerb reservation**; and the
+> `puppySpots` by construction, so Phase 3 adds a **kerb reservation**; the
 > shadow pass doubles every mounted mesh, so Phase 4's blob shadow must be
-> sun-aligned and merged to one draw call.
+> sun-aligned and merged to one draw call; and the house walls measure 0.574 to
+> 0.748 from the street's centre line (not the 0.93 first assumed), which sets
+> the fit at 0.55 and makes kerb eligibility a tested rule.
 >
 > Deliberate sequencing: Phase 1 keeps the *contract* in tests (clearance,
 > spawn clearance, non-overlap) and treats the constants as data the later
@@ -23,8 +25,9 @@
   - [ ] Implement the parked-car prop kinds and the authored `townMap.ts` rows (offset from the kerb, yaw parallel to the street), plus the grid's publication of model/footprint
   - [ ] Refactor + coverage (target >80% on the touched logic)
 - [ ] Task: Kerbside placement and clearance contracts (FR2, FR3, FR4)
-  - [ ] Write failing tests: every parked car sits alongside a `straight` road tile (never a bend, junction or end kerb); each seats on the kerb top (+0.02); for every street tile a centre-line drive never impacts a parked car; no parked car overlaps a house footprint, a building's capped footprint, another parked car, an existing prop, or any of the four authored spawn capsules; the fit never scales a model up
-  - [ ] Implement the placement rule — offset derived from the fitted footprint, orientation from the street axis, straight-segment validation — and tune the authored offsets until every contract holds
+  - [ ] Write failing tests: every parked car sits alongside a `straight` road tile (never a bend, junction or end kerb) and on a kerb whose house wall is at least 0.652 from the street's centre line, with the wall derived as `1.00 − fitted depth ÷ 2` from the house's own kit extents and the 0.86 fit cap; each seats on the kerb top (+0.02); for every street tile a centre-line drive never impacts a parked car; no parked car overlaps a house's fitted footprint, another parked car, an existing prop, a mission kerb (the reservation), or any of the four authored spawn capsules; the fit never scales a model up
+  - [ ] Make each house's model identity derivable in the pure layer (it is chosen by index in `townLayout` today), so wall eligibility is testable rather than trusted
+  - [ ] Implement the placement rule — offset ≈0.46 from the street's centre line, orientation from the street axis, straight-segment and wall eligibility validation — and tune the authored instances until every contract holds
   - [ ] Refactor + coverage
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
@@ -58,7 +61,7 @@
 ## Phase 4 – Registry, fit and blob shadow (manual-verify, exempt from TDD)
 
 - [ ] Task: Registry entries + mount fit (FR2, FR3, FR9, FR10)
-  - [ ] Add the four Car Kit models (sedan, hatchback-sports, van, suv) to the registry, mount them with the `fitWithin` cap, per-instance yaw and the kerb-top seat, and keep them out of the house-footprint map; measure each fitted model with `pnpm assets:measure` and the precache delta, recording the manual steps and the numbers
+  - [ ] Add the four Car Kit models (sedan, hatchback-sports, van, suv) to the registry, mount them with the `fitWithin` cap of 0.55, per-instance yaw and the kerb-top seat, and keep them out of the house-footprint map; measure each fitted model with `pnpm assets:measure` and the precache delta, and confirm the rendered footprint agrees with the derived half extents the placement tests assume — recording the manual steps and the numbers
 - [ ] Task: Sun-aligned merged blob shadow (FR7)
   - [ ] Build the six blobs as one static mesh — each sized to its footprint and offset/stretched along the sun's (1.2, 0.9) × height direction, seated just above the kerb top with no z-fighting — absent from the shadow-map pass, collision and taps; confirm on screen that they read as the same shadow family as the houses — record the manual steps
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
