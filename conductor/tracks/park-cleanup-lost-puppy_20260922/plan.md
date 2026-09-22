@@ -78,7 +78,7 @@
 - [x] Task: Device pass (AC11)
   - [x] Desktop drive of both missions in the real render loop, then the iPad sitting — bark, gulp and cheer audible, and again with sound off
 - [x] Task: Update `docs/playtest.md` with AC1–AC11 results `e75d585`
-- [~] Task: Update `tech-stack.md` — the puppy/litter/dumpster triangle delta and the bark clip with its provenance
+- [x] Task: Update `tech-stack.md` — the puppy/litter/dumpster triangle delta and the bark clip with its provenance `9188247`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## History
