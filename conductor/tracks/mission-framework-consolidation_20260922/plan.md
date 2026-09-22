@@ -32,7 +32,7 @@ phase.*
   - [x] Implement + coverage
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `a71f890`
 
-## Phase 3 – Shared marker layer (TDD)
+## Phase 3 – Shared marker layer (TDD) [checkpoint: 04af704]
 
 - [x] Task: Marker adapter contract `b35af45`
   - [x] Write failing tests: one adapter interface covers cone/ring, litter, puppy spot, fire target — show/hide/arm/disarm/tap-resolution driven by FSM state (red first)
@@ -40,7 +40,7 @@ phase.*
   - [x] Refactor + coverage (>80%) — missionMarkers.ts: 100% stmts/branch/funcs
 - [x] Task: Migrate the four missions' markers onto the adapter `10be20b`
   - [x] Re-point fire, order, litter, puppy markers through the shared layer; Phase 1 matrix tests are the acceptance gate (must stay green)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `04af704`
 
 ## Phase 4 – Shared celebration/linger + unified completion sparkle (TDD)
 
