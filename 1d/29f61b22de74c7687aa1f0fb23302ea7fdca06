@@ -41,3 +41,54 @@ Manual verification (recorded, dev server, three magnifications)
   real shadows is what confirms the derivation.
 
 Gates: pnpm check clean, pnpm typecheck clean, 709 tests / 57 files.
+
+----------------------------------------
+
+PHASE COMPLETION VERIFICATION — Phase 4: Registry, fit and blob shadow
+
+Phase scope (git diff --name-only 5cdae9d HEAD)
+  src/game/scene.ts, src/game/town/parkedShadows.ts, src/game/town/townLayout.ts,
+  src/game/town/townRenderer.ts, src/game/town/townTypes.ts, src/main.ts
+
+Per-file tests
+  scene.ts           -> src/game/scene.test.ts (pre-existing, 5 tests)
+  parkedShadows.ts   -> src/game/town/parkedShadows.test.ts (new, 13 tests)
+  townLayout.ts      -> src/game/town/townLayout.test.ts (15 tests)
+  townRenderer.ts    -> src/game/town/townRenderer.test.ts (12 tests)
+  townTypes.ts       -> src/game/town/parkedCars.test.ts
+  main.ts            -> NO TEST FILE. Disclosed rather than papered over: the
+                        entry point's whole change is one group.add of the blob
+                        mesh, and this repo has never had a suite for it.
+
+Automated verification
+  Command: pnpm check && pnpm typecheck && CI=true pnpm test
+  Result: lint clean, tsc --noEmit clean, 709 tests / 57 files passing.
+  Coverage this phase: parkedShadows.ts 100/100/100/100, scene.ts 100,
+  townTypes.ts 100, townRenderer.ts 100, townLayout.ts 100 statements /
+  97.61 branches (line 151, pre-existing defensive).
+
+Manual verification steps given to the user
+  1. The dev server is already running: pnpm dev -> http://localhost:5173/
+  2. Confirm the six parked cars render at fitted size, seated on the kerb.
+  3. Confirm each carries a dark blob falling to the same side as the houses'
+     and trees' real shadows.
+  4. Tap the ground beside a car: the truck heads for the tap, not the car.
+
+Verification already performed by the agent (three magnifications, dev server)
+  The cars mount at their fitted size for the first time in this track -- the
+  earlier phases could not judge any placement by eye because the art was
+  several tiles long. On screen: cars sit on the kerb strip and the lawn edge,
+  parallel to their streets; each blob falls left, matching the direction of
+  the houses' shadow-map shadows, which is the only check that can catch a sign
+  slip in sunGroundOffset (a unit test compares against the same constant it
+  derives from); the blobs cross lawn, kerb and asphalt with no z-fighting.
+
+User confirmation: "Checkpoint it" -- accepted the automated verification and
+the on-screen pass.
+
+Numbers recorded (see the task note above for the full measurement list)
+  Fit 0.55; fitted heights 0.280/0.212/0.270/0.265.
+  Precache 44 -> 48 entries, 3398.82 -> 4186.67 KiB (four GLBs = 783.6 KiB).
+  Six instances of four models = 52,056 triangles (Phase 5's tech-stack note).
+  Blob shadow: 1 draw call, 12 triangles, 6 quads, opacity 0.30, lifted 0.004
+  above the kerb top.
