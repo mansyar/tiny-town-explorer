@@ -1,0 +1,42 @@
+Phase 5 Task 1 — main.ts integration through the registry (FR1–FR10)
+
+Implementation notes / design decisions:
+- missionFocus is passed as an optional second parameter (a resolver) to
+  createMissionRegistry (FR12); the old per-entry focus closures for
+  fire/iceCream were deleted in favor of one four-way resolver.
+- Drive-over during `spawned` auto-responds via headToGarbageTruck(): the FSM
+  respond() runs synchronously, so finish()'s "only after the kid answered"
+  gate — and its Phase 2 test — stays intact; the fleet morphs if the kid
+  brought the wrong truck.
+- parkPickup.reset() clears stale litter-N ids each round (new red-first test:
+  fresh round after completion re-spawns collectable pieces).
+- Absorb gates: voiceGulp=true for each drive-over piece (FR3); false for
+  sweep — the truck's cast already voices the group (FR4) — and the sweep is
+  additionally gated on litter.length > 0.
+- puppyPending makes the town busy (isIdle: !puppyPending && state==='idle').
+  The siren is answered only by the police cast (per-vehicle gate): clear
+  pending, pawMarker.place(spot) + show(), audio.play('bark'). The helper
+  hand's siren demo (demoSiren) morphs to the police car, then pressAbility().
+- Complexity splits to satisfy biome noExcessiveCognitiveComplexity (max 15):
+  pressAbility -> applyAbilityEvent(event) + onSirenCast(); tickPuppyMission
+  -> advanceDoorRun + clearPuppyStage.
+- absorb(): removed the unused carPosition parameter; guarded the indexed last
+  piece (noUncheckedIndexedAccess) so celebrate() only runs when defined.
+- Two pup instances (spotPup, riderPup); door run = doorRun glide
+  (RIDE_HEIGHT=0.28, DOOR_RUN_SECONDS=0.7); celebration = shared celebrate()
+  (confetti + sun + cheer); startPark plays the chime, startPuppy the bark
+  whine. HUD police-pulse hooks deliberately deferred to Task 2 (no
+  VehicleHud API yet).
+
+Gates: pnpm check clean (106 files); pnpm typecheck clean;
+CI=true pnpm test -> 516/516 in 43 files (+2 new red-first: missionRegistry
+resolveFocus, parkPickup.reset fresh round).
+
+Manual verification steps (dev server http://localhost:5173/):
+Park: wait for litter spawn -> drive over pieces (any truck: a wrong one
+morphs to garbage on the first piece) -> per-piece poof + gulp -> last piece
+-> confetti + sun + cheer.
+Puppy: spawn whine -> switch to police (or accept the helper-hand hint) ->
+press siren -> paw blooms at the spot -> drive close -> pup rides the roof ->
+heart -> tap the owner house in range -> door run -> confetti + cheer ->
+quiet round reset.
