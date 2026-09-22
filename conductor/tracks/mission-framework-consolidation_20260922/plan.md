@@ -70,11 +70,13 @@ phase.*
 
 ## Phase 6 – Verification + docs
 
-- [ ] Task: Full gates (AC1, AC2, NFR1–NFR3)
-  - [ ] `pnpm check`, `pnpm typecheck`, `CI=true pnpm test`; coverage >80% on logic modules; re-measure scene budget (~37.9k tris / ~134 draw calls) for the sparkle delta
-- [ ] Task: Four-mission desktop playthrough (AC1)
-  - [ ] Drive all four missions end-to-end: no unintended visible change; town-hall sparkle pops exactly once per completion, absent in free play
-- [ ] Task: Update `docs/playtest.md` and `tech-stack.md` with AC results and any measured deltas
+- [x] Task: Full gates (AC1, AC2, NFR1–NFR3) `2c8e3aa`
+  - [x] `pnpm check` (118 files clean), `pnpm typecheck` (clean), `CI=true pnpm test` → **50 files / 617 tests** pass; coverage >80% on logic modules — missionFsm/parkMission/puppyMission/parkPickup/orderFlow/missionMarkers/missionCelebration/devCalmGap/fireFx 100%, missionManager 97.14%, puppySpots 97.67%, puppyMarker 98.46%, iceCreamMission 95.45%, `game/mission` 87.03% including the workflow-exempt scene builders (parkLitterFx and puppyFx at 0%, as designed)
+  - [x] Re-measured the scene budget for the sparkle delta by the v1 method (real render loop, `renderer.info` between frames, shadow pass included, pixel ratio 1.5): **37,802 triangles / 133 draw calls / 148 meshes** against the 37,904 / 134 / 106 baseline. The sparkle rides the existing burst pool, so the four-mission scene lands at or below the v1 figures — NFR3 holds with no ratchet. Probe removed and the entry file restored byte for byte (`git diff` on `main.ts` empty)
+- [x] Task: Four-mission desktop playthrough (AC1) `f71a51d`
+  - [x] Drive all four missions end to end: no unintended visible change; the sparkle pops exactly once at each mission's own completion site (revised from the town hall, which the town does not have), absent in free play. Run by the track owner against the dev server during the Phase 5 gate; the framework's own evidence is that every mission's public API and `main.ts`'s registry/tick/tap paths are unchanged, with the Phase 1 matrix, abort-parity and frozen-contract suites as the gate. Independently confirmed here that the built scene boots and renders the four-mission town at the measured cost
+- [x] Task: Update `docs/playtest.md` and `tech-stack.md` with AC results and any measured deltas `2c8e3aa`
+  - [x] `docs/playtest.md` gained the track's AC1–AC8 table, the re-measured budget table (with the mesh-count caveat), how the pass was driven (dev `?calmGap`, temporary probe, byte-for-byte restore), and the puppy correction as the issue the pass turned up; `tech-stack.md` carries the re-measured figures, the consolidation note, and the current test/precache counts
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## History
