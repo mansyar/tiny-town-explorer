@@ -37,7 +37,7 @@
   - [x] User confirmed the phase on the automated evidence, deferring the visual judgement of parking to Phase 4's checkpoint
   - [x] Verification report attached as a git note to `f91ae7a`
 
-## Phase 2 – Collision and tap rules (TDD)
+## Phase 2 – Collision and tap rules (TDD) [checkpoint: ea906cc]
 
 - [x] Task: Axis-aligned non-solid box hitboxes (FR5) `1d30b62`
   - [x] Write failing tests: a parked car publishes a non-solid box whose half extents follow the mounted footprint; a 90/180/270° yaw swaps the extents correctly and a diagonal yaw fails loudly rather than mis-sizing a hitbox; a swept contact reports a crashable impact and never `solid`; a car driven into one bonks and resumes with the route cursor still advancing; a regression guard showing the equivalent covering circle would fail the centre-line case (14 tests across `collision.test.ts`, `vehicleMotor.test.ts` and `townGrid.test.ts`; red first — seven collision tests failed against the code that dropped parked cars from the hitbox list entirely)
@@ -49,7 +49,12 @@
   - [x] Implement the snap-target flag on prop data and its use in the router (a required `snappable` on every published prop, set from the *kind* by the grid so a map cannot author a car as tappable; the router takes the nearest prop that says yes)
   - [x] Refactor + coverage (668/668 tests, 53 files; `inputRouter.ts` 100% on all four metrics, `townGrid.ts` 100% statements/lines, 94.59% branches — two pre-existing nullish fallbacks)
   - [x] **Reading of FR6 chosen, and asserted:** exclusion is per prop, not a veto on snapping. A tap inside 0.45 of both a parked car and a cone snaps to the cone, because that is the prop the kid meant; the parked car is simply never a candidate.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Phase scope listed since Phase 1's checkpoint (`git diff --name-only f91ae7a HEAD`); all four changed code files already had test files, so none was created
+  - [x] Automated verification: `pnpm check && pnpm typecheck && CI=true pnpm test` — lint and types clean, **668 tests / 53 files** green
+  - [x] Manual verification plan presented, with the disclosed caveat that the cars still render at kit scale until Phase 4 — which distorts a tap aimed past them, not just the view
+  - [x] User confirmed the phase on the automated evidence, keeping the plan's order
+  - [x] Verification report appended to `ea906cc`'s note so the task summary and the phase evidence stay together
 
 ## Phase 3 – Kerb reservation across the missions (TDD)
 
