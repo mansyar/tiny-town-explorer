@@ -2,7 +2,7 @@ import type { Vec2 } from '../town/townTypes';
 import type { LitterPiece } from './parkLitter';
 
 /** Drive-over collection radius, from the truck's centre (FR3). */
-const PICKUP_RADIUS = 0.6;
+export const PICKUP_RADIUS = 0.6;
 /** Ability sweep radius (FR4). */
 export const SWEEP_RADIUS = 1.5;
 /** Minimum spacing between drive-over gulps, in ms (FR3). */

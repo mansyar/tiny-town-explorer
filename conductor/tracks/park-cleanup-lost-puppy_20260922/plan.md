@@ -39,7 +39,7 @@
   - [x] Write failing tests: 3+ authored spots, each a reachable non-road tile; the owner house is a house ≥2 tiles from the spot; a spot is never chosen twice running (10 tests in `puppySpots.test.ts`, red first)
   - [x] Implement `puppySpots.ts` (four authored spots; never-twice draw; `chooseOwnerHouse` reuses `MIN_HOUSE_DISTANCE` with zero-failure fallback; 500/500 pass)
   - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `puppySpots.ts` after removing type-only dead branches)
-- [ ] Task: Siren latch, pickup and homecoming (FR7, FR8, FR9, FR10)
+- [~] Task: Siren latch, pickup and homecoming (FR7, FR8, FR9, FR10)
   - [ ] Write failing tests: no marker and no delivery before the siren; the siren latches "answered" exactly once and blooms the paw; pickup inside 0.6 and not at 0.61; the heart exists only while carrying; delivery needs the house tap inside 1.9; one marker at every state
   - [ ] Implement `puppyMission.ts` and its gates
   - [ ] Refactor + coverage
