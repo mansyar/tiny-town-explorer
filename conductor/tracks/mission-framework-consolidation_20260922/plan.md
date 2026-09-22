@@ -5,7 +5,7 @@
 > `workflow.md` Guiding Principle 3. **(mixed)** = both inside one phase.
 > Every phase ends with the workflow's verification and checkpoint protocol.
 
-## Phase 1 – Characterization safety net (TDD)
+## Phase 1 – Characterization safety net (TDD) [checkpoint: ad610d6]
 
 *Write the AC3/AC4/AC5 tests against **current** behavior before touching
 anything — they pin today's semantics and must stay green through every later
@@ -19,7 +19,7 @@ phase.*
   - [x] Implement minimal fixes only if current behavior is under-specified; document any divergence in the task note
 - [x] Task: Frozen-contract baseline (FR5, AC5) — frozen baseline: missionBusy 5 + calmGapPacer 13 + missionFocus 13 = **31 tests / 3 files**, zero diff vs branch point `0c177b2`
   - [x] Verify `missionBusy` / `calmGapPacer` / `missionFocus` suites pass **unmodified**; record their test counts as the frozen baseline (no code changes)
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `ad610d6`
 
 ## Phase 2 – Generic mission FSM (TDD)
 
