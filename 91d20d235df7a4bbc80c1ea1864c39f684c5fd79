@@ -28,3 +28,23 @@ FSM stays spawned.
 
 Gates: biome + tsc clean; full suite 493/493, exit 0; coverage
 parkMission.ts 100% stmts / branch / funcs / lines.
+
+---
+
+Phase 2 Verification Report (workflow Phase Completion Protocol):
+- Scope: fdb3a13..91d20d2 (since Phase 1 checkpoint).
+- Changed code files: parkLitter.ts, parkPickup.ts, parkMission.ts - each
+  paired with a suite (parkLitter.test.ts, parkPickup.test.ts,
+  parkMission.test.ts). plan.md exempt (.md).
+- Automated PASS - command: $env:CI="true"; pnpm test -> 493/493 tests,
+  41 files, exit 0. No failures, no fix proposals needed.
+- Coverage: parkLitter.ts 97% stmts / 83% branch / 100% lines;
+  parkPickup.ts 100/100/100/100; parkMission.ts 100/100/100/100.
+  All logic modules above the >80% target.
+- Manual verification (regression - Phase 2 is pure logic not yet wired
+  into main.ts): 1) town renders at localhost:5173, 2) free-play
+  unchanged, 3) fire + ice-cream rotation and calm gap still hold,
+  4) no park/puppy visuals expected until Phases 4-5.
+- User confirmation: YES in session ses_f39998d8effeAFKUM2cBD77Ir5,
+  2026-09-22.
+Checkpoint: 91d20d2
