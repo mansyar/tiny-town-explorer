@@ -1,9 +1,9 @@
-Phase 5 Task 2 ΓÇö HUD police-button pulse hint (FR6)
+Phase 5 Task 2 — HUD police-button pulse hint (FR6)
 
 Implementation:
 - VehicleHud gains setPolicePulse(pulsing): toggles `is-pulsing` on the
   police button (buttons-map lookup).
-- index.html: `police-pulse` keyframes ΓÇö brightness(1 <-> 1.22) +
+- index.html: `police-pulse` keyframes — brightness(1 <-> 1.22) +
   scale(1 <-> 1.09) at 1.1s ease-in-out infinite, on
   .hud-button--police.is-pulsing only. The standalone `scale` property is
   animated rather than `transform` so the active button's lift (is-active
@@ -15,7 +15,7 @@ Implementation:
   clearers, so pulse and pending flag cannot drift apart.
 
 Gates: pnpm check clean; pnpm typecheck clean; CI=true pnpm test 516/516
-(43 files, unchanged ΓÇö HUD glue is manual-verify per plan).
+(43 files, unchanged — HUD glue is manual-verify per plan).
 
 Manual verification steps (dev server http://localhost:5173/):
 1. Let the rotation reach the lost-puppy round: whine sounds and the police
