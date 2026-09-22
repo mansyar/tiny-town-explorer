@@ -19,7 +19,7 @@
 
 ## Phase 2 – Clean Up the Park mission logic (TDD)
 
-- [ ] Task: Litter field + spawn placement (FR1)
+- [~] Task: Litter field + spawn placement (FR1)
   - [ ] Write failing tests: 8 pieces (5 park, 3 kerbside on road-bordering lots), every piece on a reachable non-road tile, placement deterministic under a seeded random
   - [ ] Implement `parkLitter.ts` over the town grid's existing `collectTiles`
   - [ ] Refactor + coverage
