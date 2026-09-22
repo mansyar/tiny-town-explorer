@@ -1,4 +1,11 @@
-import { Box3, BoxGeometry, Group, Mesh, MeshLambertMaterial } from 'three';
+import {
+  Box3,
+  BoxGeometry,
+  Group,
+  Mesh,
+  MeshLambertMaterial,
+  type Object3D,
+} from 'three';
 import { describe, expect, it, vi } from 'vitest';
 import type { ModelLibrary } from '../assets/modelLibrary';
 import { createTownGrid } from './townGrid';
@@ -45,6 +52,30 @@ function deepModel(name: string): Group {
   return group;
 }
 
+/** A model whose meshes start out casting and receiving, like the library's. */
+function litModel(name: string): Group {
+  const group = new Group();
+  group.name = name;
+  const mesh = new Mesh(new BoxGeometry(0.5, 1, 0.5), new MeshLambertMaterial());
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  group.add(mesh);
+  return group;
+}
+
+/** The shadow flags every mesh under `root` carries. */
+function meshFlags(
+  root: Object3D | undefined,
+): { castShadow: boolean; receiveShadow: boolean }[] {
+  const flags: { castShadow: boolean; receiveShadow: boolean }[] = [];
+  root?.traverse((node) => {
+    if (node instanceof Mesh) {
+      flags.push({ castShadow: node.castShadow, receiveShadow: node.receiveShadow });
+    }
+  });
+  return flags;
+}
+
 /** A model with no footprint at all — a degenerate export. */
 function flatModel(name: string): Group {
   const group = new Group();
@@ -72,6 +103,53 @@ function stubLibrary(make: (url: string) => Group = boxModel): StubLibrary {
     },
   };
 }
+
+describe('mountTown shadow casting', () => {
+  it('leaves a placement that asks for nothing casting, as the library set it', async () => {
+    const plan: TownPlan = {
+      placements: [
+        {
+          kind: 'model',
+          name: 'house-1',
+          url: 'type-a.glb',
+          position: { x: 0, z: 0 },
+          yaw: 0,
+          castsShadow: true,
+        },
+      ],
+    };
+    const town = await mountTown(grid, stubLibrary(litModel).library, plan);
+    const house = town.group.getObjectByName('house-1');
+    expect(meshFlags(house).every((flags) => flags.castShadow)).toBe(true);
+    town.dispose();
+  });
+
+  it('turns casting off for a placement that opts out, keeping what it receives', async () => {
+    // A parked car takes a blob shadow instead of a real one: it is translucent
+    // and offset along the sun, and a real shadow underneath would double-darken
+    // the same patch of ground.
+    const plan: TownPlan = {
+      placements: [
+        {
+          kind: 'model',
+          name: 'parkedSedan-1',
+          url: 'sedan.glb',
+          position: { x: 0, z: 0 },
+          yaw: 0,
+          castsShadow: false,
+        },
+      ],
+    };
+    const town = await mountTown(grid, stubLibrary(litModel).library, plan);
+    const car = town.group.getObjectByName('parkedSedan-1');
+    const flags = meshFlags(car);
+    expect(flags.length).toBeGreaterThan(0);
+    expect(flags.every((entry) => !entry.castShadow)).toBe(true);
+    // Receiving stays on: a car parked in a house's shadow should darken.
+    expect(flags.every((entry) => entry.receiveShadow)).toBe(true);
+    town.dispose();
+  });
+});
 
 describe('mountTown', () => {
   it('mounts a node per placement, named after the plan', async () => {

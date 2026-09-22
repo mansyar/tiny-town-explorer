@@ -72,6 +72,15 @@ export interface ModelPlacement {
    */
   readonly seatHeight?: number;
   /**
+   * Whether this placement's meshes join the shadow-map pass.
+   *
+   * The library forces `castShadow` on every mesh it prepares, so a placement
+   * that should *not* cast — a parked car, which carries a flat blob instead
+   * (FR7) — has to be able to say so. Absent means leave the library's setting
+   * alone.
+   */
+  readonly castsShadow?: boolean;
+  /**
    * Whether this placement is a building, i.e. whether the renderer publishes
    * its measured footprint for collision (FR9).
    *
@@ -244,6 +253,7 @@ export function planTown(grid: TownGrid): TownPlan {
       yaw: yawForDirection(house.facing),
       fitWithin: grid.tileSize * HOUSE_LOT_FIT,
       isBuilding: true,
+      castsShadow: true,
     });
   });
 
@@ -267,6 +277,10 @@ export function planTown(grid: TownGrid): TownPlan {
         ? {
             fitWithin: grid.tileSize * PARKED_CAR_FIT,
             seatHeight: grid.tileSize * PARKED_CAR_SEAT_HEIGHT,
+            // Six more casters means re-rendering the town per frame into the
+            // 1024 map; the blob shadow is what a car has instead (FR7), and
+            // with a real shadow underneath it would double-darken the ground.
+            castsShadow: false,
           }
         : {}),
     });

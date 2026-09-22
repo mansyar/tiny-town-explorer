@@ -150,6 +150,17 @@ async function mountModel(
   object.position.z += placement.position.z;
   object.rotation.y = placement.yaw;
   object.name = placement.name;
+  // The library sets a shadow flag on every mesh it prepares, so a placement
+  // that opts out has to undo it here — an opted-out car that still cast would
+  // pay for the shadow pass it exists to avoid, and its blob would double up
+  // with a real shadow on the same patch of ground (FR7).
+  if (placement.castsShadow !== undefined) {
+    object.traverse((node) => {
+      if (node instanceof Mesh) {
+        node.castShadow = placement.castsShadow === true;
+      }
+    });
+  }
   return object;
 }
 

@@ -184,6 +184,23 @@ describe('planTown — houses and props', () => {
     }
   });
 
+  it('keeps parked cars out of the shadow-map pass (FR7)', () => {
+    // The blob shadow exists because six more casters means re-rendering the
+    // town per frame into a 1024 map. The library forces castShadow on every
+    // mesh it prepares, so if a placement cannot say "not me", every car casts
+    // a real shadow *as well as* its blob and the cost is paid twice.
+    for (const prop of grid.props) {
+      if (!isParkedCarKind(prop.kind)) {
+        continue;
+      }
+      expect(models(prop.id)?.castsShadow, prop.id).toBe(false);
+    }
+    // Everything else keeps casting: a house with no shadow reads as pasted on.
+    for (const house of grid.houses) {
+      expect(models(house.id)?.castsShadow, house.id).toBe(true);
+    }
+  });
+
   it('marks every house as a building, so collision gets its measured footprint', () => {
     for (const house of grid.houses) {
       const placement = models(house.id);
