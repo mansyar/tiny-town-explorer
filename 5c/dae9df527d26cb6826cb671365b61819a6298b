@@ -1,0 +1,52 @@
+PHASE COMPLETION VERIFICATION REPORT — Phase 3: Kerb reservation across the missions
+Track: Static Parked Cars Around Town (parked-cars_20260922)
+
+Automated verification
+  Announcement: "I will now run the automated test suite to verify the phase."
+  Command: pnpm check && pnpm typecheck && CI=true pnpm test
+  Result:  green — biome clean (127 files), tsc --noEmit clean,
+           692 tests passed across 56 test files.
+
+Phase scope (git diff --name-only ea906cc HEAD, ea906cc being Phase 2's
+checkpoint)
+  conductor/tracks/parked-cars_20260922/plan.md
+  src/game/mission/kerbReservation.ts (+test)
+  src/game/mission/parkLitter.ts (+test)
+  src/game/mission/parkSlots.ts (+test)
+  src/game/mission/kerbInvariant.test.ts (the cross-cutting suite)
+
+Coverage for phase changes (step 2.3)
+  parkSlots.ts was the one changed code file without a test file, so
+  parkSlots.test.ts was created (5 tests: the 3/2 split across the park tiles,
+  every slot inside its own tile, every slot clear of the trees and the dumpster
+  — 0.52 away where a tree's own footprint is 0.16 — no two slots stacked, and
+  offsets scaling with tile size).
+  Touched-module coverage: kerbReservation.ts 100% statements/lines and 96.66%
+  branches; parkLitter.ts 97.61% statements and 100% lines; parkSlots.ts 100%
+  statements/lines and 50% branches (the uncovered branch is the `?? []` guard
+  for a park tile with no slot list, which the 6x6 map cannot reach).
+
+Manual verification plan presented
+  pnpm dev, start the park mission, and confirm the three kerbside litter pieces
+  land on kerbs with no car on them while the five park pieces stay put.
+  Known intermediate state, disclosed before the checkpoint: the cars still
+  render at kit scale until Phase 4, so they cover the streets and a piece of
+  litter "beside a car" would look right or wrong for reasons that have nothing
+  to do with this phase. The phase's real contract is arithmetic — four lots
+  available for three pieces — which the tests pin rather than the eye.
+
+What the phase actually turned on (measured, not assumed)
+  Eight lots touch the ring road. Three lose their kerb to a parked car — (1,2),
+  (1,3) and (4,1) — and a fourth to the puppy's spot-verge, leaving exactly four
+  lots for three pieces. That is the floor: a fifth exclusion would have made the
+  draw deterministic and every round identical, with nothing in the suite to say
+  so, which is why the pool's size and the seed's effect are both asserted now.
+  No violation was found by the invariant suite, so no authored car had to move.
+
+User confirmation
+  "Confirm the phase on the automated evidence (Recommended)" — accepted the
+  reservation and the invariant as proven by the tests, keeping the plan's order
+  so Phase 4's fit makes every remaining visual check meaningful.
+
+Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
