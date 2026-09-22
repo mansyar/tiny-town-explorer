@@ -11,7 +11,7 @@
   - [x] Write failing tests for the registry contract: a mission contributes tick/tap/focus; exactly one mission is active at a time; the pass order is stable; a mission with nothing to do contributes nothing (12 tests in `missionRegistry.test.ts`, red first)
   - [x] Implement the registry and move the fire and ice-cream missions behind it — their existing suites stayed green and untouched (445/445 pass)
   - [x] Refactor + coverage (100% on `missionRegistry.ts`, >80% target)
-- [~] Task: Four-mission rotation (FR11)
+- [x] Task: Four-mission rotation (FR11) `fdb3a13`
   - [ ] Write failing tests: the next mission is never the one that just ran; the calm gap stays 60–90 s; any active mission pauses every pacer; the draw is uniform across the other two
   - [ ] Implement the rotation chooser over the shared calm-gap pacer and busy gate
   - [ ] Refactor + coverage
