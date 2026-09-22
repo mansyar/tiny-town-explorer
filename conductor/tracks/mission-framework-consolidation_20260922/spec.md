@@ -36,11 +36,14 @@ data (colors, sounds, duration), not code.
 **FR4 — Unified completion sparkle (bundled feature):** On mission completion,
 a small sun/sparkle burst pops at the mission's own completion site — fire
 house, ordering house, litter spot, owner's door (revised 2026-09-22: the town
-has no town hall, so the sparkle rides with each mission's celebration instead
-of a fixed landmark). Icon-only, zero text, never
+has no town hall, so the sparkle rides with each mission's celebrationinstead of a fixed landmark). Icon-only, zero text, never
 sound-only (must pair with existing celebration audio). Fires **exactly once
 per completion** — immune to tap spam and interruption during linger — and
-**never** during free play or mission start.
+**never** during free play or mission start. It has **its own burst channel**
+(`sparkle` in `abilityFx`: fewer but chunkier bits, thrown higher, pink rather
+than the celebration's gold) so the beat is legible as its own pop instead of a
+second confetti — the first cut reused the confetti channel and read as faint
+specks against the road (review, 2026-09-22).
 
 **FR5 — Frozen shared-module contracts:** `missionBusy`, `calmGapPacer`,
 `missionFocus` are **not** reworked. 60–90s calm gaps, no double-spawn /
@@ -49,7 +52,12 @@ today.
 
 **FR6 — Mid-mission abort parity:** Teardown in *any* FSM state (marker armed,
 celebration lingering, sparkle pending) must clean up exactly as today's
-missions do — no orphan markers, no post-abort celebrations.
+missions do — no orphan markers, no post-abort celebrations. `abort()` is
+exposed on **all four mission APIs** and driven from every state by
+`missionAbortParity` (review, 2026-09-22): the town's busy gate means nothing
+preempts a running mission today, so it is a contract held in reserve rather
+than a live path — but it is reachable from outside the module and must match
+the linger's cleanup exactly, and must leave a mission that can run again.
 
 **FR7 — Lost-puppy visibility (correction, added 2026-09-22 from the Phase 5
 gate):** The puppy hides, and the paw print is its signpost — so the signpost

@@ -69,6 +69,13 @@ export interface ParkMission {
    * means the truck is collecting, driving off takes it away again.
    */
   update(deltaSeconds: number, distanceToLitter: number): void;
+  /**
+   * Tears a clean-up down from any state (FR6): idle, field owed to nobody.
+   * Nothing preempts a mission today — the busy gate makes every errand wait
+   * its turn — so this is the contract held for the day something does;
+   * `missionAbortParity.test.ts` drives it from every state.
+   */
+  abort(): boolean;
 }
 
 export function createParkMission(): ParkMission {
@@ -114,6 +121,10 @@ export function createParkMission(): ParkMission {
           fsm.attempt('collecting', 'responding');
         }
       });
+    },
+
+    abort(): boolean {
+      return fsm.abort();
     },
   };
 }

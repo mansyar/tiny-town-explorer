@@ -31,7 +31,12 @@ export interface MarkerTapRule<S extends string, O extends string> {
 export interface MarkerAdapter<S extends string, O extends string> {
   /** FSM states where the marker is present (level-based, idempotent). */
   readonly showIn: readonly S[];
-  /** FSM states where an arm may be live (ring, hose, delivery). */
+  /**
+   * FSM states where an arm may be live (ring, hose, delivery). Declared only
+   * by a marker whose arm the wiring actually asks this layer about through
+   * {@link markerArmed} — a range-armed marker leaves it out rather than
+   * naming a rule nothing reads.
+   */
   readonly armIn?: readonly S[];
   /** Tap claims, first full match wins. */
   readonly taps: readonly MarkerTapRule<S, O>[];
@@ -58,14 +63,14 @@ export function markerArmed<S extends string, O extends string>(
 export function markerTap<S extends string, O extends string>(
   adapter: MarkerAdapter<S, O>,
   input: { state: S; onTarget?: boolean; armed?: boolean },
-): O {
+): O | 'ignore' {
   for (const rule of adapter.taps) {
     if (rule.inState !== input.state) continue;
     if (rule.needsTarget && input.onTarget !== true) continue;
     if (rule.needsArmed && input.armed !== true) continue;
     return rule.outcome;
   }
-  return 'ignore' as O;
+  return 'ignore';
 }
 
 /**

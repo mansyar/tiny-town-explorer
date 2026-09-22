@@ -89,12 +89,6 @@ describe('fire flame adapter matches the characterization matrix', () => {
     }
   });
 
-  it('arms the hose only while active', () => {
-    expect(markerArmed(FIRE_FLAME, 'active', true)).toBe(true);
-    expect(markerArmed(FIRE_FLAME, 'driving', true)).toBe(false);
-    expect(markerArmed(FIRE_FLAME, 'active', false)).toBe(false);
-  });
-
   it('answers a target tap only in spawned, never while spraying', () => {
     const taps: Record<DriveState, string> = {
       idle: 'ignore',
@@ -196,12 +190,6 @@ describe('puppy spot adapters match the characterization matrix', () => {
     }
   });
 
-  it('arms delivery only while carrying', () => {
-    expect(markerArmed(PUPPY_HEART, 'carrying', true)).toBe(true);
-    expect(markerArmed(PUPPY_HEART, 'searching', true)).toBe(false);
-    expect(markerArmed(PUPPY_HEART, 'carrying', false)).toBe(false);
-  });
-
   it('resolves a house tap only while carrying and armed', () => {
     for (const state of PUPPY_STATES) {
       expect(
@@ -217,6 +205,20 @@ describe('puppy spot adapters match the characterization matrix', () => {
     ).toBe('ignore');
     // The paw is a signpost, not a target: it answers nothing.
     expect(markerTap(PUPPY_PAW, { state: 'searching', onTarget: true })).toBe('ignore');
+  });
+});
+
+describe('arm states are declared only where they are consulted (FR2)', () => {
+  it('leaves the range-armed markers without an invented arm state', () => {
+    // The hose arms by proximity and the door by proximity: their arm is the
+    // *wire* (`isHoseReady` / the puppy mission's `armed`), so an arm state
+    // here would describe a rule nothing reads. The cone is the one marker
+    // whose arm `main.ts` asks the layer about, so it declares one.
+    expect(FIRE_FLAME.armIn).toBeUndefined();
+    expect(PUPPY_HEART.armIn).toBeUndefined();
+    expect(ORDER_CONE.armIn).toEqual(['active']);
+    expect(markerArmed(FIRE_FLAME, 'active', true)).toBe(false);
+    expect(markerArmed(PUPPY_HEART, 'carrying', true)).toBe(false);
   });
 });
 

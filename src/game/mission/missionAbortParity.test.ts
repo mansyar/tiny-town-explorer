@@ -4,14 +4,20 @@
  * no way to re-fire a celebration afterwards, and nothing left pending that
  * could leak into the town's next beat.
  *
- * Divergence, documented per the plan: today's FSMs expose no mid-state
- * `abort()`. The teardown that exists is the completion linger (plus refused
- * restarts, which pin that a running stage can never be half-replaced). The
- * cleanup bundle pinned here — pristine idle, hidden markers, dead taps, one
- * celebration ever — is exactly what Phase 2's generic `abort()` must satisfy
- * from any state, including mid-celebration. "No sparkle-pending leakage" is
- * covered by the pristine-snapshot assertion until FR4 adds that flag in
- * Phase 4; it must reset wherever `toIdle` does.
+ * Both teardown routes are pinned, because the town has two ways to end a run
+ * and they have to agree:
+ *
+ * - **The linger** — the shipped route: `update` past the completion timer.
+ * - **`abort()`** — the route held in reserve: teardown from any state,
+ *   including mid-celebration, which is what the four `onAbort` hooks exist to
+ *   satisfy. The town's busy gate means nothing preempts a running mission
+ *   today (every mission waits patiently by design), so this half is a
+ *   contract rather than a live path — but it must clean up exactly like the
+ *   linger does, and it must leave a mission that can run again.
+ *
+ * Refused restarts are pinned too: a running stage can never be half-replaced.
+ * The cleanup bundle asserted throughout — pristine idle, hidden markers, dead
+ * taps, one celebration ever — is the same for both routes.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -309,5 +315,73 @@ describe('puppy teardown (FR6, AC4)', () => {
 
   it('opens the next errand fresh after teardown', () => {
     expect(drainPuppy('carrying').siren()).toBe(true);
+  });
+});
+
+// --- The held-in-reserve route: abort() from any state (FR6, AC4). ----------
+
+describe('abort() teardown (FR6, AC4)', () => {
+  it('drains a fire to a pristine idle, and the next fire still lights', () => {
+    for (const state of FIRE_STATES) {
+      const mission = buildFire(state);
+      expect(mission.abort(), state).toBe(state !== 'idle');
+      const snapshot = mission.snapshot();
+      expect(snapshot.state, state).toBe('idle');
+      expect(snapshot.fireHouseId, state).toBeUndefined();
+      expect(snapshot.burstsLeft, state).toBe(0);
+      expect(flameShows(snapshot), state).toBe(false);
+      expect(mission.isHoseReady(0), state).toBe(false);
+      expect(mission.respond(), state).toBe(false);
+      expect(mission.spray(), state).toBe(false);
+      expect(mission.spawn('house-9'), state).toBe(true);
+    }
+  });
+
+  it('drains an order to a pristine idle, and the next order still opens', () => {
+    for (const state of ORDER_STATES) {
+      const mission = buildOrder(state);
+      expect(mission.abort(), state).toBe(state !== 'idle');
+      const snapshot = mission.snapshot();
+      expect(snapshot.state, state).toBe('idle');
+      expect(snapshot.orderHouseId, state).toBeUndefined();
+      expect(orderIsOpen(snapshot.state), state).toBe(false);
+      expect(mission.isServeReady(0), state).toBe(false);
+      expect(
+        resolveOrderTap({ state: snapshot.state, onOrderHouse: true, armed: true }),
+        state,
+      ).toBe('ignore');
+      expect(mission.spawn('house-9'), state).toBe(true);
+    }
+  });
+
+  it('drains a clean-up to a pristine idle, and the next field still lays', () => {
+    for (const state of PARK_STATES) {
+      const mission = buildPark(state);
+      expect(mission.abort(), state).toBe(state !== 'idle');
+      const snapshot = mission.snapshot();
+      expect(snapshot.state, state).toBe('idle');
+      expect(litterFieldShows(snapshot.state), state).toBe(false);
+      expect(resolveParkTap({ state: snapshot.state, onPiece: true }), state).toBe(
+        'ignore',
+      );
+      expect(mission.finish(), state).toBe(false);
+      expect(mission.spawn(), state).toBe(true);
+    }
+  });
+
+  it('drains an errand to a pristine idle, and the next errand still opens', () => {
+    for (const state of PUPPY_STATES) {
+      const mission = buildPuppy(state);
+      expect(mission.abort(), state).toBe(state !== 'idle');
+      const snapshot = mission.snapshot();
+      expect(snapshot.state, state).toBe('idle');
+      expect(mission.isDeliverReady(), state).toBe(false);
+      expect(
+        resolvePuppyTap({ state: snapshot.state, onOwnerHouse: true, armed: true }),
+        state,
+      ).toBe('ignore');
+      expect(mission.deliver(), state).toBe(false);
+      expect(mission.siren(), state).toBe(true);
+    }
   });
 });

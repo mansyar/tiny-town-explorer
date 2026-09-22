@@ -3,11 +3,11 @@
  * with their own declared states, celebrating state, and linger duration.
  *
  * The FSM owns the skeleton every mission used to hand-roll: the current
- * state, guarded transitions (`attempt`), tick/tap delegation with a
- * one-transition-per-event lock, the celebration linger, a once-per-entry
+ * state, guarded transitions (`attempt`), tick delegation under a
+ * one-transition-per-update lock, the celebration linger, a once-per-entry
  * celebration emit, and `abort()` cleanup from any state (FR6). Mission
- * behaviour arrives as callbacks — the handler passed to `update`/`tap` — so
- * no mission keeps bespoke transition plumbing.
+ * behaviour arrives as the callback passed to `update`, so no mission keeps
+ * bespoke transition plumbing.
  *
  * The three lifecycle edges a mission can own side data across are all
  * callbacks: `onCelebrate` (the run just won), `onIdle` (the linger landed
@@ -21,9 +21,13 @@
 export interface MissionFsmConfig<S extends string> {
   /** Every state this mission may ever be in; anything else is refused. */
   readonly states: readonly S[];
-  /** Where `abort()` and the celebration linger land. */
+  /** Where `abort()` and the celebration linger land; must be in `states`. */
   readonly initialState: S;
-  /** The celebrating/lingering state; entering it emits `onCelebrate`. */
+  /**
+   * The celebrating/lingering state; entering it emits `onCelebrate`. Must be
+   * in `states`: both are checked when the FSM is built, so a typo fails
+   * loudly instead of leaving a mission that can never spawn or celebrate.
+   */
   readonly celebratingState: S;
   /** Seconds to linger in `celebratingState` before returning to idle. */
   readonly lingerSeconds: number;
@@ -44,7 +48,7 @@ export interface MissionFsm<S extends string> {
   /**
    * Attempt one transition: current state must be in `from`, `to` must be
    * declared and different, `when` must not be false, and no earlier
-   * transition may have fired inside the current update/tap event.
+   * transition may have fired inside the current update.
    */
   attempt(from: S | readonly S[], to: S, when?: boolean): boolean;
   /**
@@ -52,8 +56,6 @@ export interface MissionFsm<S extends string> {
    * owns the frame and no handler runs.
    */
   update(delta: number, handler?: (delta: number) => void): void;
-  /** One tap pass: always delegates; the handler claims by returning truthy. */
-  tap<T>(handler: () => T): T;
   /** Tear down from any non-idle state: back to idle, timer reset, cleanup. */
   abort(): boolean;
 }
@@ -62,14 +64,24 @@ export function createMissionFsm<S extends string>(
   config: MissionFsmConfig<S>,
 ): MissionFsm<S> {
   const { states, initialState, celebratingState, lingerSeconds } = config;
+  for (const [name, declared] of [
+    ['initialState', initialState],
+    ['celebratingState', celebratingState],
+  ] as const) {
+    if (!states.includes(declared)) {
+      throw new Error(
+        `createMissionFsm: ${name} '${declared}' is not one of states [${states.join(', ')}]`,
+      );
+    }
+  }
   let state = initialState;
   let completeElapsed = 0;
-  let inEvent = false;
+  let inUpdate = false;
   let transitioned = false;
 
   function canAttempt(from: S | readonly S[], to: S, when: boolean): boolean {
     if (!when || !states.includes(to)) return false;
-    if (inEvent && transitioned) return false;
+    if (inUpdate && transitioned) return false;
     const sources = typeof from === 'string' ? [from] : from;
     return sources.includes(state) && to !== state;
   }
@@ -78,8 +90,10 @@ export function createMissionFsm<S extends string>(
     if (!canAttempt(from, to, when)) return false;
     const previous = state;
     state = to;
-    if (inEvent) transitioned = true;
-    if (to === celebratingState && previous !== celebratingState) {
+    if (inUpdate) transitioned = true;
+    // `canAttempt` has already refused a no-op, so `previous` is never the
+    // celebrating state here: entering it is always a real entry.
+    if (to === celebratingState) {
       config.onCelebrate?.(previous);
     }
     return true;
@@ -99,23 +113,12 @@ export function createMissionFsm<S extends string>(
       }
       return;
     }
-    inEvent = true;
+    inUpdate = true;
     transitioned = false;
     try {
       handler?.(delta);
     } finally {
-      inEvent = false;
-      transitioned = false;
-    }
-  }
-
-  function tap<T>(handler: () => T): T {
-    inEvent = true;
-    transitioned = false;
-    try {
-      return handler();
-    } finally {
-      inEvent = false;
+      inUpdate = false;
       transitioned = false;
     }
   }
@@ -125,11 +128,13 @@ export function createMissionFsm<S extends string>(
     const previous = state;
     state = initialState;
     completeElapsed = 0;
-    inEvent = false;
+    // The run is over, so the in-flight update lock goes with it: a transition
+    // made after an abort belongs to the next run, not the one just torn down.
+    inUpdate = false;
     transitioned = false;
     config.onAbort?.(previous);
     return true;
   }
 
-  return { getState: () => state, attempt, update, tap, abort };
+  return { getState: () => state, attempt, update, abort };
 }

@@ -60,13 +60,15 @@ export function fireAwaitsKid(state: MissionState): boolean {
 
 /**
  * The fire target (flame) adapter for the shared marker layer (FR2): shows
- * while the fire has bursts left (spawned/driving/active), arms the hose in
- * `active`, and answers a tap on the burning house only before the kid has
- * driven over (the hose is a button, not a tap, once active).
+ * while the fire has bursts left (spawned/driving/active) and answers a tap on
+ * the burning house only before the kid has driven over — the hose is a
+ * button, not a tap, once active.
+ *
+ * No arm state is declared: the hose arms by *proximity* (`isHoseReady`), so
+ * an arm state here would name a rule nothing reads (see `MarkerAdapter`).
  */
 export const FIRE_FLAME: MarkerAdapter<MissionState, 'ignore' | 'respond'> = {
   showIn: ['spawned', 'driving', 'active'],
-  armIn: ['active'],
   taps: [{ inState: 'spawned', needsTarget: true, outcome: 'respond' }],
 };
 
@@ -86,6 +88,14 @@ export interface MissionManager {
    * driving off takes it away again.
    */
   update(deltaSeconds: number, distanceToFire: number): void;
+  /**
+   * Tears a rescue down from any state (FR6): idle, flame out, bursts cleared.
+   * Nothing preempts a mission today — the busy gate makes every errand wait
+   * its turn — so this is the contract held for the day something does;
+   * `missionAbortParity.test.ts` drives it from every state and asserts the
+   * same cleanup the linger gives.
+   */
+  abort(): boolean;
 }
 
 export function createMissionManager(
@@ -165,6 +175,10 @@ export function createMissionManager(
           fsm.attempt('active', 'driving');
         }
       });
+    },
+
+    abort(): boolean {
+      return fsm.abort();
     },
   };
 }

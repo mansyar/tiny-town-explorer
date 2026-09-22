@@ -250,9 +250,9 @@ out of verifying it (the lost puppy, below).
 | # | Criterion | Verdict | Evidence |
 | --- | --- | --- | --- |
 | AC1 | All four missions run end to end with no *unintended* visible change; the only difference is the completion sparkle | **Met** | Every mission's public API was left byte-identical and `main.ts`'s registry/tick/tap paths are untouched, so the Phase 1 characterization matrix, the abort-parity harness and the frozen `missionBusy`/`calmGapPacer`/`missionFocus` suites are the acceptance gate — all green and unmodified. Walkthrough run by the track owner against the dev server (`?calmGap=2`, below); it is also what surfaced the puppy correction. |
-| AC2 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green | **Met** | Biome 118 files clean, `tsc --noEmit` clean, **617 tests across 50 files** (598 at the Phase 4 checkpoint). |
+| AC2 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green | **Met** | Biome 118 files clean, `tsc --noEmit` clean, **621 tests across 50 files** (598 at the Phase 4 checkpoint; the review pass below added 4 net). |
 | AC3 | State matrix: no marker visible or tappable outside its own mission and state | **Met** | `missionStateMatrix` 10 tests — flame only while bursts remain, cone exactly while the order is open, field exactly while the clean-up runs, paw/heart never both; every off-mission tap resolves `ignore`. |
-| AC4 | Abort parity: teardown in every state leaves no orphan marker | **Met** | `missionAbortParity` 14 tests — each mission drained from every state to a pristine idle; the framework's `onIdle` is what drops each mission's own side data, and the migration's `onAbort` wiring is the same callback. |
+| AC4 | Abort parity: teardown in every state leaves no orphan marker | **Met** | `missionAbortParity` 18 tests — each mission drained from every state to a pristine idle down *both* routes: the shipped linger, and `abort()`, which the review exposed on all four mission APIs so the `onAbort` hooks stopped being dead configuration (see the review pass). |
 | AC5 | `missionBusy` / `calmGapPacer` / `missionFocus` tests pass unmodified | **Met** | Zero edits to those three suites; no file outside `src/game/mission/` changed except `main.ts`. |
 | AC6 | Sparkle fires exactly once per completion, never in free play or at start | **Met** | `missionCelebration` 11 tests — exactly-once, tap-spam collapse, interruption during linger, silence in free play and at spawn, re-arm per run. |
 | AC7 | Per-mission bespoke FSM/marker/celebration code is gone | **Met** | `completeElapsed`, `let state`, `toIdle` and `state = "<literal>"` now appear only inside `missionFsm.ts`; each mission file declares its stages and linger and delegates every verb to a guarded transition. |
@@ -274,11 +274,49 @@ loop, shadow-map pass included:
 The sparkle rides the existing `abilityFx` burst pool and adds no persistent
 geometry, so the four-mission scene lands *at or below* the v1 figures — a
 mission framework and an extra completion burst between them cost two fewer
-draw calls than the v1 build. Meshes are counted here by walking the scene
+draw calls than the v1 build. The review re-checked that claim live rather
+than trusting the table: with nothing else changed, one sparkle took the frame
+from **144 draw calls to 154**, and back to **144** once its bits finished
+(pixel ratio 1.5, through a temporary probe that was then removed). Absolute
+figures drift with wherever the camera happens to be and which mission is in
+flight, which is why the table compares like-for-like *method* rather than
+moment-to-moment; the sparkle's own cost is the +10, its plan is built only the
+first time it fires, and it is invisible once the burst is over. Meshes are counted here by walking the scene
 graph for every mesh, so that column reads higher than the v1 table's 106,
 which predates the order marker, the litter field, the puppy instances and the
 paw/heart markers; the numbers NFR3 actually names are the triangles and draw
 calls.
+
+### The review pass
+
+A principal-engineer review ran over the whole track — 2,599 added and 256
+removed lines across 23 files, read file by file — and found no Critical or
+High issues: two Medium, five Low. All were fixed in the review commit.
+
+- **The sparkle was a second confetti burst** (Medium). It fired on the
+  `'confetti'` channel, so this track's one child-visible difference was
+  confetti twice at the same spot. `abilityFx` now carries a `sparkle` plan of
+  its own — fewer but chunkier bits, thrown higher, pink rather than gold —
+  with a test pinning the distinctness. Looking at it settled the design: the
+  first cut was near-white and vanished against the road, so it was retuned
+  before the commit rather than shipped on the strength of the plan table.
+- **`abort()` was unreachable** (Medium). The FR6 deliverable had no caller
+  anywhere in `src/`, so three missions' `onAbort` hooks were configuration
+  nothing could reach and the parity harness still pinned the linger as its
+  stand-in. It is now exposed on all four mission APIs and driven from every
+  state (`missionAbortParity`, 18 tests).
+- Low: the FSM's unused `tap()` seam deleted, so the description matches the
+  code (the one-transition lock is update-scoped); two inert `armIn`
+  declarations removed from the marker adapters, since both arms are range
+  wires rather than state rules; `markerTap` returns `O | 'ignore'`, dropping
+  its type assertion; a dead clause removed from the FSM's celebration guard;
+  and `createMissionFsm` now refuses a config whose initial or celebrating
+  state is undeclared instead of failing silently.
+- One finding was **left alone deliberately**: `FIRE_FLAME.showIn` is not read
+  by `main.ts`, but wiring it into the fire tick would run `extinguish()`
+  during the celebration and cut the smoke 2.5 s early. That is a visible
+  change, so the flame's real rule stays where it is — with `fireFx` — and the
+  adapter keeps the describing field only.
 
 ### How the pass was driven
 

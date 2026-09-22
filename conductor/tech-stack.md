@@ -39,9 +39,11 @@
   longer hand-roll their FSMs, marker wiring or celebrations — one framework
   (`missionFsm`, `missionMarkers`, `missionCelebration`) is configured per
   mission as data. It costs no rendering time of its own, and the unified
-  completion sparkle rides the existing `abilityFx` burst pool rather than
-  bringing a particle system of its own, so the re-measured scene above is the
-  whole delta. The framework runs entirely in the simulation step: one FSM with
+  completion sparkle is a **plan inside the existing `abilityFx` burst pool**
+  (`sparkle`: 10 bits, pink, chunkier and thrown higher than the confetti it
+  lands beside) rather than a particle system of its own — its pool is built on
+  first use, costs +10 draw calls while its bits live, and nothing once they
+  fade, so the re-measured scene above is the whole delta. The framework runs entirely in the simulation step: one FSM with
   guarded transitions and a completion linger, one marker layer, one
   celebration table.
 - **Park clean-up and lost puppy (added 2026-09-22):** primitives plus one
@@ -148,7 +150,7 @@ running through a town street. Full table:
   (44 entries, 3,398.82 KiB as of the consolidation track — the bark clip and
   mounted `dumpster.glb` added ~51.6 KiB over the earlier 42-entry, 3.3 MiB
   baseline).
-- Vitest 5 peer range vs Vite 8 — **verified**: 617 tests across 50 files
+- Vitest 5 peer range vs Vite 8 — **verified**: 621 tests across 50 files
   (consolidation track; was 516 across 43 at the park/puppy track, 361 across 28
   before that).
 - TypeScript 7 interop with Vite's transformer, `tsc --noEmit` gate — **verified**

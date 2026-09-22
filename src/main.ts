@@ -182,7 +182,7 @@ async function main(): Promise<void> {
       else if (what === 'drop') audio.play('drop');
       else fx.burst(what, at, 0);
     },
-    sparkle: (at) => fx.burst('confetti', at, 0),
+    sparkle: (at) => fx.burst('sparkle', at, 0),
   };
   const fireCelebration = createCelebration('fire', celebrationDeps);
   const orderCelebration = createCelebration('iceCream', celebrationDeps);

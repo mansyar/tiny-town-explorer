@@ -32,6 +32,23 @@ describe('the burst fade', () => {
   });
 });
 
+describe('the completion sparkle (FR4)', () => {
+  it('has its own plan, distinct from the confetti it lands beside', () => {
+    const sparkle = BURST_PLANS.sparkle;
+    const confetti = BURST_PLANS.confetti;
+    // The beat only reads as *its own* thing if the kid can tell it apart from
+    // the celebration's confetti, which fires at the same spot a moment
+    // earlier — so it is a different hue, fewer but chunkier bits, thrown up
+    // higher. (The first cut was near-white and vanished against the road: the
+    // hue is what makes it legible, the size is what makes it a pop.)
+    expect(sparkle).toBeDefined();
+    expect(sparkle.color).not.toBe(confetti.color);
+    expect(sparkle.count).toBeLessThan(confetti.count);
+    expect(sparkle.size).toBeGreaterThan(confetti.size);
+    expect(sparkle.lift).toBeGreaterThan(confetti.lift);
+  });
+});
+
 describe('the launch velocities', () => {
   it('throws one bit per plan', () => {
     for (const [kind, plan] of Object.entries(BURST_PLANS)) {

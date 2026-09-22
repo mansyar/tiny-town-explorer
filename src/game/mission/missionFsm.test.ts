@@ -1,7 +1,7 @@
 /**
  * Red-first contract tests for the generic mission FSM (FR1): declared
- * states, guarded transitions, tick/tap delegation, exactly-one transition
- * per update, celebration entry fires once — plus abort semantics (FR6,
+ * states, guarded transitions, tick delegation, exactly-one transition per
+ * update, config validation, celebration entry fires once — plus abort (FR6,
  * Phase 2 task 2) and per-mission configuration smoke tests proving each
  * mission's real state set and linger fit the generic contract.
  */
@@ -63,6 +63,20 @@ function walkTo(fsm: ReturnType<typeof makeFsm>, state: FireState): void {
   }
 }
 
+describe('config validation (FR1)', () => {
+  it('refuses a config whose initial state is not declared', () => {
+    expect(() =>
+      makeFsm({ states: ['idle', 'complete'], initialState: 'spawned' }),
+    ).toThrow(/initialState/);
+  });
+
+  it('refuses a config whose celebrating state is not declared', () => {
+    expect(() => makeFsm({ states: ['idle', 'spawned'], initialState: 'idle' })).toThrow(
+      /celebratingState/,
+    );
+  });
+});
+
 describe('declared states', () => {
   it('starts at the initial state', () => {
     expect(makeFsm().getState()).toBe('idle');
@@ -105,7 +119,7 @@ describe('guarded transitions', () => {
   });
 });
 
-describe('tick/tap delegation', () => {
+describe('tick delegation', () => {
   it('passes delta to the update handler while not celebrating', () => {
     const fsm = makeFsm();
     const handler = vi.fn();
@@ -119,12 +133,6 @@ describe('tick/tap delegation', () => {
       fsm.attempt('idle', 'spawned');
     });
     expect(fsm.getState()).toBe('spawned');
-  });
-
-  it('delegates taps and returns the handler result (claim)', () => {
-    const fsm = makeFsm();
-    expect(fsm.tap(() => false)).toBe(false);
-    expect(fsm.tap(() => true)).toBe(true);
   });
 
   it('stops delegating updates once celebrating — the linger owns the frame', () => {
@@ -155,16 +163,6 @@ describe('exactly-one transition per update', () => {
       fsm.attempt('spawned', 'driving');
     });
     expect(fsm.getState()).toBe('driving');
-  });
-
-  it('applies the same single-shot lock inside a tap', () => {
-    const fsm = makeFsm();
-    fsm.tap(() => {
-      expect(fsm.attempt('idle', 'spawned')).toBe(true);
-      expect(fsm.attempt('spawned', 'driving')).toBe(false); // locked
-      return true;
-    });
-    expect(fsm.getState()).toBe('spawned');
   });
 
   it('leaves direct verbs outside an update/tap unlocked', () => {

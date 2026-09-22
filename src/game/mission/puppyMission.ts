@@ -54,12 +54,15 @@ export const PUPPY_PAW: MarkerAdapter<PuppyState, 'ignore'> = {
 
 /**
  * The heart (delivery target) adapter for the shared marker layer (FR2):
- * shows while carrying, arms the door tap in range, answers a tap on the
- * owner's house only when armed.
+ * shows while carrying and answers a tap on the owner's house only while the
+ * door tap is armed.
+ *
+ * No arm state is declared: the arm is a *wire* — the mission's own `armed`,
+ * which is carrying-plus-range — so naming a state here would describe a rule
+ * nothing reads (see `MarkerAdapter`).
  */
 export const PUPPY_HEART: MarkerAdapter<PuppyState, 'ignore' | 'deliver'> = {
   showIn: ['carrying'],
-  armIn: ['carrying'],
   taps: [
     { inState: 'carrying', needsTarget: true, needsArmed: true, outcome: 'deliver' },
   ],
@@ -89,6 +92,13 @@ export interface PuppyMission {
    * linger. Negative frames are ignored, as in the other missions.
    */
   update(deltaSeconds: number, distanceToPup: number, distanceToOwner: number): void;
+  /**
+   * Tears an errand down from any state (FR6): idle, no marker, delivery
+   * disarmed. Nothing preempts a mission today — the busy gate makes every
+   * errand wait its turn — so this is the contract held for the day something
+   * does; `missionAbortParity.test.ts` drives it from every state.
+   */
+  abort(): boolean;
 }
 
 export function createPuppyMission(): PuppyMission {
@@ -149,6 +159,10 @@ export function createPuppyMission(): PuppyMission {
           armed = distanceToOwner <= DELIVERY_RANGE;
         }
       });
+    },
+
+    abort(): boolean {
+      return fsm.abort();
     },
   };
 }

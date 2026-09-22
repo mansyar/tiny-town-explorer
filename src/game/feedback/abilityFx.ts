@@ -26,7 +26,7 @@ import type { Vec2 } from '../town/townTypes';
  */
 
 /** Kinds of burst this module can throw. */
-export type BurstKind = 'cones' | 'confetti' | 'gulp' | 'poof' | 'spray';
+export type BurstKind = 'cones' | 'confetti' | 'gulp' | 'poof' | 'sparkle' | 'spray';
 
 /** How long a burst of bits lives. Long enough to read, short enough to not linger. */
 export const BURST_SECONDS = 0.7;
@@ -120,6 +120,24 @@ export const BURST_PLANS: Readonly<Record<BurstKind, BurstPlan>> = {
     fan: Math.PI * 2,
     forward: 0,
     size: 1,
+  },
+  /**
+   * The completion sparkle (FR4). It fires on top of a celebration's confetti
+   * at the same spot, so it has to read as *its own* beat rather than more
+   * confetti: **fewer but chunkier** bits (big, brief and joyful, and legible
+   * at a glance), thrown up higher so it pops above the cloud instead of
+   * thickening it, and in pink rather than the confetti's gold — the first
+   * draft was near-white, which vanished against the road and the sky.
+   */
+  sparkle: {
+    count: 10,
+    shape: 'star',
+    color: 0xff63b5,
+    speed: 1.6,
+    lift: 3.6,
+    fan: Math.PI * 2,
+    forward: 0,
+    size: 1.25,
   },
 };
 

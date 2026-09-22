@@ -66,6 +66,13 @@ export interface IceCreamMission {
    * driving off takes it away again.
    */
   update(deltaSeconds: number, distanceToHouse: number): void;
+  /**
+   * Tears a delivery down from any state (FR6): idle, cone hidden, no house
+   * left waiting. The town's busy gate means nothing preempts a mission today,
+   * so this is the contract held for the day something does — driven from
+   * every state by `missionAbortParity.test.ts`.
+   */
+  abort(): boolean;
 }
 
 export function createIceCreamMission(): IceCreamMission {
@@ -130,6 +137,10 @@ export function createIceCreamMission(): IceCreamMission {
           fsm.attempt('active', 'driving');
         }
       });
+    },
+
+    abort(): boolean {
+      return fsm.abort();
     },
   };
 }
