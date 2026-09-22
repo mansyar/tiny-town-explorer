@@ -43,10 +43,10 @@
   - [x] Write failing tests: no marker and no delivery before the siren; the siren latches "answered" exactly once and blooms the paw; pickup inside 0.6 and not at 0.61; the heart exists only while carrying; delivery needs the house tap inside 1.9; one marker at every state (8 red-first FSM tests in `puppyMission.test.ts`; marker visibility is state-derived and verified in Phase 5 wiring)
   - [x] Implement `puppyMission.ts` and its gates (FSM + `resolvePuppyTap`; `PICKUP_RADIUS` exported from `parkPickup.ts` for reuse; 508/508 pass)
   - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `puppyMission.ts`)
-- [~] Task: Helper hand across four missions (FR12)
-  - [ ] Write failing tests: `missionFocus` resolves exactly one destination for four missions — litter while the park asks, the siren button before the puppy is answered, the paw spot after, the owner house while carrying
-  - [ ] Implement the four-way focus + the siren-button target
-  - [ ] Refactor + coverage
+- [x] Task: Helper hand across four missions (FR12) `7a974c4`
+  - [x] Write failing tests: `missionFocus` resolves exactly one destination for four missions — litter while the park asks, the siren button before the puppy is answered, the paw spot after, the owner house while carrying (6 new red-first tests, 13 total in `missionFocus.test.ts`)
+  - [x] Implement the four-way focus + the siren-button target (priority chain fire → order → park → puppy; `target: 'siren'` marker for the HUD button; `parkAwaitsKid` exported from `parkMission.ts`; 514/514 pass)
+  - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `missionFocus.ts` and `parkMission.ts`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 – Art and audio assets (manual-verify, exempt from TDD)
