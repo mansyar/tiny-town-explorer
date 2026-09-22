@@ -23,10 +23,10 @@
   - [x] Write failing tests: 8 pieces (5 park, 3 kerbside on road-bordering lots), every piece on a reachable non-road tile, placement deterministic under a seeded random (7 tests in `parkLitter.test.ts`, red first)
   - [x] Implement `parkLitter.ts` over the town grid's existing `collectTiles` (via `parkTiles`; kerb draw without replacement from ring-road lots)
   - [x] Refactor + coverage (97% stmts, 83% branch, 100% lines on `parkLitter.ts`)
-- [~] Task: Pickup and sweep rules (FR3, FR4, FR5)
-  - [ ] Write failing tests: drive-over collects at 0.6 and not at 0.61; one gulp per piece; the ≥150 ms gulp rate-limit; the ability sweeps every piece within 1.5 with one gulp for the group at a 0.5 s cadence; completion fires exactly once, on the last piece
-  - [ ] Implement `parkPickup.ts` as pure rules
-  - [ ] Refactor + coverage
+- [x] Task: Pickup and sweep rules (FR3, FR4, FR5) `f8477d4`
+  - [x] Write failing tests: drive-over collects at 0.6 and not at 0.61; one gulp per piece; the ≥150 ms gulp rate-limit; the ability sweeps every piece within 1.5 with one gulp for the group at a 0.5 s cadence; completion fires exactly once, on the last piece (13 tests in `parkPickup.test.ts`, red first)
+  - [x] Implement `parkPickup.ts` as pure rules (internal clock; nearest piece per 150 ms window; sweep 1.5/500 ms; collected-id set so stale lists never double-collect; 484/484 pass)
+  - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `parkPickup.ts`)
 - [ ] Task: Park mission FSM + respond tap (FR2, FR5)
   - [ ] Write failing tests: `spawned → responding → collecting → complete → idle`; a tap on a piece responds once (morph + drive); neither a second tap nor driving away ever cancels; the linger is ~2.5 s
   - [ ] Implement `parkMission.ts` and `resolveParkTap`
