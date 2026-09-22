@@ -31,7 +31,7 @@
   - [x] Write failing tests: `spawned → responding → collecting → complete → idle`; a tap on a piece responds once (morph + drive); neither a second tap nor driving away ever cancels; the linger is ~2.5 s (9 tests in `parkMission.test.ts`, red first)
   - [x] Implement `parkMission.ts` and `resolveParkTap` (FSM mirrors fire/ice-cream; `resolveParkTap` beside `resolveOrderTap`; 493/493 pass)
   - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `parkMission.ts`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `91d20d2`]
 
 ## Phase 3 – Lost Puppy mission logic + helper hand (TDD)
 
