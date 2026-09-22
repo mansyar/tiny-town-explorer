@@ -25,6 +25,15 @@ export const COMPLETE_LINGER_SECONDS = 2.5;
 
 export type ParkState = 'collecting' | 'complete' | 'idle' | 'responding' | 'spawned';
 
+/**
+ * The kid is still needed (FR12): before the tap (`spawned`) and on the way
+ * to the litter (`responding`). Once collecting, the kid has arrived and the
+ * hand stands down — the same shape as `fireAwaitsKid`/`orderAwaitsKid`.
+ */
+export function parkAwaitsKid(state: ParkState): boolean {
+  return state === 'spawned' || state === 'responding';
+}
+
 export interface ParkSnapshot {
   readonly state: ParkState;
 }
