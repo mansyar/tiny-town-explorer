@@ -17,9 +17,9 @@ phase.*
 - [x] Task: Mid-mission abort parity harness (FR6, AC4) `e9c4953`
   - [x] Write tests that tear down each mission in every state (armed marker, celebrating, lingering) and assert full cleanup — no orphan markers, no post-abort celebration, no sparkle-pending leakage
   - [x] Implement minimal fixes only if current behavior is under-specified; document any divergence in the task note
-- [~] Task: Frozen-contract baseline (FR5, AC5)
-  - [ ] Verify `missionBusy` / `calmGapPacer` / `missionFocus` suites pass **unmodified**; record their test counts as the frozen baseline (no code changes)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Frozen-contract baseline (FR5, AC5) — frozen baseline: missionBusy 5 + calmGapPacer 13 + missionFocus 13 = **31 tests / 3 files**, zero diff vs branch point `0c177b2`
+  - [x] Verify `missionBusy` / `calmGapPacer` / `missionFocus` suites pass **unmodified**; record their test counts as the frozen baseline (no code changes)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 – Generic mission FSM (TDD)
 
