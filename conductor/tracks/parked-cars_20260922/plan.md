@@ -58,17 +58,18 @@
 
 ## Phase 3 – Kerb reservation across the missions (TDD)
 
-- [ ] Task: Reservation source + the missions' declared kerbs (FR8)
-  - [ ] Write failing tests: the reservation lists every kerb the missions already use — the park mission's two fixed north-edge slots and the puppy's two authored lot spots — derived from their own data rather than hand-copied; a parked car on a reserved kerb is rejected; the shipped authoring passes the check
-  - [ ] Implement the reservation data and query, and assert the parked-car authoring against it
-  - [ ] Refactor + coverage
-- [ ] Task: Litter's kerbside draw yields to the cars (FR8)
-  - [ ] Write failing tests: `spawnParkLitter`'s candidate lots exclude any reserved kerb; it still draws exactly three pieces; the pool stays large enough for the draw to vary by seed and stay reproducible for a given seed; no kerbside piece ever lands inside a parked-car footprint across many seeds
-  - [ ] Implement the candidate filter in `spawnParkLitter`, leaving pacing, pickups and celebrations untouched
-  - [ ] Refactor + coverage
-- [ ] Task: The town-wide invariant (FR8)
-  - [ ] Write the cross-cutting suite that walks the shipped map and every mission's placement — park litter across many seeds, the puppy's four spots, the fire pacer's houses, the ice-cream order marker, the park props — asserting that none falls inside a parked-car footprint or the reserved band, and that a puppy spot is still scoopable with the cars present
-  - [ ] Fix any violation by adjusting the authored cars (never a mission rule)
+- [x] Task: Reservation source + the missions' declared kerbs (FR8) `5032b8c`
+  - [x] Write failing tests: the reservation lists every kerb the missions already use — the park mission's two fixed north-edge slots and the puppy's two authored lot spots — derived from their own data rather than hand-copied; a parked car on a reserved kerb is rejected; the shipped authoring passes the check (11 tests in `kerbReservation.test.ts`, red first on a missing module)
+  - [x] Implement the reservation data and query, and assert the parked-car authoring against it (a kerb edge is (street tile, facing) *read from a position*, so a car and a litter piece agree on their kerb from the only thing they share; the park's two north-edge slots and the puppy's two lot spots are derived from `fixedParkItems`/`createPuppySpots`, never hand-listed; `declaredKerbViolations` makes the shipped authoring checkable and a synthetic car on the puppy's kerb is caught)
+  - [x] Refactor + coverage (`kerbReservation.ts` 100% statements/lines, 96.66% branches; `parkSlots.ts` 100% statements/lines; the park's slot layout moved to its own module so the reservation could read it without an import cycle)
+- [x] Task: Litter's kerbside draw yields to the cars (FR8) `2074264`
+  - [x] Write failing tests: `spawnParkLitter`'s candidate lots exclude any reserved kerb; it still draws exactly three pieces; the pool stays large enough for the draw to vary by seed and stay reproducible for a given seed; no kerbside piece ever lands inside a parked-car footprint across many seeds (4 tests in `parkLitter.test.ts`, red first against the unfiltered draw)
+  - [x] Implement the candidate filter in `spawnParkLitter`, leaving pacing, pickups and celebrations untouched (`kerbsideLotCandidates` is exported so the pool's size is testable rather than a side effect; `kerbPiecePosition` too, so a test can ask which kerb a lot's piece uses without re-deriving the offset)
+  - [x] Refactor + coverage (`parkLitter.ts` 97.61% statements, 100% lines)
+  - [x] **Measured, not assumed:** of the eight ring-road lots, three lose their kerb to a car — (1,2), (1,3), (4,1) — and a fourth to the puppy's `spot-verge`, leaving **four** lots for three pieces. That is the floor: a fifth exclusion would make the draw deterministic with nothing in the suite to notice, so the pool's size and the seed's effect are both asserted.
+- [x] Task: The town-wide invariant (FR8) `8d8c869`
+  - [x] Write the cross-cutting suite that walks the shipped map and every mission's placement — park litter across many seeds, the puppy's four spots, the fire pacer's houses, the ice-cream order marker, the park props — asserting that none falls inside a parked-car footprint or the reserved band, and that a puppy spot is still scoopable with the cars present (3 tests in `kerbInvariant.test.ts`, kept in its own suite so the plan's "cross-cutting" deliverable is visible in the file layout)
+  - [x] Fix any violation by adjusting the authored cars (never a mission rule) — **no violation found, so no authored car had to move.** The order-marker/fire-target items resolve to house lot centres, 1.0 from a street's centre line, where a car's footprint reaches at most 0.62.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 – Registry, fit and blob shadow (manual-verify, exempt from TDD)
