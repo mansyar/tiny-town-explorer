@@ -1,0 +1,41 @@
+Task: Registry entries + mount fit (FR2, FR3, FR9, FR10)
+
+What changed
+- planTown mounts a parked car with fitWithin = tileSize * PARKED_CAR_FIT and
+  seatHeight = tileSize * PARKED_CAR_SEAT_HEIGHT, from the same constants its
+  footprint is derived from, and never with isBuilding.
+- ModelPlacement gains seatHeight and isBuilding; the renderer seats at the
+  placement's height by measuring the model's lowest point, and publishes a
+  footprint only for isBuilding.
+- PARKED_CAR_EXTENTS gains a measured height per model, and
+  parkedCarFittedHeight(kind) applies the same fit scale the renderer does.
+
+Why
+- A cap used to double as "this is a house". A parked car takes a cap and is not
+  a building; publishing it would have given collision a second hitbox keyed to a
+  prop that already publishes its own (FR9).
+- The fit is bounded by the measured walls (0.574-0.748 from a street's centre
+  line), not by taste, and the shadow's offset along the sun is the fitted height
+  -- so the height is measured data, not a constant.
+
+Measurements (pnpm assets:measure src/assets/kits/car-kit --top=60, 2026-09-22)
+- sedan            1.50 x 1.30 x 2.55 (w x h x l), 2032 tris, 180.2 KiB
+- hatchback-sports 1.30 x 1.10 x 2.85,             2088 tris, 205.2 KiB
+- van              1.50 x 1.35 x 2.75,             2082 tris, 183.6 KiB
+- suv              1.50 x 1.30 x 2.70,             2474 tris, 214.7 KiB
+- Fitted at 0.55: heights 0.280 (sedan), 0.212 (hatchback), 0.270 (van),
+  0.265 (suv); the fitted longest extent is 0.550 for all four, which is the
+  half extent the placement tests assume -- art and data agree.
+- pnpm build: precache 44 -> 48 entries, 3398.82 -> 4186.67 KiB. The four GLBs
+  are 783.6 KiB of that; all four are in the precache manifest (FR10).
+- Six instances of the four models = 52,056 triangles, which is the budget note
+  tech-stack.md carries (Phase 5).
+
+Manual steps recorded
+- pnpm dev, drive past a kerb: the car now matches its hitbox (a bonk stops you
+  at the box the placement tests measure) and rests on the kerb top rather than
+  sunk into it.
+- Restore 44/3398.82 KiB by checking out the pre-track build if the delta is
+  ever doubted: pnpm build on the Phase 0 commit.
+
+Gates: pnpm check clean, pnpm typecheck clean, 696 tests / 56 files.
