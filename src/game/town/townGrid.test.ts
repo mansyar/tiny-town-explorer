@@ -298,6 +298,27 @@ describe('authored map validation', () => {
       /unknown/i,
     );
   });
+
+  it('rejects a parked car authored at a diagonal, at map load', () => {
+    // Collision's box shape is axis-aligned, so a diagonal car would get a
+    // hitbox that disagrees with the art it was measured from. The failure has
+    // to happen here — when the town is built — rather than silently sizing a
+    // car by the wrong axis once the art is mounted.
+    const spec: TownMapSpec = {
+      ...BASE_SPEC,
+      rows: ['###', '#L#', '###'],
+      props: [
+        {
+          kind: 'parkedSedan',
+          tile: { x: 0, y: 1 },
+          offset: { x: 0.46, y: 0 },
+          yaw: Math.PI / 4,
+        },
+      ],
+    };
+
+    expect(() => createTownGrid(spec)).toThrow(/quarter turn/i);
+  });
 });
 
 function eachTile(grid: TownGrid): TileCoord[] {

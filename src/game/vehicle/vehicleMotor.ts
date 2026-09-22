@@ -1,5 +1,6 @@
 import {
   CONTACT_SKIN,
+  type Depenetration,
   depenetration,
   type Impact,
   type Obstacle,
@@ -183,13 +184,69 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
 
   const target = (): Vec2 | undefined => targets[cursor];
 
+  /**
+   * Moves a car centre out of the deepest *solid* hitbox its capsule is inside.
+   *
+   * The recoil direction comes from the geometry, so a bonk on something that
+   * sits close to a wall can spring the car straight at that wall: a parked car
+   * leaves 0.037 to the house behind it, and the recoil travels 0.14. A nose
+   * inside a house is exactly the stuck state the design has no room for, and
+   * the same sweep that stops the car driving into a wall has to keep the
+   * spring-back out of it.
+   *
+   * Crashable shapes are deliberately ignored: driving over a bumped cone (or a
+   * parked car) is the designed outcome of a bonk, not something to recover
+   * from.
+   */
+  const deepestSolidOverlap = (circle: Vec2): Depenetration | undefined => {
+    let deepest: Depenetration | undefined;
+    for (const obstacle of obstacles) {
+      if (!obstacle.solid) {
+        continue;
+      }
+      const overlap = depenetration(obstacle.shape, circle, radius);
+      if (
+        overlap !== undefined &&
+        (deepest === undefined || overlap.distance > deepest.distance)
+      ) {
+        deepest = overlap;
+      }
+    }
+    return deepest;
+  };
+
+  const clearSolids = (centre: Vec2): Vec2 => {
+    let deepest: Depenetration | undefined;
+    for (const circle of capsuleCentres(centre, heading, radius)) {
+      const overlap = deepestSolidOverlap(circle);
+      if (
+        overlap !== undefined &&
+        (deepest === undefined || overlap.distance > deepest.distance)
+      ) {
+        deepest = overlap;
+      }
+    }
+    if (deepest === undefined) {
+      return centre;
+    }
+    const push = deepest.distance + CONTACT_SKIN;
+    return {
+      x: centre.x + deepest.normal.x * push,
+      z: centre.z + deepest.normal.z * push,
+    };
+  };
+
   /** One frame of the recoil, which ends exactly on the contact point. */
   const stepBounce = (elapsed: number): void => {
     bounceElapsed += elapsed;
     const progress = Math.min(bounceElapsed / BOUNCE_DURATION, 1);
     const recoil = Math.sin(Math.PI * progress) * BOUNCE_BACK_DISTANCE;
-    position.x = contact.x + backX * recoil;
-    position.z = contact.z + backZ * recoil;
+    const bounced = clearSolids({
+      x: contact.x + backX * recoil,
+      z: contact.z + backZ * recoil,
+    });
+    position.x = bounced.x;
+    position.z = bounced.z;
     if (progress >= 1) {
       position.x = contact.x;
       position.z = contact.z;

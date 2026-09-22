@@ -79,10 +79,16 @@ export interface Depenetration {
 }
 
 /**
- * Every hitbox in a town: houses as boxes on their lots, props as circles.
+ * Every hitbox in a town: houses as boxes on their lots, props as circles, and
+ * parked cars as the boxes their footprints cover.
  *
  * Ids come from the grid, so a bonk can be traced back to the house or prop it
  * happened to.
+ *
+ * Every prop contributes exactly one shape, and a prop that could contribute
+ * none is an error: a prop nobody can hit is a prop the car drives clean
+ * through, which is what parked cars did before they were returned here
+ * (FR5).
  */
 export function collectObstacles(
   grid: TownGrid,
@@ -106,19 +112,38 @@ export function collectObstacles(
         },
       };
     }),
-    // A prop with no radius is boxed by its footprint instead (parked cars,
-    // FR5): that obstacle is built from the box, so it is not in the circles.
-    ...grid.props.flatMap((prop) => {
+    ...grid.props.map((prop) => {
       const radius = prop.collisionRadius;
-      return radius === undefined
-        ? []
-        : [
-            {
-              id: prop.id,
-              solid: false,
-              shape: { kind: 'circle' as const, centre: prop.position, radius },
-            },
-          ];
+      if (radius !== undefined) {
+        return {
+          id: prop.id,
+          solid: false,
+          shape: { kind: 'circle' as const, centre: prop.position, radius },
+        };
+      }
+
+      // No radius means the prop is boxed by its own footprint — a parked car,
+      // whose length a covering circle would have to spill into the lane to
+      // reach (FR5). The grid has already turned the footprint by the car's
+      // yaw, so this stays axis-aligned. Crashable either way: it bonks and the
+      // car carries on, which is also what keeps the puppy's reachability rule
+      // (which samples buildings alone) honest.
+      const footprint = prop.footprint;
+      if (footprint === undefined) {
+        throw new Error(
+          `${prop.id} has neither a collision radius nor a footprint, so nothing can hit it`,
+        );
+      }
+      return {
+        id: prop.id,
+        solid: false,
+        shape: {
+          kind: 'box' as const,
+          centre: prop.position,
+          halfX: footprint.halfX,
+          halfZ: footprint.halfZ,
+        },
+      };
     }),
   ];
 }

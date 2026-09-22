@@ -304,6 +304,142 @@ describe('hitting things', () => {
   });
 });
 
+describe('parked cars in the town (FR5)', () => {
+  const grid = createTownGrid(TOWN_MAP);
+  const obstacles = collectObstacles(grid);
+  /** The van on the north ring road: an east-west street, so the lane is simple. */
+  const van = grid.props.find((prop) => prop.kind === 'parkedVan');
+
+  /**
+   * A point in the parked car's own kerbside lane, `tileX` along the ring road.
+   *
+   * 0.30 south of the street's centre line: inside the car's inner edge (0.298),
+   * outside the centre-line lane the clearance contract keeps open, and far
+   * enough from the wall behind (0.691) that the player's own 0.43-long capsule
+   * still clears it. Aiming at the parked car's *centre* instead would put the
+   * tap inside the house's hitbox, which is a different story (a solid leg).
+   */
+  const lane = (tileX: number) => {
+    const centre = grid.tileToWorld({ x: tileX, y: 0 });
+    return { x: centre.x, z: centre.z + 0.3 };
+  };
+
+  it('bonks a parked car and still delivers the leg, instead of abandoning it', () => {
+    expect(van).toBeDefined();
+    if (van === undefined) {
+      return;
+    }
+    const destination = lane(van.tile.x + 1);
+    const motor = createVehicleMotor({
+      position: lane(van.tile.x - 2),
+      heading: EAST,
+      obstacles,
+    });
+    motor.setPath(directTo(destination));
+
+    run(motor, 6);
+
+    expect(motor.bonkCount()).toBe(1);
+    // A bumped car is not a wall: the leg still ends where the kid tapped,
+    // rather than at the parked car's flank.
+    expect(motor.isDriving()).toBe(false);
+    const shortfall = Math.hypot(
+      motor.position.x - destination.x,
+      motor.position.z - destination.z,
+    );
+    expect(shortfall).toBeLessThanOrEqual(ARRIVAL_RADIUS);
+  });
+
+  it('would strand the car at the kerb if the same car were solid', () => {
+    // The contrast that shows what FR5 buys: identical geometry, solid instead
+    // of crashable, and the leg is consumed at the parked car. Parked cars must
+    // not behave this way — the design has no failure states.
+    expect(van).toBeDefined();
+    if (van === undefined) {
+      return;
+    }
+    const solid = obstacles.map((obstacle) =>
+      obstacle.id === van.id ? { ...obstacle, solid: true } : obstacle,
+    );
+    const destination = lane(van.tile.x + 1);
+    const motor = createVehicleMotor({
+      position: lane(van.tile.x - 2),
+      heading: EAST,
+      obstacles: solid,
+    });
+    motor.setPath(directTo(destination));
+
+    run(motor, 6);
+
+    expect(motor.bonkCount()).toBe(1);
+    expect(motor.isDriving()).toBe(false);
+    const shortfall = Math.hypot(
+      motor.position.x - destination.x,
+      motor.position.z - destination.z,
+    );
+    expect(shortfall).toBeGreaterThan(ARRIVAL_RADIUS);
+  });
+
+  it('never springs back into the house behind a bonked parked car', () => {
+    // Found by driving this pose rather than reasoning about it: the truck
+    // spawns on the cross-street tile a parked SUV shares, taps the kerb across
+    // the street, and sweeps its tail through the SUV on the way round. The bonk
+    // normal points east, and the 0.14 recoil used to carry the nose into
+    // house-8's wall, 0.574 from the lane centre — a car inside a house is the
+    // stuck state this design has no room for.
+    expect(van).toBeDefined();
+    if (van === undefined) {
+      return;
+    }
+    const suv = grid.props.find((prop) => prop.kind === 'parkedSuv');
+    expect(suv).toBeDefined();
+    if (suv === undefined) {
+      return;
+    }
+    // The authored spawn point on the parked car's own tile, so this is a pose
+    // the game really starts a truck in.
+    const spawn = TOWN_MAP.spawnPoints.find(
+      (point) => point.x === suv.tile.x && point.y === suv.tile.y,
+    );
+    expect(spawn).toBeDefined();
+    const motor = createVehicleMotor({
+      position: grid.tileToWorld(spawn ?? suv.tile),
+      obstacles,
+    });
+    // Across the street from the SUV's kerb: the far house's lot centre.
+    motor.setPath(directTo(grid.tileToWorld({ x: suv.tile.x + 1, y: suv.tile.y })));
+
+    for (let frame = 0; frame < 240; frame++) {
+      motor.update(1 / 60);
+      expect(capsuleOverlaps(obstacles, motor)?.solid ?? false).toBe(false);
+    }
+    // It really did bonk the parked car on the way — otherwise this pose would
+    // prove nothing about recoil.
+    expect(motor.bonkCount()).toBeGreaterThanOrEqual(1);
+  });
+
+  it('drives a street past a parked car without touching it', () => {
+    expect(van).toBeDefined();
+    if (van === undefined) {
+      return;
+    }
+    // Straight along the street's centre line, the parked car's own tile in the
+    // middle: the drive the lane-clearance contract is about, driven with the
+    // car's real capsule rather than a point.
+    const motor = createVehicleMotor({
+      position: grid.tileToWorld({ x: van.tile.x - 2, y: van.tile.y }),
+      heading: EAST,
+      obstacles,
+    });
+    motor.setPath(directTo(grid.tileToWorld({ x: van.tile.x + 1, y: van.tile.y })));
+
+    run(motor, 6);
+
+    expect(motor.bonkCount()).toBe(0);
+    expect(motor.isDriving()).toBe(false);
+  });
+});
+
 describe('heading helpers', () => {
   it('faces south when the heading is zero, like the kit models do', () => {
     const facing = facingOf(0);

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import type { TownGrid } from '../town/townGrid';
 import { createTownGrid } from '../town/townGrid';
 import { TOWN_MAP } from '../town/townMap';
-import { HOUSE_LOT_FIT, PROP_COLLISION_RADIUS } from '../town/townTypes';
+import {
+  HOUSE_LOT_FIT,
+  isParkedCarKind,
+  PARKED_CAR_FIT,
+  PROP_COLLISION_RADIUS,
+  parkedCarHalfExtents,
+} from '../town/townTypes';
 import {
   collectObstacles,
   depenetration,
@@ -12,6 +19,17 @@ import {
 
 const grid = createTownGrid(TOWN_MAP);
 const town = collectObstacles(grid);
+
+/** The player's own capsule radius, as `vehicleMotor` defines it. */
+const CAR_RADIUS = 0.26;
+
+/** Every authored parked car, in map order. */
+const parkedCars = grid.props.filter((prop) => isParkedCarKind(prop.kind));
+
+/** The centre of the street tile a parked car stands on. */
+function streetCentre(prop: (typeof parkedCars)[number]) {
+  return grid.tileToWorld(prop.tile);
+}
 
 /** A loose obstacle set for the sweep tests, at known distances. */
 const CONE: Obstacle = {
@@ -77,13 +95,10 @@ describe('collectObstacles', () => {
       .map((obstacle) => obstacle.id);
 
     expect(solid).toEqual(grid.houses.map((house) => house.id));
-    // Parked cars publish a footprint box instead of a circle (FR5), so the
-    // circle obstacles here are exactly the props that carry a radius.
-    expect(crashable).toEqual(
-      grid.props
-        .filter((prop) => prop.collisionRadius !== undefined)
-        .map((prop) => prop.id),
-    );
+    // Every prop is crashable, parked cars included: they publish a footprint
+    // box rather than a circle (FR5), which is a change of shape, not of what a
+    // bonk costs the route.
+    expect(crashable).toEqual(grid.props.map((prop) => prop.id));
   });
 
   it('leaves the roads clear, so ordinary driving never scrapes a wall', () => {
@@ -105,6 +120,143 @@ describe('collectObstacles', () => {
         }
       }
     }
+  });
+});
+
+describe('parked cars as box obstacles (FR5)', () => {
+  it('boxes every parked car where its footprint is, and gives it no circle', () => {
+    for (const prop of parkedCars) {
+      const obstacle = town.find((candidate) => candidate.id === prop.id);
+      expect(obstacle?.shape.kind, `${prop.id} is an obstacle at all`).toBe('box');
+      if (obstacle?.shape.kind !== 'box') {
+        continue;
+      }
+      // Derived from the published footprint, which is already turned: collision
+      // never re-derives geometry the grid has decided.
+      expect(obstacle.shape.centre, `${prop.id}'s box sits on the car`).toEqual(
+        prop.position,
+      );
+      expect(obstacle.shape.halfX, `${prop.id}'s half x`).toBeCloseTo(
+        prop.footprint?.halfX ?? 0,
+        6,
+      );
+      expect(obstacle.shape.halfZ, `${prop.id}'s half z`).toBeCloseTo(
+        prop.footprint?.halfZ ?? 0,
+        6,
+      );
+      expect(prop.collisionRadius, `${prop.id} carries no radius`).toBeUndefined();
+    }
+  });
+
+  it('transposes a car’s box when its yaw lies it across the street instead', () => {
+    // The same fitted length has to come out on x for one car and on z for the
+    // other; a box that ignored the yaw would size a car by how it was authored
+    // rather than by how it stands.
+    const along = grid.props.find(
+      (prop) => prop.kind === 'parkedSedan' && (prop.yaw ?? 0) === 0,
+    );
+    const across = grid.props.find(
+      (prop) => prop.kind === 'parkedVan' && Math.abs(prop.yaw ?? 0) === Math.PI / 2,
+    );
+    const alongBox = town.find((obstacle) => obstacle.id === along?.id)?.shape;
+    const acrossBox = town.find((obstacle) => obstacle.id === across?.id)?.shape;
+    const halfLength = PARKED_CAR_FIT / 2;
+
+    expect(alongBox?.kind).toBe('box');
+    expect(acrossBox?.kind).toBe('box');
+    if (alongBox?.kind !== 'box' || acrossBox?.kind !== 'box') {
+      return;
+    }
+    // Along the street: the length runs on z. Across it: on x.
+    expect(alongBox.halfZ).toBeCloseTo(halfLength, 6);
+    expect(alongBox.halfX).toBeCloseTo(parkedCarHalfExtents('parkedSedan').halfWidth, 6);
+    expect(acrossBox.halfX).toBeCloseTo(halfLength, 6);
+    expect(acrossBox.halfZ).toBeCloseTo(parkedCarHalfExtents('parkedVan').halfWidth, 6);
+  });
+
+  it('never makes a parked car solid, so a pup hiding beside one stays reachable', () => {
+    // `puppySpots.isScoopable` samples buildings alone when deciding whether a
+    // hiding spot can be reached. A solid hitbox beside a spot would make that
+    // spot unreachable and lock the puppy mission for the session, which is a
+    // second reason parked cars are crashable beyond the bonk being friendlier.
+    for (const prop of parkedCars) {
+      const obstacle = town.find((candidate) => candidate.id === prop.id);
+      expect(obstacle?.solid, `${prop.id} is crashable`).toBe(false);
+    }
+  });
+
+  it('stops a centre-line drive dead where a covering circle would (why a box)', () => {
+    // The regression guard for the shape decision. A circle big enough to cover
+    // a car's length intrudes into the lane and bonks every drive along the
+    // street's centre line, which is exactly what FR4 forbids — so even the
+    // most charitable covering circle (half the car's length, ignoring its
+    // width) has to fail where the box passes.
+    for (const prop of parkedCars) {
+      const neighbours = grid.roadNeighbours(prop.tile);
+      expect(neighbours.length, `${prop.id}'s street runs both ways`).toBe(2);
+      const [from, to] = neighbours.map((tile) => grid.tileToWorld(tile));
+      if (from === undefined || to === undefined) {
+        continue;
+      }
+
+      const box = town.find((obstacle) => obstacle.id === prop.id);
+      expect(
+        sweepObstacles(town, from, to, CAR_RADIUS)?.obstacle.id,
+        `a centre-line drive past ${prop.id} stays clear`,
+      ).not.toBe(prop.id);
+      expect(box?.shape.kind).toBe('box');
+
+      const coveringCircle: Obstacle = {
+        id: `${prop.id}-as-circle`,
+        solid: false,
+        shape: {
+          kind: 'circle',
+          centre: prop.position,
+          radius: PARKED_CAR_FIT / 2,
+        },
+      };
+      expect(
+        sweepObstacles([coveringCircle], from, to, CAR_RADIUS)?.obstacle.id,
+        `a covering circle at ${prop.id} would intrude into the lane`,
+      ).toBe(coveringCircle.id);
+    }
+  });
+
+  it('reports a parked car as a crashable impact, never as a wall', () => {
+    for (const prop of parkedCars) {
+      const impact = sweepObstacles(town, streetCentre(prop), prop.position, CAR_RADIUS);
+      expect(impact?.obstacle.id, `${prop.id} is what the car meets`).toBe(prop.id);
+      expect(impact?.obstacle.solid, `${prop.id} bonks rather than stops`).toBe(false);
+      expect(impact?.obstacle.shape.kind, `${prop.id} is boxed`).toBe('box');
+    }
+  });
+
+  it('lists every prop exactly once, as exactly one shape', () => {
+    // The bug this replaces: a prop with no radius was silently dropped from the
+    // hitboxes altogether, so a parked car could be driven through without a
+    // bonk. Every prop has to contribute something the sweep can hit.
+    for (const prop of grid.props) {
+      const listed = town.filter((obstacle) => obstacle.id === prop.id);
+      expect(listed, `${prop.id} is listed once`).toHaveLength(1);
+    }
+  });
+
+  it('refuses a prop with neither a radius nor a footprint, rather than dropping it', () => {
+    const broken = {
+      ...grid,
+      props: [
+        {
+          id: 'ghost',
+          kind: 'cone',
+          tile: { x: 2, y: 2 },
+          position: { x: 0, z: 0 },
+        },
+      ],
+    } as unknown as TownGrid;
+
+    // A prop nobody can hit is a prop the car drives through, so the data layer
+    // has to fail loudly instead of quietly leaving it out.
+    expect(() => collectObstacles(broken)).toThrow(/radius|footprint/i);
   });
 });
 
