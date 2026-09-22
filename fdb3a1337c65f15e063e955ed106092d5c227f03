@@ -19,3 +19,28 @@ Tests: missionRotation.test.ts (12), pickHouse blocks added to
 calmGapPacer/firePacer/iceCreamPacer suites. 464/464 green,
 missionRotation 100% stmts/funcs/lines, calmGapPacer 94% branch.
 Biome + tsc clean.
+
+---
+PHASE 1 VERIFICATION REPORT (workflow.md Phase Completion Protocol)
+Phase: Shared foundation: registry seam + four-mission rotation (TDD)
+
+Scope: b36934d..fdb3a13 (all changes since track start; no prior checkpoint).
+Changed code files: calmGapPacer, firePacer, iceCreamPacer, missionRegistry,
+missionRotation (each with a matching .test.ts suite) + src/main.ts
+(composition/UI-glue, exempt per Guiding Principle 3).
+
+Automated tests: PASS
+Command: $env:CI="true"; pnpm test
+Result: 464/464 tests, 38 files, exit 0. Also: pnpm check clean,
+pnpm typecheck clean, coverage 100% on missionRegistry.ts and
+missionRotation.ts, 94% branch on calmGapPacer.ts.
+
+Manual verification (frontend change, dev server at http://localhost:5173):
+1. Play a full mission (fire or ice-cream).
+2. Confirmed: next mission is always the other type - never back-to-back.
+3. Confirmed: 60-90 s calm gap before the next spawn.
+4. Confirmed: only one mission active at a time.
+5. Confirmed: helper-hand focus, tap-to-respond, celebrations, sounds unchanged.
+
+User confirmation: YES (explicit, in session ses_f39998d8effeAFKUM2cBD77Ir5,
+2026-09-22).
