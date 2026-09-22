@@ -24,14 +24,26 @@
   three.js for tight frame-budget control. The town alone measured 16.2k
   triangles (10 houses, the road grid and props). The full built scene with the
   fleet mounted measured **37,904 triangles per frame including the shadow-map
-  pass**, across 134 draw calls and 106 meshes (2026-09-22) — inside the spec's
-  ~50k budget, so nothing needed ratcheting down. Frame rate was judged on  the iPad 9th-gen floor in the Phase 8 playtest.
+  pass**, across 134 draw calls and 106 meshes (2026-09-22), and **37,802
+  triangles across 133 draw calls** when re-measured for the consolidation
+  track (2026-09-22, all four missions plus the unified sparkle, same
+  shadow-inclusive method) — inside the spec's ~50k budget, so nothing needed
+  ratcheting down. Frame rate was judged on  the iPad 9th-gen floor in the Phase 8 playtest.
 - **Second mission (added 2026-09-22):** the ice-cream order marker is 212
   triangles of primitives (5 meshes, 3 shared `MeshBasicMaterial`s) — no new
   GLB, no new texture, no new kit — measured from the geometries rather than
   estimated. The cone handoff reuses the existing `cones` burst pool, so the
   37,904-triangle scene above stays inside its budget; a second mission FSM
   costs no rendering time of its own.
+- **Mission framework consolidation (added 2026-09-22):** the four missions no
+  longer hand-roll their FSMs, marker wiring or celebrations — one framework
+  (`missionFsm`, `missionMarkers`, `missionCelebration`) is configured per
+  mission as data. It costs no rendering time of its own, and the unified
+  completion sparkle rides the existing `abilityFx` burst pool rather than
+  bringing a particle system of its own, so the re-measured scene above is the
+  whole delta. The framework runs entirely in the simulation step: one FSM with
+  guarded transitions and a completion linger, one marker layer, one
+  celebration table.
 - **Park clean-up and lost puppy (added 2026-09-22):** primitives plus one
   newly mounted vendored GLB — measured from the geometries, not estimated.
   Litter is eight pieces of tied bag (90 triangles each) or crumpled paper
@@ -133,9 +145,11 @@ running through a town street. Full table:
 
 ## Compatibility Notes (closed 2026-09-22)
 - vite-plugin-pwa 1.x peer range vs Vite 8 — **verified**: builds and precaches
-  (44 entries, 3,396 KiB as of the park/puppy track — the bark clip and mounted
-  `dumpster.glb` added ~51.6 KiB over the earlier 42-entry, 3.3 MiB baseline).
-- Vitest 5 peer range vs Vite 8 — **verified**: 516 tests across 43 files
-  (park/puppy track; was 361 across 28).
+  (44 entries, 3,398.82 KiB as of the consolidation track — the bark clip and
+  mounted `dumpster.glb` added ~51.6 KiB over the earlier 42-entry, 3.3 MiB
+  baseline).
+- Vitest 5 peer range vs Vite 8 — **verified**: 617 tests across 50 files
+  (consolidation track; was 516 across 43 at the park/puppy track, 361 across 28
+  before that).
 - TypeScript 7 interop with Vite's transformer, `tsc --noEmit` gate — **verified**
   in both places; the native compiler runs the build's type-check step.

@@ -231,3 +231,97 @@ offline play. What these two missions add, on an iPad over a LAN dev server:
 
 None. The desktop drive and the iPad sitting both completed both missions
 clean on the first try; nothing was found to file or fix.
+
+*One defect in these two missions was found later, by the consolidation
+track's walkthrough — two hiding spots and the paw marker's draw order. See
+"Issues the pass turned up (framework consolidation)" below.*
+
+## Mission framework consolidation + unified completion sparkle (track `mission-framework-consolidation_20260922`)
+
+The refactor that the ice-cream and park/puppy specs both deferred: the four
+missions' hand-rolled FSMs, marker wiring and celebration handling were
+consolidated behind one tested framework (`missionFsm`, `missionMarkers`,
+`missionCelebration`) that each mission configures as data. One child-visible
+addition rides with it — a unified completion sparkle — and one correction came
+out of verifying it (the lost puppy, below).
+
+### The criteria
+
+| # | Criterion | Verdict | Evidence |
+| --- | --- | --- | --- |
+| AC1 | All four missions run end to end with no *unintended* visible change; the only difference is the completion sparkle | **Met** | Every mission's public API was left byte-identical and `main.ts`'s registry/tick/tap paths are untouched, so the Phase 1 characterization matrix, the abort-parity harness and the frozen `missionBusy`/`calmGapPacer`/`missionFocus` suites are the acceptance gate — all green and unmodified. Walkthrough run by the track owner against the dev server (`?calmGap=2`, below); it is also what surfaced the puppy correction. |
+| AC2 | `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` green | **Met** | Biome 118 files clean, `tsc --noEmit` clean, **617 tests across 50 files** (598 at the Phase 4 checkpoint). |
+| AC3 | State matrix: no marker visible or tappable outside its own mission and state | **Met** | `missionStateMatrix` 10 tests — flame only while bursts remain, cone exactly while the order is open, field exactly while the clean-up runs, paw/heart never both; every off-mission tap resolves `ignore`. |
+| AC4 | Abort parity: teardown in every state leaves no orphan marker | **Met** | `missionAbortParity` 14 tests — each mission drained from every state to a pristine idle; the framework's `onIdle` is what drops each mission's own side data, and the migration's `onAbort` wiring is the same callback. |
+| AC5 | `missionBusy` / `calmGapPacer` / `missionFocus` tests pass unmodified | **Met** | Zero edits to those three suites; no file outside `src/game/mission/` changed except `main.ts`. |
+| AC6 | Sparkle fires exactly once per completion, never in free play or at start | **Met** | `missionCelebration` 11 tests — exactly-once, tap-spam collapse, interruption during linger, silence in free play and at spawn, re-arm per run. |
+| AC7 | Per-mission bespoke FSM/marker/celebration code is gone | **Met** | `completeElapsed`, `let state`, `toIdle` and `state = "<literal>"` now appear only inside `missionFsm.ts`; each mission file declares its stages and linger and delegates every verb to a guarded transition. |
+| AC8 | Puppy visibility: spots clear of buildings and scoopable; paw drawn over occluders | **Met** | `puppySpots` 10 tests (every spot clear of every house footprint and within the drive-over radius of a legal car position; the two pre-fix positions pinned as rejected) and `puppyMarker` 3 (paw draws over town geometry, heart keeps normal depth testing). |
+
+### The performance budget, re-measured
+
+The crash the sparkle was budgeted against (NFR3) was a new draw-call hotspot.
+Re-measured the same way as the v1 figure — the built scene in the real render
+loop, shadow-map pass included:
+
+| | v1 sweep | Consolidation |
+| --- | --- | --- |
+| Triangles per frame | 37,904 | **37,802** |
+| Draw calls | 134 | **133** |
+| Meshes in the scene | 106 | 148 |
+| Pixel ratio | 1.5 | 1.5 |
+
+The sparkle rides the existing `abilityFx` burst pool and adds no persistent
+geometry, so the four-mission scene lands *at or below* the v1 figures — a
+mission framework and an extra completion burst between them cost two fewer
+draw calls than the v1 build. Meshes are counted here by walking the scene
+graph for every mesh, so that column reads higher than the v1 table's 106,
+which predates the order marker, the litter field, the puppy instances and the
+paw/heart markers; the numbers NFR3 actually names are the triangles and draw
+calls.
+
+### How the pass was driven
+
+The walkthrough runs at shipped pacing, which is 60–90 s of calm gap between
+missions. To make a four-mission sitting possible at all, `main.ts` reads a
+dev-only `?calmGap=<seconds>` query parameter (60–90 s replaced by, say, 2 s).
+It is an affordance rather than a second pacing rule: it can only *shorten* the
+gap (capped at the shipped maximum), it leaves the busy pause and the
+never-twice-in-a-row rule untouched, it is read behind `import.meta.env.DEV`,
+and a production build carries no trace of it — verified by building and
+grepping `dist` (44 precache entries, 3,398.82 KiB).
+
+The scene figures above came from the same method the v1 sweep used: the real
+render loop in the browser, reading `renderer.info.render` between frames via a
+temporary probe in the entry file, which was then restored byte for byte
+(`git diff` on `main.ts` empty) and every gate re-run clean. Nothing shipped
+depends on the probe or on the accelerated gap.
+
+### Issues the pass turned up (framework consolidation)
+
+One, in the lost-puppy mission, and it was two faults at once:
+
+- **Two hiding spots put the pup inside a house.** `spot-garden` sat in
+  `house-4`'s lot and `spot-verge` in `house-5`'s — inside the 0.86-tile
+  footprint a house is scaled to, so the 0.2-unit pup stood in a wall. The
+  garden one was worse than invisible: hemmed by adjacent houses whose gaps are
+  narrower than the car, no legal car position came within the drive-over
+  radius, so the errand could never be finished and the town's busy gate held
+  shut for the rest of the session. **Fixed:** hiding spots now pass two tested
+  rules — clear of every building's capped footprint, and *scoopable* (a legal
+  car position within the pickup radius) — and the two lot spots moved to the
+  kerb of the street each house faces. The two park hides were already honest
+  and stayed.
+- **The paw marker — the mission's only ground-level marker — could be hidden
+  by the very prop the pup hides behind.** The order cone and the delivery
+  heart float above the roofline at 1.7 units; the paw sat on the grass at
+  0.06, and the camera's tilt (about 35° of elevation, not the 45° the comment
+  claimed) means a house hides ground well past its own footprint. **Fixed:**
+  the paw print now draws after the scene with depth testing off, so it reads
+  over a house, a tree or the dumpster; the heart keeps normal depth testing
+  and a test pins that asymmetry.
+
+Spec and plan for the track carry the change as FR7/AC8, with the marker-visual
+line in "Out of Scope" carrying an explicit exception — the fault broke the
+zero-failure pillar rather than changing a look. Nothing device-specific was
+touched, so the sittings above still stand as written.
