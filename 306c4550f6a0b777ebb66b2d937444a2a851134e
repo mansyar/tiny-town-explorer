@@ -1,0 +1,24 @@
+Task: The puppy mesh (FR14)
+
+Summary:
+- New src/game/mission/puppyFx.ts: createPuppy() - a chunky low-poly pup
+  facing +x (slumped body, big head, light snout mask, floppy cone ears,
+  box legs with dark paws, wide-set eyes, stub tail), built entirely from
+  three.js primitives in the props' lit material family (MeshLambert).
+- Exactly 4 shared materials: FUR_COLOR 0xc98a4b, COAT_DARK_COLOR 0x7a4f26,
+  COAT_LIGHT_COLOR 0xe8d5b5, EYE_COLOR 0x2b2b2b.
+- ~230 triangles (body 56 + head 36 + snout 20 + nose 16 + ears 16 + legs 48
+  + eyes 32 + tail 8) - inside FR14's 200-300 band and negligible against the
+  50k budget; delta measured for tech-stack.md in Phase 6.
+- Ground origin between the paws so it drops flush on any tile; Phase 5
+  animates the hop-aboard and run-to-door from that base. Named meshes
+  (puppy-body/head/snout/nose/ears/legs/eyes/tail) for inspection.
+- No new GLB/Blender (FR14); visual/scene code = manual-verify, no red/green.
+
+Recorded manual steps (execute at Phase 4 verification / Phase 5+6 passes):
+1. After Phase 5 wiring: pup reads as a puppy at play distance (~48px) -
+   ears, snout mask and stub tail distinguishable.
+2. Drive-over pickup: pup hops aboard the police car (icon rides as passenger).
+3. Delivery: pup hops out and runs to the owner house door before confetti.
+
+Gates: biome clean (import order fixed), tsc clean, 514/514 tests (44 files).
