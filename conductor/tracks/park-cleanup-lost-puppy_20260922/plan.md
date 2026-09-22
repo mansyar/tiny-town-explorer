@@ -83,9 +83,9 @@
 
 ## Review Fixes
 
-- [ ] Review Low #1: `missionRotation.ts` — justify the two `as MissionId` casts (L58/L60)
-- [ ] Review Low #2: `puppyFx.ts` — header "~220" to "~230" so it matches `createPuppy` and the measured 232 (L4)
-- [ ] Review Low #3: `main.ts` — guard `ownerAt === undefined` and drop the unreachable `?? aim` fallback (L300)
+- [x] Review Low #1: `missionRotation.ts` — justify the two `as MissionId` casts (L58/L60) `597cb90`
+- [x] Review Low #2: `puppyFx.ts` — header "~220" to "~230" so it matches `createPuppy` and the measured 232 (L4) `597cb90`
+- [x] Review Low #3: `main.ts` — guard `ownerAt === undefined` and drop the unreachable `?? aim` fallback (L300) `597cb90`
 
 ## History
 
