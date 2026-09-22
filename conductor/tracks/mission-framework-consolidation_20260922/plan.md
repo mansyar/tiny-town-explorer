@@ -53,7 +53,7 @@ phase.*
   - [x] Refactor + coverage (>80% on sparkle/celebration logic) — missionCelebration.ts: 100% stmts/branch/funcs
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `0542340`
 
-## Phase 5 – Mission migration + deletion (mixed)
+## Phase 5 – Mission migration + deletion (mixed) [checkpoint: f71a51d]
 
 - [x] Task: Move all four missions onto the framework (AC7) `eef84ae`
   - [x] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission — all four now declare stages + linger and let `missionFsm` own transitions; `completeElapsed`/`let state`/`toIdle` survive only inside the framework. In-flight refinement: the framework gained `onIdle` (the linger's return to idle) so each mission drops its own side data there; 5 new FSM tests, red first. Suite green after each mission (fire → ice cream → park → puppy): 48 files / 603 tests.
@@ -62,10 +62,11 @@ phase.*
   - [x] Re-author the two lot spots onto kerbside ground the car can actually reach (`spot-garden` on house-4's east kerb, `spot-verge` on house-5's south verge); keep the two park hides, where hiding is honest
   - [x] Render the paw marker over town geometry so the signpost survives the pup hiding behind a house, tree or dumpster — `depthTest: false`, `depthWrite: false`, drawn after the scene; the heart keeps normal depth testing because it floats above the roofline
   - [x] Gates: `pnpm check` + `pnpm typecheck` + `CI=true pnpm test` → 50 files / 617 tests green
-- [ ] Task: `main.ts` wiring (manual-verify)
-  - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission — statically confirmed: `main.ts`'s mission surface is unchanged (all four public APIs identical, registry/tick/tap paths untouched); the playthrough itself is the phase's open gate.
+- [x] Task: `main.ts` wiring (manual-verify) `f71a51d` (no code change — the migration left `main.ts`'s mission surface byte-identical, so this task verifies rather than edits)
+  - [x] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission — statically confirmed: all four mission public APIs identical and the registry/tick/tap paths untouched (`git diff` on `main.ts` shows only the dev `?calmGap` override). Played through by the track owner via `?calmGap=2`: four missions spawn → respond → celebrate → sparkle once at their own sites, nothing in free play, no orphan markers at idle. The walkthrough also surfaced FR7 (the puppy correction above), which was fixed and re-verified before this checkpoint.
   - [x] Verification affordance (in-flight refinement, `0b46ad4`): dev-only `?calmGap=<seconds>` shortens the town's calm gap so the four-mission walkthrough does not spend minutes waiting. Shorten-only (capped at the shipped maximum), DEV-gated, absent from the production bundle (verified by build + grep of `dist/`); busy pause and never-twice rule untouched.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `f71a51d`
+  - [x] Scope read with `git diff --name-only 0542340 HEAD`; every changed code file has a test file. Command: `CI=true pnpm test` → 50 files / 617 tests pass. Manual plan presented (four-mission walkthrough at `?calmGap=2`, exactly one sparkle per completion and none in free play, every puppy spot reachable, paw print visible over occluders); user confirmed ✓. Report attached as a git note on `f71a51d`.
 
 ## Phase 6 – Verification + docs
 
