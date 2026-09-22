@@ -158,8 +158,20 @@ caveats:
   and judged on the device, not waved through. Triangles: parked cars leave the
   shadow pass, so six cars cost **+12,796** single-pass (not ~25,600) plus 12
   blob triangles — **~+12,808 → ~50.6k** shadow-inclusive. `tech-stack.md`
-  records the deltas and notes the budget as **~52k** (from ~50k) with the
-  reason; the device fps pass remains the real gate.
+  records the deltas and the budget note; the device fps pass remains the real
+  gate.
+
+  **Measured after implementation** (GL draws counted per frame on the running
+  game, the method the recorded baseline used; cars removed from the map for the
+  control run): no cars **138 draws / 38,310 triangles**, cars as first shipped
+  **245 / 59,768**, cars with blobs only **171 / 51,130**. So the estimate above
+  was right on triangles (**+12,820** vs the predicted +12,808 — 12 triangles of
+  rounding, all of it the blob) and right on draws (**+33** vs a predicted +32),
+  and wrong about one thing it assumed rather than tested: the cars *were* in the
+  shadow pass, because the model library sets `castShadow` on every mesh it
+  prepares and no placement could opt out. That is the 245 → 171 drop.
+  Baseline drift: the no-car scene now measures 138/38,310 against the 133/37,802
+  recorded before this track — the park track's trees, dumpster and props since.
 - **NFR3 — No simulation cost:** parked cars are static scene content — no
   per-frame tick, no update in the render loop.
 - **NFR4 — TDD scope:** placement and clearance rules, hitbox derivation and
@@ -213,8 +225,8 @@ caveats:
 | Seat height | Kerb top (+0.02) | The footprint crosses three surface heights; seating at ground would bury the wheels 0.02 in the kerb. |
 | Kerb conflict | Reservation: cars declare, missions skip | The band is shared with litter (0.65) and the pup's spots (0.52) by construction, so one side must yield. The missions' fixed items are declared and the dynamic litter draw filters — keeping 6 spread-out cars instead of surrendering every ring kerb to the missions. Cost: this track touches `parkLitter` and `puppySpots` and must re-verify the puppy's spots. |
 | Tap snap | Excluded | Snapping would send the player to a point inside the car, where the bump-once-then-drive-past rule walks it through the parked car's body. |
-| Shadows | Sun-aligned blobs, merged into one mesh | Halves the biggest new content class (~12.8k vs ~25.6k tris/frame) and keeps its draw cost to +1 instead of +6. The sun's (1.2, 0.9) offset is what makes an un-offset blob read as a hole. |
-| Budget | ~50k → ~52k, documented | The 50k figure was a heuristic start; the measured delta is ~600 tris, and the device pass stays the gate. Draw calls, the riskier number, are reported and judged on device. |
+| Shadows | Sun-aligned blobs, merged into one mesh | Halves the biggest new content class (~12.8k vs ~25.6k tris/frame) and keeps its draw cost to +1 instead of +6. The sun's (1.2, 0.9) offset is what makes an un-offset blob read as a hole — and it points toward negative x and z, away from the sun. The one thing this decision assumed and did not check was that the cars were already out of the shadow pass; measured, they were not, which is what `ModelPlacement.castsShadow` fixes. |
+| Budget | ~50k heuristic → **51,130 measured, ~1.1k over** | The 50k figure was a heuristic start, and the real delta is the +12,820 of the six cars, not the ~600 written here before anything was measured. Over the line for the first time in this project, so `tech-stack.md` states it plainly with the levers (four cars, or lower-detail karts) instead of calling 51.1k "inside ~50k". The device pass stays the gate on fps; the draw-call rise is judged there too. |
 | Art | Car Kit, four models | Already vendored, matches the fleet, fit path exists, one shared texture. Cost: ~784 KiB of precache and four registry entries. |
 | Placement data | Authored in `townMap.ts` | Keeps the town deterministic and offline-identical, and the layout testable as data. |
 | Wandering traffic | Out of scope | Stays its own roadmap step; parked-car data stays separable so a traffic track isn't boxed in later. |
