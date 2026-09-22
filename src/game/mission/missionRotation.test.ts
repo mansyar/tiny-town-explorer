@@ -124,6 +124,28 @@ describe('the draw is uniform across the other three', () => {
   });
 });
 
+describe('the dev calm-gap override', () => {
+  it('opens inside a caller-supplied window instead of the shipped 60–90s', () => {
+    const unit = rotation({ minSeconds: 2, maxSeconds: 2 });
+    expect(unit.secondsUntilDue()).toBe(2);
+    const { mission, elapsed } = untilDue(unit);
+    expect(mission).toBe('fire');
+    // Due after the override, not after a minute of waiting.
+    expect(elapsed).toBeGreaterThanOrEqual(2);
+    expect(elapsed).toBeLessThan(2.1);
+    // And the re-roll stays inside the override, so every mission is quick.
+    expect(unit.secondsUntilDue()).toBe(2);
+  });
+
+  it('still pauses the shortened gap while a mission is running', () => {
+    const unit = rotation({ minSeconds: 2, maxSeconds: 2 });
+    for (let frame = 0; frame < 600; frame += 1) {
+      expect(unit.update(1 / 60, true)).toBeUndefined();
+    }
+    expect(unit.secondsUntilDue()).toBe(2);
+  });
+});
+
 describe('pools at the edges', () => {
   it('takes no turn at all in a town with no missions', () => {
     const unit = createMissionRotation({ missions: [], random: fixedRandom(0) });

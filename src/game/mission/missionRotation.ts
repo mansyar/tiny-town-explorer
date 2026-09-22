@@ -23,6 +23,13 @@ import type { MissionId } from './missionRegistry';
 export interface MissionRotationOptions {
   /** Missions eligible to be drawn, in stable order. */
   readonly missions: readonly MissionId[];
+  /**
+   * Overrides for the calm gap. The shipped 60-90s window is the default, so
+   * only tests and the dev-only `?calmGap=` override (`devCalmGap`) ever pass
+   * anything else.
+   */
+  readonly minSeconds?: number;
+  readonly maxSeconds?: number;
   /** Injectable for deterministic tests; defaults to `Math.random`. */
   readonly random?: () => number;
 }
@@ -48,8 +55,8 @@ export function createMissionRotation(options: MissionRotationOptions): MissionR
     // "any candidate except the last one drawn", which is FR11 verbatim.
     houses: options.missions.map((id) => ({ id, position: { x: 0, z: 0 } })),
     minDistance: 0,
-    minSeconds: CALM_MIN_SECONDS,
-    maxSeconds: CALM_MAX_SECONDS,
+    minSeconds: options.minSeconds ?? CALM_MIN_SECONDS,
+    maxSeconds: options.maxSeconds ?? CALM_MAX_SECONDS,
     random: options.random,
   });
 

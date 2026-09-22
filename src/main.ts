@@ -16,6 +16,7 @@ import {
 import { createParentPanel } from './game/hud/parentPanel';
 import { createVehicleHud, type VehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
+import { calmGapOverride } from './game/mission/devCalmGap';
 import { createFireFx } from './game/mission/fireFx';
 import { createFirePacer } from './game/mission/firePacer';
 import { createHelperHand } from './game/mission/helperHand';
@@ -196,8 +197,17 @@ async function main(): Promise<void> {
   // One shared calm gap decides *when* the town acts next and — never the
   // same mission twice (spec FR11) — *who* goes: all four missions are in
   // the pool, each pacer below still deciding *where* its own mission lands.
+  //
+  // Dev-only, and dropped from production builds: `?calmGap=2` shortens the
+  // gap so a manual walkthrough can see all four missions back to back
+  // instead of waiting the shipped 60-90s between each. Nothing else about
+  // the rotation changes — the busy pause and the never-twice rule hold.
+  const calmGap = import.meta.env.DEV
+    ? calmGapOverride(window.location.search)
+    : undefined;
   const rotation = createMissionRotation({
     missions: ['fire', 'iceCream', 'park', 'puppy'],
+    ...calmGap,
   });
   const orderMarker = createOrderMarker();
   scene.add(orderMarker.object);
