@@ -68,7 +68,7 @@ phase.*
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `f71a51d`
   - [x] Scope read with `git diff --name-only 0542340 HEAD`; every changed code file has a test file. Command: `CI=true pnpm test` → 50 files / 617 tests pass. Manual plan presented (four-mission walkthrough at `?calmGap=2`, exactly one sparkle per completion and none in free play, every puppy spot reachable, paw print visible over occluders); user confirmed ✓. Report attached as a git note on `f71a51d`.
 
-## Phase 6 – Verification + docs
+## Phase 6 – Verification + docs [checkpoint: 2c8e3aa]
 
 - [x] Task: Full gates (AC1, AC2, NFR1–NFR3) `2c8e3aa`
   - [x] `pnpm check` (118 files clean), `pnpm typecheck` (clean), `CI=true pnpm test` → **50 files / 617 tests** pass; coverage >80% on logic modules — missionFsm/parkMission/puppyMission/parkPickup/orderFlow/missionMarkers/missionCelebration/devCalmGap/fireFx 100%, missionManager 97.14%, puppySpots 97.67%, puppyMarker 98.46%, iceCreamMission 95.45%, `game/mission` 87.03% including the workflow-exempt scene builders (parkLitterFx and puppyFx at 0%, as designed)
@@ -77,7 +77,8 @@ phase.*
   - [x] Drive all four missions end to end: no unintended visible change; the sparkle pops exactly once at each mission's own completion site (revised from the town hall, which the town does not have), absent in free play. Run by the track owner against the dev server during the Phase 5 gate; the framework's own evidence is that every mission's public API and `main.ts`'s registry/tick/tap paths are unchanged, with the Phase 1 matrix, abort-parity and frozen-contract suites as the gate. Independently confirmed here that the built scene boots and renders the four-mission town at the measured cost
 - [x] Task: Update `docs/playtest.md` and `tech-stack.md` with AC results and any measured deltas `2c8e3aa`
   - [x] `docs/playtest.md` gained the track's AC1–AC8 table, the re-measured budget table (with the mesh-count caveat), how the pass was driven (dev `?calmGap`, temporary probe, byte-for-byte restore), and the puppy correction as the issue the pass turned up; `tech-stack.md` carries the re-measured figures, the consolidation note, and the current test/precache counts
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `2c8e3aa`
+  - [x] Scope read with `git diff --name-only f71a51d HEAD` — docs only (`docs/playtest.md`, `tech-stack.md`, `plan.md`), so no new test pairing was owed. Command: `CI=true pnpm test` → 50 files / 617 tests pass; `pnpm check` and `pnpm typecheck` clean. Manual plan presented (four-mission playthrough, sparkle exactly once per completion, nothing in free play, plus the puppy fix's visuals); user confirmed ✓. Report attached as a git note on `2c8e3aa`.
 
 ## History
 
