@@ -1,0 +1,27 @@
+Task: Pickup and sweep rules (FR3, FR4, FR5)
+
+Summary: new src/game/mission/parkPickup.ts - pure pickup rules with an
+internal clock. Drive-over collects the nearest piece within
+PICKUP_RADIUS (0.6), at most one per 150ms gulp window (GULP_MIN_MS)
+so a cluster lands as a rhythm. sweep() takes every piece within
+SWEEP_RADIUS (1.5) in one gulp on a 500ms cadence (SWEEP_MIN_MS).
+Collected ids are remembered: a caller may keep passing a stale list
+without double-collecting or re-firing completion. complete fires true
+only on the call that removes the last outstanding piece (FR5), from
+either drive-over or sweep, and never on an already-empty park.
+
+Why: FR3/FR4/FR5 - the rules are pure logic (radius maths, rate
+limits, one-shot completion), so they are TDD'd in isolation before
+parkMission.ts wires them in Task 3.
+
+Tests: src/game/mission/parkPickup.test.ts (13, red first): pickup
+radius boundary (0.6 in / 0.61 out), one gulp per piece, >=150ms gulp
+spacing over 12 frames, all in-range pieces collected over 2s,
+sweep collects group in one gulp / 1.51 boundary / empty-ground gulp
+still spent / 500ms cadence / no double-collect after drive-over,
+completion fires once from drive-over and from sweep, quiet on empty
+park.
+
+Gates: biome + tsc clean; full suite 484/484 (39 files), exit 0;
+coverage parkPickup.ts 100% stmts / 100% branch / 100% funcs / 100%
+lines.
