@@ -65,8 +65,8 @@
 
 - [x] Task: `main.ts` integration through the registry (FR1–FR10) `0c149e2`
   - [x] Write failing tests for the wiring decisions only, implement, then manual-verify spawn → respond → collect → celebrate and spawn → whine → siren → pickup → deliver
-- [~] Task: HUD police-button pulse hint (FR6)
-  - [ ] Implement the pulse and its clear on answer; manual-verify it reads as an invitation and never competes with the ability button
+- [x] Task: HUD police-button pulse hint (FR6) `f333325`
+  - [x] Implement the pulse and its clear on answer; manual-verify it reads as an invitation and never competes with the ability button
 - [ ] Task: Input routing (FR2, FR7, FR10)
   - [ ] Write tests for the routing decisions (tap a piece = respond; tap the owner house = deliver only while carrying and in range; the ability press latches the siren once; newest-wins preserved), implement, then manual-verify on touch
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
