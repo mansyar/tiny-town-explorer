@@ -1,0 +1,31 @@
+Task: Sweep FX + celebration wiring (reuse-verified, no new code)
+
+Confirmation that every FX/sound FR3-FR5, FR9 and FR15 need already ships:
+1. gulp: the garbage truck's cast() already emits {kind:'gulp'}
+   (vehicleSystem.ts:104); main.ts:392 plays it through playAbility ->
+   sampledSoundFor -> 'gulp', and main.ts:402-403 throws fx.burst('gulp')
+   (7 green stars, abilityFx). The FR4 sweep reuses this whole path - Phase 5
+   only adds the SWEEP_RADIUS (1.5) selection calling parkPickup's tested logic.
+2. poof: 'poof' is an existing BurstKind (12 cream stars) and audio sample;
+   FR3's per-piece poof is a Phase 5 fx.burst('poof', piece, 0) call. Pickup
+   pacing (one gulp/piece >=150 ms, sweep gulp >=0.5 s) lives in parkPickup.ts
+   from Phase 2 (tested).
+3. Celebrations (FR5 park, FR9 puppy): exact fire-recipe reuse -
+   fx.burst('confetti', where, 0) + sun.show(where) + audio.play('cheer')
+   (main.ts:657-663), edge-guarded by a celebrated flag like fire/order.
+   sunFx SUN_SECONDS = 2.2 s vs spec "~2.5 s" - existing value accepted as
+   the "existing confetti/sun" FR15 calls for.
+4. confetti burst (22 gold stars), cheer sample, sunFx all shipped and tested.
+
+Manual steps (recorded here; executed at Phase 5 wiring + Phase 6 device pass):
+1. Park mission: drive over litter - each piece vanishes with a cream poof
+   burst + gulp sound, in a >=150 ms rhythm (no machine-gun stutter).
+2. Ability press within 1.5 tiles of pieces - ONE gulp (green burst + sound)
+   sweeps the group; repeat presses respect the >=0.5 s cadence.
+3. Last piece gone - gold confetti + smiling sun + cheer over the spot, ~2-2.5 s
+   linger, then idle into the calm gap.
+4. Puppy delivery: carrying the pup, tap the owner house in range - pup runs to
+   the door, then confetti + sun + cheer over the door (FR9).
+5. Muted pass: identical visuals, silence, no errors (kid-safe cap unchanged).
+
+No code changed by this task; last gates (post-Task 3): 514/514, biome, tsc.
