@@ -1,0 +1,49 @@
+Phase 6 Task 1 — Full gates (NFR2, NFR4)
+
+Commands announced from the plan and run as-is:
+- pnpm check -> Biome clean, 106 files, no fixes.
+- pnpm typecheck -> tsc --noEmit clean.
+- CI=true pnpm test:coverage (run twice: text, then text+json-summary) ->
+  516 tests / 43 files pass both runs (baseline 514 + the two Phase 5
+  red-first tests).
+
+Coverage (v8; vitest.config exclusions in force: main.ts, parentPanel.ts,
+vehicleHud.ts = DOM glue, manual-verified):
+- All files: 77.47% stmts / 83.71% branch / 85.13% funcs / 77.16% lines.
+- NFR4 scope ("FSMs, pacers, pickup/sweep radii, tap routing, rotation and
+  the registry" at >80%): every named module >= 94.5% stmts —
+  puppyMission, parkMission, parkPickup, missionRegistry, missionRotation,
+  firePacer, iceCreamPacer, calmGapPacer, missionBusy, missionFocus,
+  orderFlow, puppySpots, helperHand, serveGate, inputRouter all 100;
+  parkLitter 97.43; helperTrace 94.56.
+- game/mission excluding the three workflow-GP3 visual files
+  (parkLitterFx, puppyFx, puppyMarker at 0% by design): 98.18% stmts
+  (649/661) across 21 files. The group reads 79.43% only because those
+  exempt files sit inside it; the all-files aggregate is likewise dragged
+  by exempt scene/DOM/data code (abilityFx 22.01, audioRegistry 0
+  data-only, audioEngine lines 145-343 device paths, installHint DOM
+  half) — the same boundary the ice-cream gates note drew.
+
+NFR2 measurements (pnpm assets:measure for the GLB; primitives measured
+from their geometries programmatically, the ice-cream marker's method):
+- dumpster.glb (city-kit-roads, Kenney CC0, registry-mounted in Phase 4):
+  234 triangles, 35,868 bytes.
+- litter (parkLitterFx primitives): tied bag 90 tris, crumpled paper 20
+  tris; parkLitter parks five fixed pieces (three on the west lot, two on
+  the east) -> 240-310 tris mounted per round depending on the mix.
+- pup (puppyFx.createPuppy): 232 triangles — matches Phase 4's hand count
+  and FR14's 200-300 band.
+- Against the standing 37,904-triangle scene (incl. the shadow pass):
+  dumpster + litter + pup sum under +800 tris, keeping the build inside
+  the 50k budget with >11k headroom. A full scene re-count lands in the
+  device pass (Task 2), as the ice-cream track did.
+
+Precache delta (pnpm build, vite-plugin-pwa 1.3.0):
+- 42 entries / 3.3 MiB (tech-stack baseline) -> 44 entries / 3,396.22 KiB:
+  + bark.mp3 (16.98 kB) and + dumpster.glb (35.86 kB), about +51.6 KiB.
+  The audio README Cost line already reads "Nine clips, 384 KiB"
+  (Phase 4); the prose delta for tech-stack.md lands at Task 4.
+
+No code changed; the evidence rides on this plan commit (the ice-cream
+track merged gates into its docs commit; this plan keeps gates as their
+own task, so the note carries them here).
