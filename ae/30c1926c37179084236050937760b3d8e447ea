@@ -1,0 +1,44 @@
+PHASE COMPLETION VERIFICATION — Phase 5: Wiring and verification
+
+Phase scope (git diff --name-only 1d29f61 HEAD)
+  Code: src/game/town/townLayout.ts, src/game/town/townRenderer.ts
+        Each with its test file modified in the same phase (townLayout.test.ts,
+        townRenderer.test.ts). No code file in this phase lacks a test file.
+  Docs: conductor/tech-stack.md, conductor/product.md, docs/playtest.md, and
+        the track's spec.md and plan.md.
+
+Automated verification
+  Command: pnpm check && pnpm typecheck && CI=true pnpm test
+  Result: Biome 129 files clean, tsc --noEmit clean, 712 tests / 57 files green.
+
+Manual verification — performed by the track owner, results in docs/playtest.md
+  1. Drive-through at the dev server: head-on bonk, graze, centre line of every
+     street, and taps beside a car. Verdict: clean — every bonk squished, honked
+     and resumed on route; no centre-line drive touched a car.
+  2. iPad sitting: cars read as parked cars at play distance, blobs read as
+     shadows, no new stutter while the town was busiest, and all four car GLBs
+     load with the network off.
+  Note on agency: an agent-driven tap in the browser did not visibly move the
+  truck — the input router validates the tap against its newest-command window,
+  so a synthetic click can be filtered out. That is why the drive-through is
+  recorded as the owner's pass rather than as an agent observation.
+
+Measurements this phase (see the task note on 8310763 for the full method)
+  No parked cars:      138 draw calls / 38,310 triangles per frame
+  Cars casting too:    245 / 59,768   (what shipped before the fix)
+  Shipped:             171 / 51,130   (+33 draws, +12,820 triangles)
+  Precache: 44 -> 48 entries, 3,398.82 -> 4,186.67 KiB.
+  Budget, stated plainly: ~1.1k triangles over the spec's ~50k heuristic, with
+  the levers recorded in tech-stack.md.
+
+Issues found and their fate
+  1. Cars were in the shadow-map pass despite FR7 (fixed in 8310763, tests red
+     first, and the fix is the 245 -> 171 draw-call drop measured).
+  2. Two pre-measurement claims corrected rather than shipped: the spec's
+     "delta ~600 triangles / budget ~52k" row, and the interim 52,056-triangle
+     note (the correct six-instance figure is 12,796).
+  Neither was visible on screen; both were found by measuring, which is what
+  this phase's task was for.
+
+User confirmation: reported the four checks clear and asked for the results to be
+recorded and the phase checkpointed.
