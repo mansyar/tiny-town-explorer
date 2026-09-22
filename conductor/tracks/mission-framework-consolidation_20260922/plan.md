@@ -58,7 +58,8 @@ phase.*
 - [x] Task: Move all four missions onto the framework (AC7) `eef84ae`
   - [x] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission — all four now declare stages + linger and let `missionFsm` own transitions; `completeElapsed`/`let state`/`toIdle` survive only inside the framework. In-flight refinement: the framework gained `onIdle` (the linger's return to idle) so each mission drops its own side data there; 5 new FSM tests, red first. Suite green after each mission (fire → ice cream → park → puppy): 48 files / 603 tests.
 - [ ] Task: `main.ts` wiring (manual-verify)
-  - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission
+  - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission — statically confirmed: `main.ts`'s mission surface is unchanged (all four public APIs identical, registry/tick/tap paths untouched); the playthrough itself is the phase's open gate.
+  - [x] Verification affordance (in-flight refinement, `0b46ad4`): dev-only `?calmGap=<seconds>` shortens the town's calm gap so the four-mission walkthrough does not spend minutes waiting. Shorten-only (capped at the shipped maximum), DEV-gated, absent from the production bundle (verified by build + grep of `dist/`); busy pause and never-twice rule untouched.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 – Verification + docs
@@ -72,6 +73,12 @@ phase.*
 
 ## History
 
+- 2026-09-22 – Phase 5 in flight. The migration left `main.ts` untouched (all
+  four mission public APIs identical), so the phase's human gate is a
+  four-mission playthrough — and the town's 60–90s calm gap turned that gate
+  into minutes of waiting. A dev-only `?calmGap=<seconds>` override was added
+  under the manual-verify task per workflow.md "In-Flight Refinements": it
+  changes no shipped behavior and is dropped from production builds.
 - 2026-09-22 – Track created from an approved spec. Phase 1 deliberately
   writes characterization tests *before* refactor work so the consolidation
   has a behavior-pinning safety net (the review-lesson pattern already in
