@@ -1,0 +1,16 @@
+Task: Litter field + spawn placement (FR1)
+
+Summary: parkLitter.ts lays out the 8 litter pieces - 5 at fixed slots
+on the park's two tiles (kept clear of the authored trees, same layout
+every round so the park stays the focal point) and 3 drawn without
+replacement from lot tiles touching the ring road, nudged to the kerb
+(0.35 toward the edge road). Seed drives only the kerb draw.
+
+Why: FR1 - 5 park + 3 kerbside; park fixed for readability, kerbs
+seeded for variety; row-major candidate order keeps draws reproducible.
+
+Tests: parkLitter.test.ts (7): 8 pieces 5/3, never on road, reachable
+via findPath, kerb lots touch ring road, no stacking, same seed = same
+layout, different seeds = different kerbs. Red first (module missing).
+Gates: biome + tsc clean; 7/7 new, full suite green; coverage 97%
+stmts / 83% branch / 100% lines on parkLitter.ts.
