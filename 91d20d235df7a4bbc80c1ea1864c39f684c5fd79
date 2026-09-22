@@ -1,0 +1,30 @@
+Task: Park mission FSM + respond tap (FR2, FR5)
+
+Summary: new src/game/mission/parkMission.ts - pure FSM mirroring
+missionManager/iceCreamMission: idle -> spawn() -> spawned ->
+respond() -> responding <-> collecting (COLLECT_RANGE 1.9, the shared
+mission range) -> finish() -> complete -> ~2.5s linger -> idle.
+Driving away only disarms collecting, never cancels (NFR1); spawn
+ignored while running; finish() only bites once the kid has answered
+and only once. resolveParkTap({state, onPiece}) sits beside
+resolveOrderTap: 'respond' only for a piece tap while spawned, so the
+morph + drive fire exactly once.
+
+Why: FR2/FR5 - the FSM owns the errand's shape while parkPickup.ts
+(FR3/FR4) owns collection; completion is reported by the pickup rules
+via finish(), not by the FSM counting pieces.
+
+Tests: parkMission.test.ts (9, red first): full chain to idle, spawn
+ignored while running, distance never jumps the gun in spawned,
+respond-once via resolveParkTap, miss/quiet-town taps ignore,
+collecting disarms to responding and re-arms, linger ~2.5s, negative
+frame ignored, finish only after respond and only once.
+
+Note: one red-phase assertion was corrected before green - it called
+mission.respond() expecting false on a missed tap, but respond() does
+not see tap geometry; resolveParkTap is the gate (same contract as
+resolveOrderTap/fire). Test now asserts the resolver ignores and the
+FSM stays spawned.
+
+Gates: biome + tsc clean; full suite 493/493, exit 0; coverage
+parkMission.ts 100% stmts / branch / funcs / lines.
