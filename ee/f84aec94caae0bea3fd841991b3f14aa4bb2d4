@@ -1,0 +1,69 @@
+Task: Move all four missions onto the framework (AC7) — Phase 5
+
+Summary
+-------
+Fire, ice cream, park and puppy each hand-rolled the same lifecycle: a
+`let state` variable, a transition assignment in every verb, a
+`completeElapsed` timer and a `toIdle()` that cleared their own side data.
+All four now declare their stages once and let `createMissionFsm` own the
+transitions, the one-transition-per-event lock and the linger. AC7's grep
+proof: `completeElapsed`, `let state`, `toIdle` and `state = '<literal>'`
+now appear only inside `missionFsm.ts`; the four mission modules contain
+zero bespoke transition code.
+
+Framework gap closed (in-flight refinement, workflow.md
+"Task Correction & Plan Amendment")
+--------------------------------------------------------
+`missionFsm` had `onCelebrate` and `onAbort` but no hook for the third
+lifecycle edge — the linger landing back in idle — which is exactly where
+fire's `fireHouseId`/`burstsLeft` and ice cream's `orderHouseId` are
+dropped. Without it a mission would have to mask stale fields behind the
+current state, which is the plumbing this module exists to delete. Added
+`onIdle?: (from: S) => void`, red-first (5 new tests in
+`missionFsm.test.ts`: emits once on the idle edge, never re-emits while
+idle, once per completed run, silent on abort, plus the linger's
+negative-frame clamp that moved out of four mission timers into the
+framework).
+
+Per-mission mapping
+-------------------
+- fire      -> `createMissionFsm` config (idle/spawned/driving/active/complete,
+               linger 2.5 s); `onIdle`/`onAbort` -> `clearFire`
+- iceCream  -> same stage set + linger; `onIdle`/`onAbort` -> `clearOrder`;
+               `serve()` is now `attempt('active','complete')`
+- park      -> idle/spawned/responding/collecting/complete; `finish()` is
+               `attempt(['responding','collecting'],'complete')`; no side data,
+               so no hooks
+- puppy     -> idle/searching/carrying/complete; `siren()` is
+               `attempt('idle','searching')`; `onIdle`/`onAbort` -> `clearPup`
+
+Files modified
+--------------
+- src/game/mission/missionFsm.ts        (onIdle hook; linger clamps negatives)
+- src/game/mission/missionFsm.test.ts   (+5 contract tests, red first)
+- src/game/mission/missionManager.ts    (fire on the framework)
+- src/game/mission/iceCreamMission.ts   (order on the framework)
+- src/game/mission/parkMission.ts       (clean-up on the framework)
+- src/game/mission/puppyMission.ts      (errand on the framework)
+
+Verification
+------------
+- CI=true pnpm test      -> 48 files / 603 tests passed (baseline 598; +5)
+- pnpm typecheck         -> clean
+- pnpm check (biome)     -> clean, 115 files
+- CI=true pnpm test:coverage -> missionFsm.ts 100% stmts/branch/funcs;
+  parkMission.ts 100%; puppyMission.ts 100%; missionManager.ts 97.14%;
+  iceCreamMission.ts 95.45%. Only uncovered lines are the two unused
+  `distanceBetween` convenience exports (pre-existing).
+- Full suite green after each mission, in the order fire -> ice cream ->
+  park -> puppy.
+- main.ts untouched: every mission's public API is byte-identical, so the
+  registry/tick/tap seam and the frozen missionBusy/calmGapPacer/
+  missionFocus contracts are unaffected (NFR1, AC5).
+
+Why
+---
+The consolidation both earlier specs deferred: four copies of the same FSM
+meant four places to fix a transition bug. One declared lifecycle per
+mission makes the mission files configuration + adapters, which is what
+lets the next mission be added without new transition plumbing.
