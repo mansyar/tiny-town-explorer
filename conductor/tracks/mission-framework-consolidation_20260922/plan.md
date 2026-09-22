@@ -55,8 +55,8 @@ phase.*
 
 ## Phase 5 – Mission migration + deletion (mixed)
 
-- [~] Task: Move all four missions onto the framework (AC7)
-  - [ ] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission
+- [x] Task: Move all four missions onto the framework (AC7) `eef84ae`
+  - [x] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission — all four now declare stages + linger and let `missionFsm` own transitions; `completeElapsed`/`let state`/`toIdle` survive only inside the framework. In-flight refinement: the framework gained `onIdle` (the linger's return to idle) so each mission drops its own side data there; 5 new FSM tests, red first. Suite green after each mission (fire → ice cream → park → puppy): 48 files / 603 tests.
 - [ ] Task: `main.ts` wiring (manual-verify)
   - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
