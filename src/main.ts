@@ -294,10 +294,10 @@ async function main(): Promise<void> {
             onOwnerHouse: ownerAt !== undefined && isTapOnHouse(aim, ownerAt),
             armed: puppy.isDeliverReady(),
           });
-          if (action !== 'deliver') {
+          if (action !== 'deliver' || ownerAt === undefined) {
             return false;
           }
-          deliverPuppy(ownerAt ?? aim);
+          deliverPuppy(ownerAt);
           return true;
         },
         // The pending whine is half an errand with nowhere else to go: busy

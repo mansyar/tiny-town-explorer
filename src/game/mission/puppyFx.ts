@@ -1,7 +1,7 @@
 /**
  * What the lost puppy looks like (FR14): a chunky primitives build in the
  * props' lit material family — no new GLB, no Blender, four shared materials
- * drawn from the City Kit palette family, ~220 triangles against the 50k
+ * drawn from the City Kit palette family, ~230 triangles against the 50k
  * budget.
  *
  * Same shape as `fireFx` and `orderMarker`: the mesh is the thin layer, and

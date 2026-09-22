@@ -55,6 +55,8 @@ export function createMissionRotation(options: MissionRotationOptions): MissionR
 
   return {
     secondsUntilDue: () => pacer.secondsUntilDue(),
+    // Justified upcast: every pool member was handed in as a MissionId, so
+    // the pacer can only ever remember one.
     lastMissionId: () => pacer.lastHouseId() as MissionId | undefined,
     update: (deltaSeconds, busy) =>
       pacer.update(deltaSeconds, busy) as MissionId | undefined,
