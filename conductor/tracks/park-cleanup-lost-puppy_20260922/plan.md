@@ -12,10 +12,10 @@
   - [x] Implement the registry and move the fire and ice-cream missions behind it — their existing suites stayed green and untouched (445/445 pass)
   - [x] Refactor + coverage (100% on `missionRegistry.ts`, >80% target)
 - [x] Task: Four-mission rotation (FR11) `fdb3a13`
-  - [ ] Write failing tests: the next mission is never the one that just ran; the calm gap stays 60–90 s; any active mission pauses every pacer; the draw is uniform across the other two
-  - [ ] Implement the rotation chooser over the shared calm-gap pacer and busy gate
-  - [ ] Refactor + coverage
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Write failing tests: the next mission is never the one that just ran; the calm gap stays 60–90 s; any active mission pauses every pacer; the draw is uniform across the other three (12 tests in `missionRotation.test.ts` + `pickHouse` blocks in the three pacer suites, red first)
+  - [x] Implement the rotation chooser over the shared calm-gap pacer and busy gate (`missionRotation.ts` + `pickHouse()` passthroughs + `tickPacers` rewired in `main.ts`; 476/476 pass)
+  - [x] Refactor + coverage (100% on `missionRotation.ts`, 94% branch on `calmGapPacer.ts`)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `fdb3a13`]
 
 ## Phase 2 – Clean Up the Park mission logic (TDD)
 
