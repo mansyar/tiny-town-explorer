@@ -1,7 +1,11 @@
 import carKitFiretruck from '../../assets/kits/car-kit/firetruck.glb?url';
 import carKitGarbageTruck from '../../assets/kits/car-kit/garbage-truck.glb?url';
+import carKitHatchbackSports from '../../assets/kits/car-kit/hatchback-sports.glb?url';
 import carKitIceCreamTruck from '../../assets/kits/car-kit/ice-cream-truck.glb?url';
 import carKitPolice from '../../assets/kits/car-kit/police.glb?url';
+import carKitSedan from '../../assets/kits/car-kit/sedan.glb?url';
+import carKitSuv from '../../assets/kits/car-kit/suv.glb?url';
+import carKitVan from '../../assets/kits/car-kit/van.glb?url';
 import dumpster from '../../assets/kits/city-kit-roads/dumpster.glb?url';
 import electricityPole from '../../assets/kits/city-kit-roads/electricity-pole.glb?url';
 import roadBend from '../../assets/kits/city-kit-roads/road-bend-square.glb?url';
@@ -23,6 +27,7 @@ import treeSmall from '../../assets/kits/city-kit-suburban/tree-small.glb?url';
 import cone from '../../assets/kits/toy-car-kit/item-cone.glb?url';
 import pine from '../../assets/kits/toy-car-kit/tree-pine.glb?url';
 import vehicleTruck from '../../assets/kits/toy-car-kit/vehicle-truck.glb?url';
+import type { ParkedCarKind } from '../town/townTypes';
 
 /**
  * The kit models the town mounts, named by the role they play.
@@ -103,6 +108,22 @@ export const VEHICLE_MODELS = {
 } as const;
 
 /**
+ * The parked cars the town stands along its kerbs (FR1), by prop kind.
+ *
+ * Four Car Kit models — the same family as the fleet, so a parked car reads as
+ * one of the town's own cars. They mount at town scale rather than the kit's
+ * own (Car Kit art is authored ~4× the town's scale), and the extents the grid
+ * derives each footprint from are the measured ones in
+ * `townTypes.PARKED_CAR_EXTENTS`.
+ */
+export const PARKED_CAR_MODELS: Readonly<Record<ParkedCarKind, string>> = {
+  parkedSedan: carKitSedan,
+  parkedHatchback: carKitHatchbackSports,
+  parkedVan: carKitVan,
+  parkedSuv: carKitSuv,
+};
+
+/**
  * Every model the v1 town mounts, for warming the loader.
  *
  * Deduplicated: a model can hold two roles at once (the street tree is both park
@@ -115,5 +136,6 @@ export const TOWN_MODELS: readonly string[] = [
     ...Object.values(NATURE_MODELS),
     ...Object.values(PROP_MODELS),
     ...Object.values(VEHICLE_MODELS),
+    ...Object.values(PARKED_CAR_MODELS),
   ]),
 ];

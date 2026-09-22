@@ -1,12 +1,13 @@
 import {
   BUILDING_MODELS,
   NATURE_MODELS,
+  PARKED_CAR_MODELS,
   PROP_MODELS,
   ROAD_MODELS,
 } from '../assets/modelRegistry';
 import type { TownGrid } from './townGrid';
 import type { Direction, RoadConnections, RoadShape, Vec2 } from './townTypes';
-import { DIRECTION_STEPS, DIRECTIONS, HOUSE_LOT_FIT } from './townTypes';
+import { DIRECTION_STEPS, DIRECTIONS, HOUSE_LOT_FIT, isParkedCarKind } from './townTypes';
 
 /**
  * The town's placement plan: what to mount, and exactly where.
@@ -223,11 +224,15 @@ export function planTown(grid: TownGrid): TownPlan {
     placements.push({
       kind: 'model',
       name: prop.id,
-      url: PROP_MODELS[prop.kind],
+      url: isParkedCarKind(prop.kind)
+        ? PARKED_CAR_MODELS[prop.kind]
+        : PROP_MODELS[prop.kind],
       position: prop.position,
       // Trees get a deterministic quarter-turn each so a park row does not read
-      // as one model stamped eight times; upright props stay axis-aligned.
-      yaw: prop.kind === 'tree' ? (index % 4) * QUARTER_TURN : 0,
+      // as one model stamped eight times; a parked car keeps the yaw its
+      // placement authored, so it lies along its own street; upright props stay
+      // axis-aligned.
+      yaw: prop.yaw ?? (prop.kind === 'tree' ? (index % 4) * QUARTER_TURN : 0),
     });
   });
 

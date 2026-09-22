@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BUILDING_MODELS,
   NATURE_MODELS,
+  PARKED_CAR_MODELS,
   PROP_MODELS,
   ROAD_MODELS,
   TOWN_MODELS,
@@ -37,6 +38,7 @@ describe('modelRegistry', () => {
       ...Object.values(NATURE_MODELS),
       ...Object.values(PROP_MODELS),
       ...Object.values(VEHICLE_MODELS),
+      ...Object.values(PARKED_CAR_MODELS),
     ];
     expect(new Set(TOWN_MODELS)).toEqual(new Set(groups));
     expect(new Set(TOWN_MODELS).size).toBe(TOWN_MODELS.length);

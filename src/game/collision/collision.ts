@@ -106,15 +106,20 @@ export function collectObstacles(
         },
       };
     }),
-    ...grid.props.map((prop) => ({
-      id: prop.id,
-      solid: false,
-      shape: {
-        kind: 'circle' as const,
-        centre: prop.position,
-        radius: prop.collisionRadius,
-      },
-    })),
+    // A prop with no radius is boxed by its footprint instead (parked cars,
+    // FR5): that obstacle is built from the box, so it is not in the circles.
+    ...grid.props.flatMap((prop) => {
+      const radius = prop.collisionRadius;
+      return radius === undefined
+        ? []
+        : [
+            {
+              id: prop.id,
+              solid: false,
+              shape: { kind: 'circle' as const, centre: prop.position, radius },
+            },
+          ];
+    }),
   ];
 }
 

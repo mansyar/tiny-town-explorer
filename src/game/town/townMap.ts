@@ -1,4 +1,7 @@
-import type { TownMapSpec } from './townTypes';
+import { PARKED_CAR_KERB_OFFSET, type TownMapSpec } from './townTypes';
+
+/** Kerb offset toward the street a parked car belongs to, in tile units. */
+const KERB = PARKED_CAR_KERB_OFFSET;
 
 /**
  * The authored town: a 6x6 tile grid whose ring road plus one cross street
@@ -20,6 +23,9 @@ import type { TownMapSpec } from './townTypes';
  * Every lot touches a street, so a mission can always park beside a house,
  * and the road network is a single connected loop for pathing.
  */
+/** A quarter turn: the yaw that lies a car along an east-west street. */
+const QUARTER_TURN = Math.PI / 2;
+
 export const TOWN_MAP: TownMapSpec = {
   // One world unit per track tile keeps the 6x6 town at 6x6 units, which
   // frames a roughly car-sized vehicle at the spec'd 15-20% of viewport
@@ -52,6 +58,52 @@ export const TOWN_MAP: TownMapSpec = {
     // The park's trash landmark (FR1): south-east corner of the east park
     // tile, clear of the tree, the litter slots and spot-dumpster's corner.
     { kind: 'dumpster', tile: { x: 2, y: 1 }, offset: { x: 0.3, y: 0.3 } },
+
+    // Six parked cars (FR1), authored on the *street* tile and offset toward
+    // the kerb they sit against, with a yaw that lies them along that street.
+    //
+    // Each one is on a kerb whose house wall measures at least 0.652 from the
+    // street's centre line (`1.00 - fitted depth / 2`), because that is the
+    // narrowest wall a car fitted to `PARKED_CAR_FIT` can clear while keeping
+    // its inner edge out of the lane. Two kerbs in town cannot host a car at
+    // any offset — beside house-8 (type-r, wall 0.574) and house-5 (type-f,
+    // 0.576) — and the roomiest kerb of all (0.748) is the puppy's hiding
+    // place, so neither is used here.
+    //
+    // Four of the eight ring-road lots keep their kerbs clear for the park
+    // mission's litter draw: (1,2), (1,3), (4,1) and (4,4) are taken here, so a
+    // seeded draw still has (1,4), (2,4), (4,2) and (4,3) to choose three from.
+    { kind: 'parkedSedan', tile: { x: 0, y: 2 }, offset: { x: KERB, y: 0 }, yaw: 0 },
+    {
+      kind: 'parkedHatchback',
+      tile: { x: 0, y: 3 },
+      offset: { x: KERB, y: 0 },
+      yaw: Math.PI,
+    },
+    {
+      kind: 'parkedVan',
+      tile: { x: 4, y: 0 },
+      offset: { x: 0, y: KERB },
+      yaw: QUARTER_TURN,
+    },
+    {
+      kind: 'parkedSuv',
+      tile: { x: 3, y: 2 },
+      offset: { x: -KERB, y: 0 },
+      yaw: 0,
+    },
+    {
+      kind: 'parkedSedan',
+      tile: { x: 3, y: 4 },
+      offset: { x: -KERB, y: 0 },
+      yaw: Math.PI,
+    },
+    {
+      kind: 'parkedHatchback',
+      tile: { x: 4, y: 5 },
+      offset: { x: 0, y: -KERB },
+      yaw: QUARTER_TURN,
+    },
   ],
   spawnPoints: [
     { x: 3, y: 2 },

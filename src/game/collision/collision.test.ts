@@ -77,7 +77,13 @@ describe('collectObstacles', () => {
       .map((obstacle) => obstacle.id);
 
     expect(solid).toEqual(grid.houses.map((house) => house.id));
-    expect(crashable).toEqual(grid.props.map((prop) => prop.id));
+    // Parked cars publish a footprint box instead of a circle (FR5), so the
+    // circle obstacles here are exactly the props that carry a radius.
+    expect(crashable).toEqual(
+      grid.props
+        .filter((prop) => prop.collisionRadius !== undefined)
+        .map((prop) => prop.id),
+    );
   });
 
   it('leaves the roads clear, so ordinary driving never scrapes a wall', () => {

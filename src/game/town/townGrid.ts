@@ -12,7 +12,9 @@ import type {
 import {
   DIRECTION_STEPS,
   DIRECTIONS,
+  isParkedCarKind,
   PROP_COLLISION_RADIUS,
+  parkedCarFootprint,
   tileKindForCharacter,
 } from './townTypes';
 
@@ -31,8 +33,20 @@ export interface TownProp {
   readonly kind: PropKind;
   readonly tile: TileCoord;
   readonly position: Vec2;
-  /** Circle radius used by collision and tap-to-prop snapping. */
-  readonly collisionRadius: number;
+  /**
+   * Circle radius used by collision and tap-to-prop snapping. Absent for props
+   * hit by a footprint box instead — parked cars carry {@link TownProp.footprint}
+   * and no radius, so a circle-only path cannot silently take a car's width for
+   * its length.
+   */
+  readonly collisionRadius?: number;
+  /** Authored yaw, for props that lie along something (parked cars, FR1). */
+  readonly yaw?: number;
+  /**
+   * Axis-aligned half extents a parked car occupies, already swapped by its yaw
+   * so the box needs no rotation to sweep (FR5).
+   */
+  readonly footprint?: { readonly halfX: number; readonly halfZ: number };
 }
 
 /**
@@ -150,14 +164,31 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
     propCounts.set(prop.kind, index);
     const centre = tileToWorld(prop.tile);
     const offset = prop.offset ?? { x: 0, y: 0 };
+    const id = `${prop.kind}-${index}`;
+    const position = {
+      x: centre.x + offset.x * spec.tileSize,
+      z: centre.z + offset.y * spec.tileSize,
+    };
+    if (isParkedCarKind(prop.kind)) {
+      // A parked car is boxed by the footprint its model occupies, not by a
+      // circle (FR5) — derived here, before any art is mounted, from the kit
+      // measurements in `townTypes`.
+      const yaw = prop.yaw ?? 0;
+      const { halfX, halfZ } = parkedCarFootprint(prop.kind, yaw);
+      return {
+        id,
+        kind: prop.kind,
+        tile: prop.tile,
+        position,
+        yaw,
+        footprint: { halfX: halfX * spec.tileSize, halfZ: halfZ * spec.tileSize },
+      };
+    }
     return {
-      id: `${prop.kind}-${index}`,
+      id,
       kind: prop.kind,
       tile: prop.tile,
-      position: {
-        x: centre.x + offset.x * spec.tileSize,
-        z: centre.z + offset.y * spec.tileSize,
-      },
+      position,
       collisionRadius: PROP_COLLISION_RADIUS[prop.kind] * spec.tileSize,
     };
   });
