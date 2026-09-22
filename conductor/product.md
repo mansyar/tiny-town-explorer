@@ -10,10 +10,11 @@ finishing over grass), bouncing harmlessly off cones, poles, and houses with a
 squish-and-resume bonk. The design pillars are absolute: zero text (icons and
 sounds only), zero failure (no timers, no penalties, no wrong choices), and
 pure agency (every tap gets a response). The v1 slice ships all four vehicles
-as free-play toys with live special abilities plus two missions — putting out
-migratory cartoon kitchen fires with tap-burst hose sprays, and delivering a
-cone to whichever house raises an ice-cream order — while the lost-puppy
-police mission and park cleanup follow after a real-kid playtest. Built with Vite + TypeScript + three.js and a
+as free-play toys with live special abilities plus four missions — putting out
+migratory cartoon kitchen fires with tap-burst hose sprays, delivering a cone
+to whichever house raises an ice-cream order, clearing the park litter from
+under the garbage truck's wheels, and finding the lost puppy with the siren
+and carrying it home to its owner. Built with Vite + TypeScript + three.js and a
 workbox-precached service worker, it targets 60fps on an iPad 9th gen in any
 orientation, remembers nothing between sessions, and never says a word.
 
@@ -47,14 +48,21 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
   over grass; newest tap wins under multi-touch chaos.
 - Bounce-and-resume collisions: squish, bonk, horn, auto-resume — never
   stuck, never penalized.
-- Two missions sharing one town-at-a-time gate. "Put Out the Kitchen Fire!":
-  fires spawn at a new house ≥2 houses from the previous one with 60–90s calm
-  gaps; tap-to-morph vehicle swap; tap-burst hose (3–4 bursts extinguish);
-  confetti resolution. "Ice Cream Delivery": a house orders with a bouncing
-  cone + music-note icon (readable at 48px) and one soft jingle; the kid taps
-  the truck's ability to jingle it, drives over, and taps the house to serve
-  one cone. Whichever mission runs pauses the other, and either waits
-  patiently forever.
+- Four missions taking turns through one town-at-a-time gate. "Put Out the
+  Kitchen Fire!": fires spawn at a new house ≥2 houses from the previous one
+  with 60–90s calm gaps; tap-to-morph vehicle swap; tap-burst hose (3–4 bursts
+  extinguish); confetti resolution. "Ice Cream Delivery": a house orders with a
+  bouncing cone + music-note icon (readable at 48px) and one soft jingle; the
+  kid taps the truck's ability to jingle it, drives over, and taps the house to
+  serve one cone. "Clean Up the Park": litter bounces across the park tiles and
+  the ring-road kerbs; driving over a piece gulps it and the ability press
+  sweeps a nearby cluster. "Lost Puppy": the police siren answers the town's
+  quiet whine, the pup is found by driving over it and carried to the owner's
+  door — and its paw print always shows where to drive, even when the pup is
+  hiding behind a house or a tree. Whichever mission runs pauses the rest, and
+  each waits patiently forever. Every mission ends on the same beat: confetti,
+  the smiling sun, a cheer, and a small completion sparkle burst at that
+  mission's own site — exactly one per completion, and never during free play.
 - Inactivity helper: after 10s mid-mission, a hand traces the route and
   performs one demo tap.
 - Parent panel behind a hold-3s filling-ring gate: a sound toggle and a
@@ -66,7 +74,6 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
 - Any-orientation play; ortho camera tracks the active car.
 
 ## Out of Scope (v1)
-- Clean Up the Park and Lost Puppy missions (v2+).
 - AI traffic or wandering cars (static parked cars also deferred).
 - Any persistence or save system — sessions start fresh by design.
 - Any written language in-game, including settings screens.
@@ -81,8 +88,9 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
 - Parents can find and use the parent panel without instructions.
 
 ## Roadmap (v2+)
-- Two additional missions: Clean Up the Park and Lost Puppy (police vehicle).
-  (Ice Cream Delivery shipped 2026-09-22, `ice-cream-delivery_20260922`.)
+- No new missions planned. All four (fire, ice cream, park clean-up, lost
+  puppy) shipped and now run on one shared mission framework —
+  `mission-framework-consolidation_20260922`, 2026-09-22.
 - Optional session sticker board, only if playtesting shows value against
   shared-tablet sibling conflicts.
 - Static parked cars, then light wandering traffic, for town liveliness.
