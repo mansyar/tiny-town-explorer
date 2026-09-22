@@ -23,14 +23,14 @@ phase.*
 
 ## Phase 2 – Generic mission FSM (TDD)
 
-- [ ] Task: FSM core module
-  - [ ] Write failing tests for the state machine contract: declared states, guarded transitions, tick/tap delegation, exactly-one transition per update, celebration entry fires once (red first)
-  - [ ] Implement the generic FSM module configured per mission
-  - [ ] Refactor + coverage (>80% on the new logic module)
-- [ ] Task: Abort/teardown semantics in the FSM (FR6)
-  - [ ] Write failing tests: `abort()` from any state returns to idle and emits cleanup, including mid-celebration (red first)
-  - [ ] Implement + coverage
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: FSM core module `f78bbf3`
+  - [x] Write failing tests for the state machine contract: declared states, guarded transitions, tick/tap delegation, exactly-one transition per update, celebration entry fires once (red first)
+  - [x] Implement the generic FSM module configured per mission
+  - [x] Refactor + coverage (>80% on the new logic module) — 100% stmts/branch/funcs
+- [x] Task: Abort/teardown semantics in the FSM (FR6) `f78bbf3` (abort landed in the same red-green cycle as the core; see task note)
+  - [x] Write failing tests: `abort()` from any state returns to idle and emits cleanup, including mid-celebration (red first)
+  - [x] Implement + coverage
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 – Shared marker layer (TDD)
 
