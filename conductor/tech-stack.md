@@ -32,6 +32,18 @@
   estimated. The cone handoff reuses the existing `cones` burst pool, so the
   37,904-triangle scene above stays inside its budget; a second mission FSM
   costs no rendering time of its own.
+- **Park clean-up and lost puppy (added 2026-09-22):** primitives plus one
+  newly mounted vendored GLB — measured from the geometries, not estimated.
+  Litter is eight pieces of tied bag (90 triangles each) or crumpled paper
+  (20 each), about 400 triangles a round by mix; the puppy is 232 triangles
+  of primitives with 4 shared `MeshLambertMaterial`s (inside its 200–300
+  contract); the dumpster is the City Kit (Roads) `dumpster.glb` already
+  vendored at scaffold (234 triangles, 35.9 KiB), mounted as the park
+  landmark — no new art files. Together under ~1,200 triangles over the
+  standing 37,904-triangle scene, leaving >10k headroom to the 50k spec
+  budget. The paw/heart markers and celebration FX are primitives reusing
+  the marker and burst patterns of the first two missions, and both mission
+  FSMs cost no rendering time of their own.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
@@ -49,6 +61,12 @@
   point. `setEngine` maps the motor's rate straight onto the loop's
   `playbackRate`, which is the speed-to-playbackRate curve the plan named — the
   earlier synthesized sawtooth is gone.
+- **The bark (added 2026-09-22):** one new clip for the lost-puppy mission —
+  "Barking of a Spitz" (BigSoundBank #0682, Joseph SARDIN, CC0), transcoded
+  to mono 44.1 kHz MP3 with the same loudnorm recipe as the one-shots
+  (16,989 B). The sound bank carries no license file to vendor, so its
+  provenance lives in `src/assets/audio/README.md` as a table row plus a
+  prose credit. Total: **nine clips, 384 KiB**.
 
 ## Package Management
 - **pnpm 12.4** (installed: 12.4.1) — strict, fast, disk-efficient; pinned
@@ -115,7 +133,9 @@ running through a town street. Full table:
 
 ## Compatibility Notes (closed 2026-09-22)
 - vite-plugin-pwa 1.x peer range vs Vite 8 — **verified**: builds and precaches
-  (42 entries, 3.3 MiB) locally and on Cloudflare's builder.
-- Vitest 5 peer range vs Vite 8 — **verified**: 361 tests across 28 files.
+  (44 entries, 3,396 KiB as of the park/puppy track — the bark clip and mounted
+  `dumpster.glb` added ~51.6 KiB over the earlier 42-entry, 3.3 MiB baseline).
+- Vitest 5 peer range vs Vite 8 — **verified**: 516 tests across 43 files
+  (park/puppy track; was 361 across 28).
 - TypeScript 7 interop with Vite's transformer, `tsc --noEmit` gate — **verified**
   in both places; the native compiler runs the build's type-check step.
