@@ -53,7 +53,7 @@
 
 - [x] Task: Litter meshes + park dumpster mount (FR1) `dff0369`
   - [x] Build the tied-bag and crumpled-paper primitives, mount the vendored `dumpster.glb` through the existing registry/pack path (its tests may need the new entry), and record the manual steps — readable at 48px, bounces, sits flush on the ground (`parkLitterFx.ts` factories; `PROP_MODELS.dumpster` + `PropKind` + collision radius 0.18 + townMap prop on park tile (2,1); manual steps recorded in the commit's git note; 514/514 pass)
-- [ ] Task: The puppy mesh (FR14)
+- [~] Task: The puppy mesh (FR14)
   - [ ] Build the pup from primitives in the props' lit material family, ≤4 shared materials, ~200–300 triangles; record the manual steps — reads as a puppy at play distance, hops aboard, runs to the door
 - [ ] Task: Source and transcode the CC0 bark (FR15)
   - [ ] Licence-check a CC0 bark source, transcode to mono 44.1 kHz MP3 with loudness normalisation, place it in `src/assets/audio/` with provenance beside it, register it in the audio registry, and measure the byte delta for the precache note
