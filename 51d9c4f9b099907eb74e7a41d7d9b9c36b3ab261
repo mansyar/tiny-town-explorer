@@ -27,4 +27,4 @@ Manual steps (recorded; bark becomes audible in Phase 5):
    busy -> one short bark plays (first-tap unlock, mute, kid-safe cap).
 2. Repeat muted: no bark, no crash.
 
-Gates: biome clean, tsc clean, 514/514 tests (44 files).
+Gates: biome clean, tsc clean, 514/514 tests (43 files).
