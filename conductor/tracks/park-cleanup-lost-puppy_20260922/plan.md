@@ -81,6 +81,12 @@
 - [x] Task: Update `tech-stack.md` — the puppy/litter/dumpster triangle delta and the bark clip with its provenance `9188247`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `9188247`]
 
+## Review Fixes
+
+- [ ] Review Low #1: `missionRotation.ts` — justify the two `as MissionId` casts (L58/L60)
+- [ ] Review Low #2: `puppyFx.ts` — header "~220" to "~230" so it matches `createPuppy` and the measured 232 (L4)
+- [ ] Review Low #3: `main.ts` — guard `ownerAt === undefined` and drop the unreachable `?? aim` fallback (L300)
+
 ## History
 
 - 2026-09-22 – Track created from an approved spec and plan. Both remaining
