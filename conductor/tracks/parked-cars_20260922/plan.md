@@ -56,7 +56,7 @@
   - [x] User confirmed the phase on the automated evidence, keeping the plan's order
   - [x] Verification report appended to `ea906cc`'s note so the task summary and the phase evidence stay together
 
-## Phase 3 – Kerb reservation across the missions (TDD)
+## Phase 3 – Kerb reservation across the missions (TDD) [checkpoint: 5cdae9d]
 
 - [x] Task: Reservation source + the missions' declared kerbs (FR8) `5032b8c`
   - [x] Write failing tests: the reservation lists every kerb the missions already use — the park mission's two fixed north-edge slots and the puppy's two authored lot spots — derived from their own data rather than hand-copied; a parked car on a reserved kerb is rejected; the shipped authoring passes the check (11 tests in `kerbReservation.test.ts`, red first on a missing module)
@@ -70,7 +70,12 @@
 - [x] Task: The town-wide invariant (FR8) `8d8c869`
   - [x] Write the cross-cutting suite that walks the shipped map and every mission's placement — park litter across many seeds, the puppy's four spots, the fire pacer's houses, the ice-cream order marker, the park props — asserting that none falls inside a parked-car footprint or the reserved band, and that a puppy spot is still scoopable with the cars present (3 tests in `kerbInvariant.test.ts`, kept in its own suite so the plan's "cross-cutting" deliverable is visible in the file layout)
   - [x] Fix any violation by adjusting the authored cars (never a mission rule) — **no violation found, so no authored car had to move.** The order-marker/fire-target items resolve to house lot centres, 1.0 from a street's centre line, where a car's footprint reaches at most 0.62.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Phase scope listed since Phase 2's checkpoint (`git diff --name-only ea906cc HEAD`); `parkSlots.ts` was the one code file without a test, so `parkSlots.test.ts` was created
+  - [x] Automated verification: `pnpm check && pnpm typecheck && CI=true pnpm test` — lint and types clean, **692 tests / 56 files** green
+  - [x] Manual verification plan presented, with the same disclosed caveat as the previous two phases: the unfitted cars cover the streets, so a visual pass over the litter proves little
+  - [x] User confirmed the phase on the automated evidence, keeping the plan's order
+  - [x] Verification report attached as a git note to `5cdae9d`
 
 ## Phase 4 – Registry, fit and blob shadow (manual-verify, exempt from TDD)
 
