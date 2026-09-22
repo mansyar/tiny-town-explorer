@@ -1,0 +1,49 @@
+Task: Axis-aligned non-solid box hitboxes (FR5) — Phase 2, task 1
+
+Summary of changes:
+- collectObstacles now maps every prop to exactly one shape: a circle when the
+  grid publishes a collision radius, and otherwise the footprint BOX the grid
+  already turned by the car's yaw, solid: false. Before this, a prop with no
+  radius was dropped from the list entirely, so a parked car had no hitbox at
+  all and could be driven through without a bonk — the comment claiming they
+  were "boxed by its footprint instead" described intent, not code.
+- A prop that offers neither a radius nor a footprint now throws instead of
+  being skipped: a prop nobody can hit is a prop the car drives through, which
+  is exactly the bug this task fixes.
+- vehicleMotor's spring-back now clears SOLID hitboxes. Driving the pose the new
+  tests describe found this: a bonk whose normal points at a wall springs the
+  car into it, because a parked car leaves only 0.037 to the house behind it
+  while the recoil travels 0.14. The clamp applies to solids alone, since
+  driving over a bumped crashable is the designed outcome.
+- Coverage: the "marks buildings solid and props crashable" assertion was
+  updated to the new contract (every prop is crashable; parked cars differ in
+  shape, not in what a bonk costs the route).
+
+Files created: none.
+Files modified:
+- src/game/collision/collision.ts (+ its test: 7 new tests)
+- src/game/vehicle/vehicleMotor.ts (+ its test: 4 new tests)
+- src/game/town/townGrid.test.ts (a diagonal parked yaw must fail at map load)
+
+Why:
+A parked car has to be something the car can bonk, but the shape matters as much
+as the presence: a circle big enough to cover its 0.55 length reaches 0.185 from
+the street centre line, inside the player's own 0.26 capsule, so it would bonk
+every centre-line drive — the exact thing FR4 forbids. Tests assert the contrast
+in both directions: the box passes the centre-line sweep that the covering
+circle fails, and the leg still completes where the same car made solid would
+strand it at the kerb.
+
+Verification: pnpm check clean, pnpm typecheck clean, CI=true pnpm test 663
+tests / 53 files green; coverage collision.ts 100% (statements, branches,
+functions, lines), vehicleMotor.ts 100% statements/functions/lines and 94.82%
+branches (uncovered: one comparison branch in the new deepest-overlap helper and
+one pre-existing line in pushClear).
+
+Deviation from the plan's wording: the motor's recoil clamp was not in this
+task's sub-tasks. It is recorded here and in plan.md because the task's own tests
+surfaced it, and because a car left inside a house breaks an invariant the
+project already tests ("never ends a frame inside a hitbox").
+
+Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
