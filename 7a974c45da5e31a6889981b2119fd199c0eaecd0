@@ -29,3 +29,20 @@ through these.
 
 Gates: biome clean, tsc clean, 514/514 tests, coverage missionFocus.ts and
 parkMission.ts both 100/100/100/100.
+
+---
+Phase 3 Verification Report (workflow Phase Completion Protocol)
+Scope: 91d20d2..7a974c4 (Phase 2 checkpoint -> last functional commit)
+Changed code files: missionFocus.{ts,test.ts}, parkMission.ts (+parkMission.test.ts),
+parkPickup.ts (+parkPickup.test.ts), puppyMission.{ts,test.ts}, puppySpots.{ts,test.ts}
+- every changed code file has a matching suite (plan.md exempt).
+Automated: PASS - command $env:CI="true"; pnpm test -> 514/514 tests, 43 files,
+exit 0; biome + tsc clean; coverage missionFocus.ts 100/100/100/100,
+parkMission.ts 100/100/100/100, puppyMission.ts 100, puppySpots.ts 100.
+Manual verification (regression - Phase 3 is pure logic, unwired until Phase 5):
+1. pnpm dev -> http://localhost:5173/ renders town; free-play unchanged.
+2. Fire and ice-cream missions spawn/complete as before (rotation + calm gap).
+3. Helper hand unchanged for the two live missions (10s idle -> trace + demo tap).
+4. No puppy/park visuals expected yet (Phases 4-5).
+User confirmation: YES in session ses_f39998d8effeAFKUM2cBD77Ir5, 2026-09-22.
+Checkpoint: 7a974c4
