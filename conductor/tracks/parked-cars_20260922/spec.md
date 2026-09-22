@@ -106,13 +106,20 @@ caveats:
 - **FR7 — Blob shadow, sun-aligned, one draw call.** Parked cars do **not** join
   the shadow-map pass. Each carries a flat dark ground quad sized to its
   footprint, and because the sun sits at (12, 10, 9) with its target at the
-  origin, a real shadow lands `(1.2, 0.9) × height` away from its object —
-  **≈(0.40, 0.30)** for a 0.33-tall car, a third of a tile. A blob sitting
-  directly *under* the car would contradict every house's real shadow and read
-  as a hole, so blobs are **offset and stretched along the sun direction**. All
-  six are merged into **one static mesh** (one draw call, 12 triangles, not six
-  draw calls), sit just above the FR3 seat height so they cross the lawn, kerb
-  and asphalt without z-fighting, and take no part in collision or taps.
+  origin, a real shadow lands `(−1.2, −0.9) × height` from its object — toward
+  negative x and z, i.e. *away* from the sun, which is the sign that matters: a
+  blob offset the other way would point into the light and contradict every
+  house's shadow beside it. For the measured fitted heights (0.21 to 0.28 — the
+  original 0.33 here was pre-fit) that is **≈(0.34, 0.25)** for the sedan, about
+  a third of a tile. A blob sitting directly *under* the car would contradict
+  every house's real shadow and read as a hole, so blobs are **offset and
+  stretched along the sun direction**, each drawn as the box around its
+  footprint and that footprint's sun-shifted copy. All six are merged into **one
+  static mesh** (one draw call, 12 triangles, not six draw calls), sit just
+  above the FR3 seat height so they cross the lawn, kerb and asphalt without
+  z-fighting, and take no part in collision or taps. The sun's position is
+  exported from `scene.ts` and the offset derived from it, so the fake shadow
+  cannot drift away from the light that shades the houses.
 - **FR8 — Kerb reservation across the missions.** One shared source of truth
   records which kerb edges the town has spoken for, and both directions are
   enforced:

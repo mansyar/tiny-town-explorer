@@ -10,6 +10,34 @@ export const SKY_COLOR = 0x87ceeb;
  */
 const SUN_SHADOW_EXTENT = 8;
 
+/**
+ * Where the sun stands, in world units. Shared rather than private because it
+ * is not only the light's business: a flat blob shadow has to land where the
+ * sun would actually throw it, so anything that fakes a shadow reads the
+ * direction from here instead of hard-coding it and drifting from the light.
+ */
+export const SUN_POSITION = { x: 12, y: 10, z: 9 } as const;
+
+/**
+ * Where the sun throws the shadow of a point `height` above the ground, in
+ * world x/z.
+ *
+ * The light travels along `-SUN_POSITION`, so a point at height `h` lands at
+ * `-(x, z) / y * h` — for this sun, 1.2 and 0.9 units of shadow per unit of
+ * height, toward **negative** x and z. The sign is the whole point: a shadow
+ * falls away from the light, so an offset the other way makes a fake shadow
+ * point into the sun and contradict every real one beside it.
+ */
+export function sunGroundOffset(height: number): {
+  readonly x: number;
+  readonly z: number;
+} {
+  return {
+    x: (-SUN_POSITION.x / SUN_POSITION.y) * height,
+    z: (-SUN_POSITION.z / SUN_POSITION.y) * height,
+  };
+}
+
 /** The empty stage (sky, fog, daylight) that the town is added to. */
 export interface GameScene {
   readonly scene: Scene;
@@ -64,7 +92,7 @@ function createLights(): Group {
 
   const sun = new DirectionalLight(0xfff2d8, 2.6);
   sun.name = 'sunLight';
-  sun.position.set(12, 10, 9);
+  sun.position.set(SUN_POSITION.x, SUN_POSITION.y, SUN_POSITION.z);
   sun.castShadow = true;
   sun.shadow.mapSize.set(1024, 1024);
   sun.shadow.camera.left = -SUN_SHADOW_EXTENT;

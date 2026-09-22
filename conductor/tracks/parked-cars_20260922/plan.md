@@ -81,7 +81,7 @@
 
 - [~] Task: Registry entries + mount fit (FR2, FR3, FR9, FR10)
   - [ ] Add the four Car Kit models (sedan, hatchback-sports, van, suv) to the registry, mount them with the `fitWithin` cap of 0.55, per-instance yaw and the kerb-top seat, and keep them out of the house-footprint map; measure each fitted model with `pnpm assets:measure` and the precache delta, and confirm the rendered footprint agrees with the derived half extents the placement tests assume — recording the manual steps and the numbers
-- [ ] Task: Sun-aligned merged blob shadow (FR7)
+- [~] Task: Sun-aligned merged blob shadow (FR7)
   - [ ] Build the six blobs as one static mesh — each sized to its footprint and offset/stretched along the sun's (1.2, 0.9) × height direction, seated just above the kerb top with no z-fighting — absent from the shadow-map pass, collision and taps; confirm on screen that they read as the same shadow family as the houses — record the manual steps
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 

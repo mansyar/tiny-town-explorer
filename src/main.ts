@@ -72,6 +72,7 @@ import { createSunFx } from './game/mission/sunFx';
 import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
+import { mountParkedShadows } from './game/town/parkedShadows';
 import { createTownGrid } from './game/town/townGrid';
 import { mountTown } from './game/town/townRenderer';
 import type { Vec2 } from './game/town/townTypes';
@@ -458,6 +459,13 @@ async function main(): Promise<void> {
 
   const library = createModelLibrary();
   const town = await mountTown(grid, library);
+  // The parked cars' faked shadows join the town's own graph: one static mesh
+  // seated above the kerb top, so a car reads as resting on the street the way
+  // the houses do rather than as a floating box.
+  const parkedShadows = mountParkedShadows(grid);
+  if (parkedShadows !== undefined) {
+    town.group.add(parkedShadows.mesh);
+  }
   scene.add(town.group);
 
   // Hitboxes come from the same measured models the town just mounted, so the
