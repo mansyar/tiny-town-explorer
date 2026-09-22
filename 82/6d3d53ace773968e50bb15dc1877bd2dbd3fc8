@@ -1,0 +1,32 @@
+Phase 6 Task 2 — Device pass (AC11)
+
+Desktop half: proven in Phase 5's user-confirmed browser drive — both
+missions played through in the real render loop at localhost:5173 (park:
+tap-respond, drive-over gulp rhythm, cluster sweep, confetti; puppy:
+whine + police pulse, siren yip + paw, roof hop, in-range deliver),
+including a muted beat. The step-by-step lives in the Phase 5
+verification report (note on f333325).
+
+iPad half (AC11): one sitting on the performance-floor device over the
+LAN dev server (vite --host, http://192.168.0.114:5173/):
+- Sound on, park round: litter readable at play distance; drive-over
+  gulp per piece with poofs; ability sweep voices the cluster once; last
+  piece -> confetti + cheer + sun; no stutter noted at the busiest
+  moment (cluster pickup + morph).
+- Sound on, puppy round: one whine, no marker, police pulse reads as an
+  invitation without competing with the ability button; siren -> yip +
+  paw bloom + pulse stop; helper hand retargets; pup hops aboard; house
+  tap in range -> door run -> cheer + confetti.
+- Sound off (parent-panel hold-3s mute): both rounds replayed; every cue
+  read visually (poof, gulp burst, pulse, paw, heart, confetti) —
+  silence, never confusion. Unmuted clean.
+
+Verdict: AC11 Met — both missions audible and completable hands-on
+(bark, gulp, cheer), and again with sound off.
+
+Scene re-count: not re-taken in the browser. The asset-level NFR2 delta
+(under ~1,200 tris over the standing 37,904-triangle scene, measured in
+Task 1's note) plus this sitting's smoothness judgment stand, exactly as
+the ice-cream track's marker delta did.
+
+No code changed.
