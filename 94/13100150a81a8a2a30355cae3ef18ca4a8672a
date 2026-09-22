@@ -39,3 +39,8 @@ Manual steps recorded
   ever doubted: pnpm build on the Phase 0 commit.
 
 Gates: pnpm check clean, pnpm typecheck clean, 696 tests / 56 files.
+
+CORRECTION (added after the scene measurement in 8310763)
+  The "52,056 triangles" above is wrong. 8,676 is the sum for the four *distinct*
+  car models; six instances are sedan x2 + hatchback x2 + van + suv = 12,796.
+  Measured per-frame cost of all six cars plus the blob is +12,820 triangles.
