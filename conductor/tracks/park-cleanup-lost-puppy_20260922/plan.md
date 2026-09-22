@@ -47,7 +47,7 @@
   - [x] Write failing tests: `missionFocus` resolves exactly one destination for four missions — litter while the park asks, the siren button before the puppy is answered, the paw spot after, the owner house while carrying (6 new red-first tests, 13 total in `missionFocus.test.ts`)
   - [x] Implement the four-way focus + the siren-button target (priority chain fire → order → park → puppy; `target: 'siren'` marker for the HUD button; `parkAwaitsKid` exported from `parkMission.ts`; 514/514 pass)
   - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `missionFocus.ts` and `parkMission.ts`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `7a974c4`]
 
 ## Phase 4 – Art and audio assets (manual-verify, exempt from TDD)
 
