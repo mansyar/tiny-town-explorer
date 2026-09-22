@@ -39,10 +39,11 @@
 
 ## Phase 2 – Collision and tap rules (TDD)
 
-- [ ] Task: Axis-aligned non-solid box hitboxes (FR5)
-  - [ ] Write failing tests: a parked car publishes a non-solid box whose half extents follow the mounted footprint; a 90/180/270° yaw swaps the extents correctly and a diagonal yaw fails loudly rather than mis-sizing a hitbox; a swept contact reports a crashable impact and never `solid`; a car driven into one bonks and resumes with the route cursor still advancing; a regression guard showing the equivalent covering circle would fail the centre-line case
-  - [ ] Implement the prop→box obstacle mapping (box shape, `solid: false`) and keep the existing circle mapping for every other prop
-  - [ ] Refactor + coverage
+- [x] Task: Axis-aligned non-solid box hitboxes (FR5) `1d30b62`
+  - [x] Write failing tests: a parked car publishes a non-solid box whose half extents follow the mounted footprint; a 90/180/270° yaw swaps the extents correctly and a diagonal yaw fails loudly rather than mis-sizing a hitbox; a swept contact reports a crashable impact and never `solid`; a car driven into one bonks and resumes with the route cursor still advancing; a regression guard showing the equivalent covering circle would fail the centre-line case (14 tests across `collision.test.ts`, `vehicleMotor.test.ts` and `townGrid.test.ts`; red first — seven collision tests failed against the code that dropped parked cars from the hitbox list entirely)
+  - [x] Implement the prop→box obstacle mapping (box shape, `solid: false`) and keep the existing circle mapping for every other prop (a prop with neither a radius nor a footprint now throws rather than being skipped, which is the bug this replaces)
+  - [x] Refactor + coverage (663/663 tests, 53 files; `collision.ts` 100% on all four metrics, `vehicleMotor.ts` 100% statements/functions/lines and 94.82% branches — the residue is one comparison branch in the new deepest-overlap helper plus one pre-existing line in `pushClear`; the first draft of that helper tripped Biome's cognitive-complexity limit at 17 and was split into two functions)
+  - [x] **Found and fixed while driving the tests (deviation from this task's sub-tasks):** a bonk whose recoil direction points at a wall springs the car *into* it — a parked car leaves 0.037 to the house behind it while the recoil travels 0.14, so the tail-bonk a turning truck takes off a parked car put its nose inside house-8. The motor's spring-back now clears solid hitboxes, leaving crashables drivable. Proven red-first: with the clamp disabled, both the new regression test and the pre-existing `never creeps into a building` test fail.
 - [ ] Task: Tap-snap exclusion (FR6)
   - [ ] Write failing tests: a tap inside the prop snap radius of a parked car keeps the finger's ground point and reports no `propId`; taps near cones and poles still snap; the dead-zone honk and newest-wins are unchanged; a parked car never becomes a drive target or a mission target
   - [ ] Implement the snap-target flag on prop data and its use in the router
