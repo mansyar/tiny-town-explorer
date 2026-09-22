@@ -1,0 +1,1 @@
+Task: Per-mission state matrix (AC3). Added src/game/mission/missionStateMatrix.test.ts: 10 characterization tests pinning state->marker (flame, cone, litter field, paw/heart) and state->tap (respond/spray/serve/deliver/ignore) for all 4 missions, plus cross-mission isolation. Gates: pnpm check, pnpm typecheck, CI=true pnpm test all green (526 tests / 44 files, baseline 516+10).
