@@ -32,7 +32,10 @@ confetti/cheer/sun-style completion feedback; per-mission differences become
 data (colors, sounds, duration), not code.
 
 **FR4 — Unified completion sparkle (bundled feature):** On mission completion,
-a small sun/sparkle burst pops at town hall. Icon-only, zero text, never
+a small sun/sparkle burst pops at the mission's own completion site — fire
+house, ordering house, litter spot, owner's door (revised 2026-09-22: the town
+has no town hall, so the sparkle rides with each mission's celebration instead
+of a fixed landmark). Icon-only, zero text, never
 sound-only (must pair with existing celebration audio). Fires **exactly once
 per completion** — immune to tap spam and interruption during linger — and
 **never** during free play or mission start.
@@ -62,7 +65,7 @@ missions do — no orphan markers, no post-abort celebrations.
 ## Acceptance Criteria
 
 - **AC1:** All four missions run end-to-end on desktop with no *unintended*
-  visible change; the only child-visible difference is the town-hall sparkle on
+  visible change; the only child-visible difference is the completion sparkle on
   completion.
 - **AC2:** `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` all green;
   NFR1/NFR2 hold.
