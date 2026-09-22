@@ -5,6 +5,7 @@
  * are: only the sounds the game actually asks for are emitted and precached, so
  * the ~220 others in the two packs cost nothing.
  */
+import barkUrl from '../../assets/audio/bark.mp3?url';
 import bonkUrl from '../../assets/audio/bonk.mp3?url';
 import cheerUrl from '../../assets/audio/cheer.mp3?url';
 import chimeUrl from '../../assets/audio/chime.mp3?url';
@@ -17,6 +18,7 @@ import type { SampledSound } from './audioEngine';
 
 /** Every sample the build ships, keyed by the sound the game asks for. */
 export const SOUND_MODELS: Readonly<Record<SampledSound, string>> = {
+  bark: barkUrl,
   bonk: bonkUrl,
   cheer: cheerUrl,
   chime: chimeUrl,

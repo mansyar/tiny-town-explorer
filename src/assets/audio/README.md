@@ -6,6 +6,7 @@ exactly as `src/assets/kits/README.md` does for the model kits.
 
 | Pack | Version | Downloaded | Source | Role |
 | --- | --- | --- | --- | --- |
+| Barking of a Spitz | 0682 | 2026-09-22 | https://bigsoundbank.com/barking-of-a-spitz-s0682.html | the lost puppy's bark |
 | Impact Sounds | 1.0 | 2026-09-21 | https://kenney.nl/assets/impact-sounds | the bonk off a prop or a wall |
 | Interface Sounds | 1.0 | 2026-09-21 | https://kenney.nl/assets/interface-sounds | taps, the morph poof, the trash gulp, the cone drop, the mission chime and the win |
 | Some sounds | 2024-08-22 | 2026-09-21 | https://opengameart.org/content/some-sounds-0 | the car's engine loop |
@@ -36,15 +37,25 @@ leaves the engine room to rise rather than start bright. It was mixed to mono
 44.1 kHz and peak-normalised to −6 dBFS, with no compression or dynamics so the
 loop point stays clean.
 
+`bark.mp3` is the other non-Kenney clip: *Barking of a Spitz* (sound #0682) by
+[Joseph SARDIN](https://josephsardin.fr/), from
+[BigSoundBank](https://bigsoundbank.com/barking-of-a-spitz-s0682.html),
+released **CC0 (public domain)** per that page — a small dog's growl-and-bark,
+1.35 s, mono 48 kHz, exactly the puppy-sized voice the lost-puppy mission
+needed. It took the same transcode as the Kenney clips (mono, 44.1 kHz,
+`loudnorm`, 96k MP3); the source page ships no archive, so this paragraph and
+the table above are its provenance.
+
 ## Cost
 
-Eight clips, 368 KiB in total — nearly all of it the engine loop, which is the
+Nine clips, 384 KiB in total — nearly all of it the engine loop, which is the
 one sound that plays continuously. As with the models, they are referenced through
 `?url` imports in `src/game/audio/audioRegistry.ts`, so only the sounds the game
 actually asks for are emitted and precached.
 
 | Clip | From | Used for |
 | --- | --- | --- |
+| `bark.mp3` | BigSoundBank *Barking of a Spitz* `0682` | the lost puppy's bark |
 | `bonk.mp3` | Impact Sounds `impactSoft_medium_000` | the bump off a prop or a building |
 | `chime.mp3` | Interface Sounds `bong_001` | the fire alarm that calls a mission |
 | `cheer.mp3` | Interface Sounds `confirmation_001` | a mission resolved |

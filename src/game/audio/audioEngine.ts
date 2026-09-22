@@ -24,6 +24,7 @@ export const MUTE_RAMP_SECONDS = 0.06;
  * one-shots for `play`.
  */
 export type SampledSound =
+  | 'bark'
   | 'bonk'
   | 'cheer'
   | 'chime'
