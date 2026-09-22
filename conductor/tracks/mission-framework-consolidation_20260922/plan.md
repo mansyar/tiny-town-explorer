@@ -80,8 +80,27 @@ phase.*
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `2c8e3aa`
   - [x] Scope read with `git diff --name-only f71a51d HEAD` — docs only (`docs/playtest.md`, `tech-stack.md`, `plan.md`), so no new test pairing was owed. Command: `CI=true pnpm test` → 50 files / 617 tests pass; `pnpm check` and `pnpm typecheck` clean. Manual plan presented (four-mission playthrough, sparkle exactly once per completion, nothing in free play, plus the puppy fix's visuals); user confirmed ✓. Report attached as a git note on `2c8e3aa`.
 
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions `50f1b66`
+  - **[Medium] The sparkle was a second confetti burst.** `abilityFx` gained a `sparkle` `BurstKind` with a plan of its own (fewer but chunkier bits, thrown higher, pink rather than gold) and `main.ts` fires it through the celebration's sparkle dep. Distinctness is pinned by a new `abilityFx` test; the look was then verified by eye through a temporary dev probe, which is *why* it was retuned — the first cut (near-white, size 0.7) read as faint specks against the road. NFR3 re-checked live: one sparkle costs **+10 draw calls while alive** (144 → 154 → 144, identical conditions, pixel ratio 1.5) and nothing at steady state.
+  - **[Medium] `abort()` was unreachable.** Exposed on all four mission APIs (`missionManager`, `iceCreamMission`, `parkMission`, `puppyMission`), so the `onAbort` hooks are reachable contracts rather than dead configuration, and `missionAbortParity` now drives teardown from every state through `abort()` as well as the linger — 14 → 18 tests. Spec FR6 amended: the contract is held in reserve because the busy gate means nothing preempts a mission today.
+  - **[Low] The FSM's unused `tap()` seam** deleted with its two tests, and the header now describes the one-transition lock as update-scoped. The Phase 2 wording promised "tick/tap delegation"; no production caller ever existed, so the description now matches the code.
+  - **[Low] Unread marker-adapter fields.** `FIRE_FLAME.armIn` and `PUPPY_HEART.armIn` removed (both arms are *range* wires, not state rules) and `MarkerAdapter` documents that `armIn` is declared only where `markerArmed` is consulted. `FIRE_FLAME.showIn` was **kept deliberately**: wiring it into the fire tick would run `extinguish()` during the celebration and cut the smoke 2.5 s early — a visible change a review fix must not smuggle in.
+  - **[Low] `'ignore' as O`** — `markerTap` now returns `O | 'ignore'`, so the assertion is gone; the three call sites are unchanged.
+  - **[Low] Two silent-failure nits in `missionFsm`** — the dead `previous !== celebratingState` clause removed, and `createMissionFsm` now refuses a config whose `initialState`/`celebratingState` is not declared in `states` (two new tests), so a typo fails loudly instead of leaving a mission that can never spawn or celebrate.
+  - Gates after the fixes: `pnpm check` clean (118 files), `tsc --noEmit` clean, `CI=true pnpm test` **621 tests / 50 files**; `missionFsm`/`missionMarkers`/four missions/devCalmGap still 100% statements.
+
 ## History
 
+- 2026-09-22 – Track complete; conductor-review ran over the whole track (2,599
+  added / 256 removed lines, 23 files, read file by file) and found no Critical
+  or High issues — two Medium and five Low, all fixed in `50f1b66`. The two
+  Mediums were contracts that were wired but never reachable: the sparkle fired
+  on the confetti channel (so the track's headline visual read as confetti
+  twice, and looking at it changed the design again), and `abort()` had no
+  caller in `src/` at all. One Low was deliberately left alone
+  (`FIRE_FLAME.showIn`) because wiring it would move the smoke by 2.5 s.
 - 2026-09-22 – Phase 5 gate found a defect in shipped lost-puppy work: two of
   the four authored hiding spots sat inside a house's 0.86-tile footprint
   (`spot-garden` in `house-4`, `spot-verge` in `house-5`), and the paw marker —
