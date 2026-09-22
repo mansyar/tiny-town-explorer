@@ -67,8 +67,8 @@
   - [x] Write failing tests for the wiring decisions only, implement, then manual-verify spawn → respond → collect → celebrate and spawn → whine → siren → pickup → deliver
 - [x] Task: HUD police-button pulse hint (FR6) `f333325`
   - [x] Implement the pulse and its clear on answer; manual-verify it reads as an invitation and never competes with the ability button
-- [~] Task: Input routing (FR2, FR7, FR10)
-  - [ ] Write tests for the routing decisions (tap a piece = respond; tap the owner house = deliver only while carrying and in range; the ability press latches the siren once; newest-wins preserved), implement, then manual-verify on touch
+- [x] Task: Input routing (FR2, FR7, FR10) (test audit — all four decisions already covered, no new code)
+  - [x] Write tests for the routing decisions (tap a piece = respond; tap the owner house = deliver only while carrying and in range; the ability press latches the siren once; newest-wins preserved), implement, then manual-verify on touch (audit: piece→respond in `parkMission.test.ts` 'answers only a tap that lands on a piece, and only once'; deliver gating in `puppyMission.test.ts` 'resolves to deliver only when carrying, on the house, and in range' + 'arms delivery only near the owner house…'; siren latch-once at `puppyMission.test.ts:31-34`; newest-wins at `inputRouter.test.ts` 'supersedes the previous destination with the newest one'; aim→house at `orderFlow.test.ts` 'which house a tap was aimed at'; registry first-claim-wins at `missionRegistry.test.ts` 'offers taps to missions until one answers' — nothing red-first left to write; the touch pass runs at the Phase Verification checkpoint)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 – Verification + docs
