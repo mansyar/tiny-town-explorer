@@ -37,6 +37,15 @@ export interface TownProp {
   readonly tile: TileCoord;
   readonly position: Vec2;
   /**
+   * Whether a tap landing near this prop may be interpreted as aiming at it.
+   *
+   * False for parked cars (FR6): a toddler tapping a car means the ground by
+   * it, and a tap that resolved onto a car's centre would send the truck at a
+   * point inside the car's own body. The grid decides this from the kind rather
+   * than the map, so a parked car cannot be authored as tappable by accident.
+   */
+  readonly snappable: boolean;
+  /**
    * Circle radius used by collision and tap-to-prop snapping. Absent for props
    * hit by a footprint box instead — parked cars carry {@link TownProp.footprint}
    * and no radius, so a circle-only path cannot silently take a car's width for
@@ -183,6 +192,7 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
         kind: prop.kind,
         tile: prop.tile,
         position,
+        snappable: false,
         yaw,
         footprint: { halfX: halfX * spec.tileSize, halfZ: halfZ * spec.tileSize },
       };
@@ -192,6 +202,7 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
       kind: prop.kind,
       tile: prop.tile,
       position,
+      snappable: true,
       collisionRadius: PROP_COLLISION_RADIUS[prop.kind] * spec.tileSize,
     };
   });

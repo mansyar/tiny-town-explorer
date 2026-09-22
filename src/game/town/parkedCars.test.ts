@@ -82,6 +82,21 @@ describe('parked cars in the authored town', () => {
       expect(prop.footprint).toBeDefined();
     }
   });
+
+  it('marks parked cars as not tap targets, and every other prop as one (FR6)', () => {
+    // A tap near a parked car has to resolve to the ground under the finger, so
+    // the exclusion lives on the prop data rather than in the router's guess
+    // about which kinds are cars. The grid derives it from the kind, so a map
+    // cannot author a parked car as tappable by accident.
+    for (const prop of parked) {
+      expect(prop.snappable, `${prop.id} is not a tap target`).toBe(false);
+    }
+    for (const prop of grid.props.filter(
+      (candidate) => !isParkedCarKind(candidate.kind),
+    )) {
+      expect(prop.snappable, `${prop.id} is still a tap target`).toBe(true);
+    }
+  });
 });
 
 describe('parked-car model data', () => {

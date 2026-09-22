@@ -157,7 +157,14 @@ export function createInputRouter({
       }
 
       const landed = grid.clampToBounds(ground);
-      const prop = grid.propsWithin(landed, PROP_SNAP_RADIUS)[0];
+      // The nearest prop the kid could have meant. Parked cars are excluded
+      // (FR6): they are big enough to swallow a tap aimed at the street, and
+      // resolving onto one would drive the truck at a point inside its body.
+      // `propsWithin` is nearest-first, so this stays "the nearest of the
+      // props that may be aimed at".
+      const prop = grid
+        .propsWithin(landed, PROP_SNAP_RADIUS)
+        .find((candidate) => candidate.snappable);
       const target = prop === undefined ? landed : { ...prop.position };
       if (distance(target, car) <= DEAD_ZONE_RADIUS) {
         return honkAt(car);

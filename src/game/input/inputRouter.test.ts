@@ -277,6 +277,134 @@ describe('tap-to-prop snapping', () => {
   });
 });
 
+/**
+ * A town with one parked car and one cone, so the two crashable kinds can be
+ * compared side by side: only the cone may be aimed at (FR6).
+ *
+ * Tile (2,2) is the world origin, so the car sits at (0, 0.4) with its 0.55
+ * length running north-south, its nose at z = 0.675; the cone at (0, 0.9) is
+ * just beyond that nose.
+ */
+const PARKED_MAP: TownMapSpec = {
+  tileSize: 1,
+  rows: ['.....', '.....', '.....', '.....', '.....'],
+  houses: [],
+  props: [
+    { kind: 'parkedSedan', tile: { x: 2, y: 2 }, offset: { x: 0, y: 0.4 }, yaw: 0 },
+    { kind: 'cone', tile: { x: 2, y: 3 }, offset: { x: 0, y: -0.1 } },
+  ],
+  spawnPoints: [{ x: 2, y: 2 }],
+};
+
+const parkedGrid = createTownGrid(PARKED_MAP);
+
+/** The harness again, against the parked-car town. */
+function parkedHarness(focus: Vec2 = { x: 0, z: 0 }): Harness {
+  const rig = createCameraRig(1);
+  rig.snapTo(focus);
+  rig.camera.updateMatrixWorld(true);
+  let car: Vec2 = CAR_AWAY;
+  const router = createInputRouter({
+    camera: rig.camera,
+    grid: parkedGrid,
+    getCarPosition: () => car,
+  });
+  return {
+    camera: rig.camera,
+    router,
+    moveCarTo(point: Vec2): void {
+      car = point;
+    },
+    tapWorld(point: Vec2): TapCommand {
+      const ndc = new Vector3(point.x, 0, point.z).project(rig.camera);
+      return router.tapAt({ x: ndc.x, y: ndc.y });
+    },
+  };
+}
+
+describe('parked cars are not tap targets (FR6)', () => {
+  const car = parkedGrid.props.find((prop) => prop.kind === 'parkedSedan');
+
+  it('resolves a tap on a parked car to the ground the finger found', () => {
+    expect(car).toBeDefined();
+    if (car === undefined) {
+      return;
+    }
+    const rig = parkedHarness();
+    // Inside the prop snap radius of the parked car, and clear of the cone.
+    const point = { x: car.position.x + 0.35, z: car.position.z };
+    const command = rig.tapWorld(point);
+
+    expect(command.kind).toBe('drive');
+    if (command.kind !== 'drive') {
+      return;
+    }
+    // No propId means nothing downstream can read this tap as being about a
+    // prop — no toot, no bob, no mission answer.
+    expect(command.propId).toBeUndefined();
+    // And the destination is the finger's point, not the car's centre: an
+    // empty-street tap, which is what FR6 promises.
+    expect(command.target.x).toBeCloseTo(point.x, 2);
+    expect(command.target.z).toBeCloseTo(point.z, 2);
+    expect(command.landed.x).toBeCloseTo(point.x, 2);
+  });
+
+  it('still snaps to a cone the parked car happens to stand nearer to', () => {
+    expect(car).toBeDefined();
+    if (car === undefined) {
+      return;
+    }
+    const rig = parkedHarness();
+    // Both within 0.45, the car the closer of the two: exclusion means the cone
+    // is the candidate, not that the tap stops being about a prop at all.
+    const command = rig.tapWorld({ x: car.position.x + 0.05, z: car.position.z + 0.2 });
+
+    expect(command.kind === 'drive' && command.propId).toBe('cone-1');
+    const cone = parkedGrid.props.find((prop) => prop.kind === 'cone');
+    expect(command.kind === 'drive' && command.target.x).toBeCloseTo(
+      cone?.position.x ?? 0,
+      2,
+    );
+    expect(command.kind === 'drive' && command.target.z).toBeCloseTo(
+      cone?.position.z ?? 0,
+      2,
+    );
+  });
+
+  it('honks rather than driving when the tap lands on the car beside the truck', () => {
+    expect(car).toBeDefined();
+    if (car === undefined) {
+      return;
+    }
+    const rig = parkedHarness();
+    rig.moveCarTo({ x: car.position.x, z: car.position.z - 0.1 });
+
+    // The truck is standing against the parked car and the kid taps the car: an
+    // honest ground point lands inside the dead zone, so this is feedback — the
+    // one outcome a parked car can never produce is a route into itself.
+    const command = rig.tapWorld(car.position);
+
+    expect(command.kind).toBe('honk');
+  });
+
+  it('drives past a parked car to a tap beyond it', () => {
+    expect(car).toBeDefined();
+    if (car === undefined) {
+      return;
+    }
+    const rig = parkedHarness();
+    rig.moveCarTo({ x: 0, z: -1 });
+    // Clear of the cone's snap radius as well, so nothing snaps and the route
+    // is a plain drive past the parked car.
+    const beyond = { x: 0.35, z: 1.35 };
+    const command = rig.tapWorld(beyond);
+
+    expect(command.kind).toBe('drive');
+    expect(command.kind === 'drive' && command.propId).toBeUndefined();
+    expect(command.kind === 'drive' && command.target.z).toBeCloseTo(beyond.z, 2);
+  });
+});
+
 describe('newest tap wins', () => {
   it('supersedes the previous destination with the newest one', () => {
     const rig = harness();
