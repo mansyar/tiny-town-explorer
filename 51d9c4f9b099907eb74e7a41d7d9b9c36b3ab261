@@ -28,3 +28,10 @@ Manual steps (recorded; bark becomes audible in Phase 5):
 2. Repeat muted: no bark, no crash.
 
 Gates: biome clean, tsc clean, 514/514 tests (43 files).
+
+## Phase 4 verification report
+- Automated: biome (105 files) clean, tsc clean, CI=true vitest 514/514 (43 files), exit 0; scope 7a974c4..97ae0e6 = 10 files, +208/-15.
+- Test pairs: modelRegistry/audioEngine have direct suites; parkLitterFx/puppyFx are visual scene code (phase TDD-exempt); audioRegistry/townMap/townTypes are data-only (Record-type completeness) exercised via townLayout/townGrid/collision suites.
+- Manual (user-confirmed in browser): dumpster visible and flush at the east park tile SE corner, clear of tree/litter slots/spot; bonk radius 0.18 solid; free-play + fire/ice-cream + helper hand unchanged; bark registered but silent until Phase 5.
+- Deferred steps (litter bounce in-world, puppy spawn/hop-aboard, park/puppy celebrations, bark audible) live in the task notes for Phases 5/6.
+- Phase checkpoint: 51d9c4f.
