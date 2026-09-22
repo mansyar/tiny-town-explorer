@@ -1,0 +1,30 @@
+Task: Siren latch, pickup and homecoming (FR7-FR10)
+
+Summary:
+- New src/game/mission/puppyMission.ts: pure FSM mirroring the fire and
+  ice-cream missions - idle --siren()--> searching --drive over--> carrying
+  --deliver()--> complete --~2.5s--> idle.
+- Siren is a one-shot latch (false while the pup is already out) so a second
+  press can never restart or reset the errand.
+- update(delta, distanceToPup, distanceToOwner): scoops the pup at
+  <= PICKUP_RADIUS while searching (re-exported from parkPickup.ts so both
+  missions share one drive-over constant), arms/disarms delivery at
+  <= DELIVERY_RANGE (1.9, the shared mission range) while carrying, ticks the
+  completion linger; negative frames clamped as in the other missions.
+- resolvePuppyTap({state, onOwnerHouse, armed}) beside the other tap
+  resolvers: "deliver" only while carrying, on the house, and in range, so
+  celebration fires exactly once; every other tap ignores.
+- parkPickup.ts: PICKUP_RADIUS exported (was module-private) for reuse.
+
+Why: FR7-FR10 - siren opens a real search, pickup is drive-over (verb stays
+driving), heart/arm gating reuses the hose/serve arming pattern so the tap
+range rule is one shape across all missions.
+
+Tests: puppyMission.test.ts (8, red first): full chain
+idle-searching-carrying-complete-idle, siren latch ignores while out, pickup
+only within radius (0.61 keeps searching, 0.6 scoops), arm/disarm around
+DELIVERY_RANGE, resolvePuppyTap 5 cases, deliver-once, linger 2.4->2.5,
+negative frame ignored.
+
+Gates: biome clean, tsc clean, 508/508 tests (43 files), coverage
+puppyMission.ts 100/100/100/100.
