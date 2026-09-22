@@ -1,0 +1,28 @@
+Task: Litter meshes + park dumpster mount (FR1)
+
+Summary:
+- New src/game/mission/parkLitterFx.ts: createTiedBag() and
+  createCrumpledPaper() - ground-origin primitive groups in the props' lit
+  material family (MeshLambert), flat pale colours (bag 0xe8eef2, paper
+  0xf4e9c8 with flatShading facets), ~0.22 world units wide, named meshes,
+  LITTER_SURFACE_HEIGHT = 0.02 exported for the Phase 5 drop-in. Visual/scene
+  code: manual-verify, no red/green per workflow Guiding Principle 3.
+- dumpster.glb already vendored in city-kit-roads (Kenney CC0, packed at
+  scaffold): registry import added, PROP_MODELS.dumpster added (the existing
+  modelRegistry tests auto-verify file-on-disk + group coverage).
+- PropKind gains "dumpster"; PROP_COLLISION_RADIUS.dumpster = 0.18 (Record
+  type forced the entry at compile time).
+- townMap: dumpster prop on park tile (2,1) offset (0.3,0.3) - south-east
+  corner, clear of the tree (-0.2,0.2), both litter slots (z -0.3) and
+  spot-dumpster (0.3,-0.3), so the pup hides "beside the dumpster's corner".
+
+Recorded manual steps (execute at Phase 4 verification / Phase 5+6 passes):
+1. pnpm dev -> http://localhost:5173/ : dumpster visible on the east park
+   tile's south-east corner, flush on the grass, clear of the tree and paths,
+   correct yaw (if it sits rotated, adjust townLayout yaw rule - manual phase).
+2. Drive a vehicle into it: a small bonk at radius 0.18, no pass-through.
+3. After Phase 5 wiring: eight pieces visible at play distance (readable at
+   ~48px), alternating tied-bag / crumpled-paper, sitting flush on their
+   tiles, idle bounce, poof on collect.
+
+Gates: biome clean, tsc clean, 514/514 tests (43 files).
