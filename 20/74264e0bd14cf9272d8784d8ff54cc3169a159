@@ -1,0 +1,30 @@
+Task: Litter's kerbside draw yields to the cars (FR8) — Phase 3, task 2
+
+Summary of changes:
+- spawnParkLitter now draws from `kerbsideLotCandidates(grid)`: ring-road lots
+  whose kerb (the one the piece would actually stand on, from the same
+  arithmetic the placer runs) is not in takenKerbKeys().
+- `kerbPiecePosition` is exported so a test can ask which kerb a lot's piece
+  uses without re-implementing the offset maths.
+- The park's five fixed pieces are now built from `fixedParkItems`, so the
+  declaration cannot drift from where the litter goes. Same ids, same order,
+  same positions as before.
+
+Files created: none.
+Files modified: src/game/mission/parkLitter.ts (+ its test: 4 new tests, red
+first against the unfiltered draw).
+
+Why:
+The counts are the whole story here, and they were measured rather than assumed.
+Eight lots touch the ring road. Three of them lose their kerb to a parked car
+((1,2), (1,3) and (4,1)) and a fourth to the puppy's spot-verge, leaving four
+lots for three pieces — four distinct rounds, so the seed still means something.
+A fifth exclusion anywhere would have made the draw deterministic and nothing in
+the suite would have noticed, which is why the pool's size and the seed's effect
+are both asserted now.
+
+Verification: pnpm check clean, pnpm typecheck clean, CI=true pnpm test 687
+tests / 55 files green; coverage parkLitter.ts 97.61% statements, 100% lines.
+
+Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
