@@ -12,12 +12,12 @@ anything — they pin today's semantics and must stay green through every later
 phase.*
 
 - [x] Task: Per-mission state matrix (AC3) `197324f`
-  - [ ] Write matrix tests: for each of fire / ice cream / park / puppy × each FSM state, assert marker visibility and tap-correctness (no puppy spot tappable during fire mission, no cone after serve, etc.), red first where a gap exists
-  - [ ] Implement only missing assertions/minimal hooks; coverage on new test helpers
-- [ ] Task: Mid-mission abort parity harness (FR6, AC4)
-  - [ ] Write tests that tear down each mission in every state (armed marker, celebrating, lingering) and assert full cleanup — no orphan markers, no post-abort celebration, no sparkle-pending leakage
-  - [ ] Implement minimal fixes only if current behavior is under-specified; document any divergence in the task note
-- [ ] Task: Frozen-contract baseline (FR5, AC5)
+  - [x] Write matrix tests: for each of fire / ice cream / park / puppy × each FSM state, assert marker visibility and tap-correctness (no puppy spot tappable during fire mission, no cone after serve, etc.), red first where a gap exists
+  - [x] Implement only missing assertions/minimal hooks; coverage on new test helpers
+- [x] Task: Mid-mission abort parity harness (FR6, AC4) `e9c4953`
+  - [x] Write tests that tear down each mission in every state (armed marker, celebrating, lingering) and assert full cleanup — no orphan markers, no post-abort celebration, no sparkle-pending leakage
+  - [x] Implement minimal fixes only if current behavior is under-specified; document any divergence in the task note
+- [~] Task: Frozen-contract baseline (FR5, AC5)
   - [ ] Verify `missionBusy` / `calmGapPacer` / `missionFocus` suites pass **unmodified**; record their test counts as the frozen baseline (no code changes)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
