@@ -1,0 +1,35 @@
+Task: Tap-snap exclusion (FR6) — Phase 2, task 2
+
+Summary of changes:
+- TownProp gains a required `snappable` flag. createTownGrid sets it from the
+  prop KIND (false for parked cars, true otherwise) rather than reading it from
+  the map, so a parked car cannot be authored as tappable by accident and every
+  prop has to answer the question explicitly.
+- The router snaps to the nearest prop that is snappable, using propsWithin's
+  nearest-first order. Before this, a tap inside 0.45 of a parked car resolved
+  onto the car's centre — a destination inside the car's own body.
+- The reading of FR6 chosen, and asserted: exclusion per prop, not a veto on
+  snapping. A cone just past a parked car is still the prop the kid meant, so it
+  wins when it is the nearest aimable prop even if the car is nearer the tap.
+
+Files created: none.
+Files modified:
+- src/game/town/townGrid.ts (the flag on published prop data)
+- src/game/input/inputRouter.ts (its use)
+- src/game/input/inputRouter.test.ts (4 tests, all red first: the router snapped
+  to 'parkedSedan-1' before the change)
+- src/game/town/parkedCars.test.ts (the data half: parked cars false, every
+  other prop true)
+
+Why:
+The router is the only place a tap becomes an intent, so it is the only place
+the "never target a point inside a car" rule can be enforced. Keeping the flag
+on the data keeps the router free of a hard-coded list of car kinds.
+
+Verification: pnpm check clean, pnpm typecheck clean, CI=true pnpm test 668
+tests / 53 files green; coverage inputRouter.ts 100% on all four metrics,
+townGrid.ts 100% statements/lines with 94.59% branches (the residues are two
+pre-existing nullish fallbacks).
+
+Generated with Codebuff
+Co-Authored-By: Codebuff <noreply@codebuff.com>
