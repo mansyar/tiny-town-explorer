@@ -1,0 +1,43 @@
+Task: Sun-aligned merged blob shadow (FR7)
+
+What changed
+- scene.ts exports SUN_POSITION and sunGroundOffset(height), and createLights
+  builds the sun from them. One source of truth for where shadows fall.
+- src/game/town/parkedShadows.ts: parkedShadowQuads(grid) derives one quad per
+  parked car; mountParkedShadows(grid) merges them into one static mesh.
+- main.ts adds that mesh to the mounted town's group (Phase 5's wiring task).
+
+Why a faked shadow at all
+- Casting real shadows for six more models re-renders the town per frame into
+  the 1024 map, which is the cost the performance-floor device cannot pay.
+
+Why the sign is asserted against the sun and not a constant
+- The light travels along -SUN_POSITION, so a shadow lands toward NEGATIVE x
+  and z. The magnitude (1.2, 0.9) x height is identical either way, so a sign
+  slip passes every numeric assertion that hard-codes the offset and only shows
+  up on screen, as blobs pointing into the light. The suite therefore asserts
+  dot(offset, sun.xz) < 0 and derives the rest from SUN_POSITION.
+
+Geometry
+- Blob = the box around (footprint) union (footprint + offset): centred half way
+  down the offset, reaching half the offset further along each axis. Six quads,
+  24 vertices, 12 triangles, one material, one draw call.
+- Lifted 0.004 above the kerb top (PARKED_SHADOW_LIFT), so the quad clears lawn
+  (0.00), asphalt (0.01) and kerb (0.02) without z-fighting.
+- Per-model heights (FR2's fitted heights) 0.212-0.280, so the van's shadow
+  reaches 0.336/0.252 and the hatchback's 0.255/0.191.
+
+Spec correction recorded
+- FR7's illustrative "0.33-tall car -> (0.40, 0.30)" was pre-fit arithmetic; the
+  measured fitted heights are 0.21-0.28, so the sedan's offset is (0.34, 0.25).
+  The formula in FR7 was right, the example was not, and the spec now says so.
+
+Manual verification (recorded, dev server, three magnifications)
+- pnpm dev then the served URL: the six cars render at fitted size, seated on
+  the kerb; each carries a dark blob offset to the same side as the houses' and
+  trees' shadow-map shadows; the blobs cross lawn, kerb and asphalt cleanly.
+- No automated substitute exists for the direction check: a unit test can only
+  compare against the same sun constant, so the on-screen agreement with the
+  real shadows is what confirms the derivation.
+
+Gates: pnpm check clean, pnpm typecheck clean, 709 tests / 57 files.
