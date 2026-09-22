@@ -85,6 +85,13 @@ export interface HouseSpec {
   readonly id: string;
   readonly tile: TileCoord;
   readonly facing: Direction;
+  /**
+   * Which suburban model stands on the lot. Authored rather than cycled by
+   * index, so the pure layer knows each house's geometry — the wall a parked
+   * car has to clear is `1.00 - fitted depth / 2`, which no constant can
+   * express — and so adding a house cannot silently re-skin the whole street.
+   */
+  readonly model: BuildingKind;
 }
 
 /** Authored prop placement. */
@@ -232,6 +239,42 @@ export function parkedCarFootprint(
     : { halfX: halfWidth, halfZ: halfLength };
 }
 
+/** The widest half-width across the parked models: the binding case for a kerb. */
+export function widestParkedHalfWidth(): number {
+  return Math.max(
+    ...PARKED_CAR_KINDS.map((kind) => parkedCarHalfExtents(kind).halfWidth),
+  );
+}
+
+/**
+ * Gap a parked car leaves between itself and the wall it stands against, in
+ * world units. Small — the band between the lane and the narrowest usable wall
+ * is only a few centimetres — but real, so a car never looks welded to a house.
+ */
+export const KERB_CLEARANCE = 0.03;
+
+/**
+ * The narrowest house wall a kerb may have for a car to park against it, in
+ * world units, derived rather than eyeballed: the kerb offset plus the widest
+ * car's half-width plus the gap it must leave. A kerb with a wall narrower than
+ * this cannot seat a car without either entering the lane or entering the wall.
+ *
+ * Measured walls in this town run 0.574 to 0.748, which is why two kerbs are
+ * unusable and the fit is what it is (see {@link PARKED_CAR_FIT}).
+ */
+export const MIN_KERB_WALL =
+  PARKED_CAR_KERB_OFFSET + widestParkedHalfWidth() + KERB_CLEARANCE;
+
+/**
+ * Height a parked car is seated at, measured from City Kit (Roads): a tile's
+ * base is 0.00, its asphalt +0.01 and its kerb top +0.02.
+ *
+ * A parked car's footprint crosses all three, so seating it on the ground would
+ * bury its wheels 0.02 in the kerb; seating it on the kerb top instead floats it
+ * 0.02 above the lawn, which is below visual notice.
+ */
+export const PARKED_CAR_SEAT_HEIGHT = 0.02;
+
 /**
  * Share of a one-tile lot a house may fill, centred on the lot.
  *
@@ -253,6 +296,83 @@ export const HOUSE_LOT_FIT = 0.86;
 export interface HouseFootprint {
   readonly halfX: number;
   readonly halfZ: number;
+}
+
+/** The eight City Kit (Suburban) models the town's houses are drawn from. */
+export type BuildingKind =
+  | 'type-a'
+  | 'type-b'
+  | 'type-c'
+  | 'type-d'
+  | 'type-f'
+  | 'type-h'
+  | 'type-q'
+  | 'type-r';
+
+/**
+ * Kit-space horizontal extents of each house model, measured from the committed
+ * GLBs with `pnpm assets:measure` (2026-09-22): `width` across the facade and
+ * `depth` from front to back. `depth` is the axis the house presents to the
+ * street it faces, and so the one a parked car's kerb is measured against.
+ */
+export const BUILDING_EXTENTS: Readonly<
+  Record<BuildingKind, { readonly width: number; readonly depth: number }>
+> = {
+  'type-a': { width: 1.3, depth: 1.03 },
+  'type-b': { width: 1.83, depth: 1.14 },
+  'type-c': { width: 1.29, depth: 1.03 },
+  'type-d': { width: 1.76, depth: 1.03 },
+  'type-f': { width: 1.43, depth: 1.41 },
+  'type-h': { width: 1.3, depth: 0.92 },
+  'type-q': { width: 1.24, depth: 0.89 },
+  'type-r': { width: 1.03, depth: 1.02 },
+};
+
+/**
+ * Uniform scale the renderer applies to a house: its widest horizontal axis is
+ * capped at `HOUSE_LOT_FIT` tiles and the other axis follows. Never scaled up,
+ * matching `fitScale` in the renderer.
+ */
+function houseFitScale(kind: BuildingKind, tileSize: number): number {
+  const { width, depth } = BUILDING_EXTENTS[kind];
+  return Math.min(1, (tileSize * HOUSE_LOT_FIT) / Math.max(width, depth));
+}
+
+/**
+ * Half extents a fitted house occupies in **world axes**, given the way it
+ * faces — the same `{ halfX, halfZ }` shape collision publishes for the mounted
+ * art, so a predicted footprint can stand in for a measured one.
+ *
+ * The fit caps whichever axis is wider in the model, which is why a house's
+ * depth is a property of its model rather than of the lot cap; the model then
+ * turns so that its depth faces the street, so a house facing north or south
+ * presents its depth along z and one facing east or west along x.
+ */
+export function houseFootprint(
+  kind: BuildingKind,
+  tileSize: number,
+  facing: Direction,
+): HouseFootprint {
+  const { width, depth } = BUILDING_EXTENTS[kind];
+  const scale = houseFitScale(kind, tileSize);
+  const depthAlongZ = facing === 'north' || facing === 'south';
+  const alongZ = (depthAlongZ ? depth : width) * scale;
+  const alongX = (depthAlongZ ? width : depth) * scale;
+  return { halfX: alongX / 2, halfZ: alongZ / 2 };
+}
+
+/**
+ * How far a house's street-facing wall stands from that street's centre line, in
+ * world units.
+ *
+ * A lot and the street it faces have their centres one tile apart and the house
+ * is centred on its lot, so the wall is `tileSize` minus the fitted half depth.
+ * This is the number a parked car has to clear (FR3), and it ranges from 0.574
+ * to 0.748 in this town — never the 0.93 the first draft assumed.
+ */
+export function houseWallDistance(kind: BuildingKind, tileSize: number): number {
+  const { depth } = BUILDING_EXTENTS[kind];
+  return tileSize - (depth * houseFitScale(kind, tileSize)) / 2;
 }
 
 /** Unit step for each compass direction in grid space. */

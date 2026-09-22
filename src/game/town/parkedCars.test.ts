@@ -7,6 +7,7 @@ import {
   PARKED_CAR_FIT,
   PARKED_CAR_KERB_OFFSET,
   PARKED_CAR_KINDS,
+  parkedCarFootprint,
   parkedCarHalfExtents,
 } from './townTypes';
 
@@ -99,6 +100,18 @@ describe('parked-car model data', () => {
       expect(halfWidth).toBeGreaterThan(0);
       expect(halfWidth).toBeLessThan(halfLength);
     }
+  });
+
+  it('refuses a diagonal yaw rather than publish a hitbox the art disagrees with (FR5)', () => {
+    // `collision.ts`'s box shape is axis-aligned, so a diagonal car would be
+    // boxed as if it lay along the street. The data layer is the last place
+    // that mistake is still a loud failure instead of a silent mis-hitbox.
+    expect(() => parkedCarFootprint('parkedSedan', Math.PI / 4)).toThrow(/quarter turn/i);
+    expect(() => parkedCarFootprint('parkedSedan', 0.3)).toThrow(/quarter turn/i);
+    // The four quarter turns themselves stay valid, and swap the extents.
+    const upright = parkedCarFootprint('parkedSedan', 0);
+    const along = parkedCarFootprint('parkedSedan', Math.PI / 2);
+    expect(upright).toEqual({ halfX: along.halfZ, halfZ: along.halfX });
   });
 
   it('keeps the sedan the widest model, so one half-width bound covers the fleet', () => {

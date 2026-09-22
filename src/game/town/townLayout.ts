@@ -1,6 +1,5 @@
 import {
   BUILDING_MODELS,
-  NATURE_MODELS,
   PARKED_CAR_MODELS,
   PROP_MODELS,
   ROAD_MODELS,
@@ -209,11 +208,13 @@ export function planTown(grid: TownGrid): TownPlan {
     }
   }
 
-  grid.houses.forEach((house, index) => {
+  grid.houses.forEach((house) => {
     placements.push({
       kind: 'model',
       name: house.id,
-      url: buildingModelFor(index),
+      // The map names each house's model, so the fitted wall a parked car has
+      // to clear can be derived without mounting anything.
+      url: BUILDING_MODELS[house.model],
       position: house.position,
       yaw: yawForDirection(house.facing),
       fitWithin: grid.tileSize * HOUSE_LOT_FIT,
@@ -237,17 +238,6 @@ export function planTown(grid: TownGrid): TownPlan {
   });
 
   return { placements };
-}
-
-/**
- * House model for a lot, cycling the registry so neighbours differ.
- *
- * The `??` covers an empty registry rather than any reachable index: an indexed
- * read is `T | undefined` under `noUncheckedIndexedAccess`, and a stray planter
- * on a lot still beats handing the loader an undefined URL.
- */
-function buildingModelFor(index: number): string {
-  return BUILDING_MODELS[index % BUILDING_MODELS.length] ?? NATURE_MODELS.planter;
 }
 
 /** Re-exported so callers can iterate the same order the plan uses. */

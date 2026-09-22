@@ -34,7 +34,7 @@ describe('modelRegistry', () => {
   it('covers every group exactly once', () => {
     const groups = [
       ...Object.values(ROAD_MODELS),
-      ...BUILDING_MODELS,
+      ...Object.values(BUILDING_MODELS),
       ...Object.values(NATURE_MODELS),
       ...Object.values(PROP_MODELS),
       ...Object.values(VEHICLE_MODELS),

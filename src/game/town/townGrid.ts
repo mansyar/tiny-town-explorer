@@ -1,5 +1,6 @@
 import { TOWN_MAP } from './townMap';
 import type {
+  BuildingKind,
   Direction,
   PropKind,
   RoadConnections,
@@ -23,6 +24,8 @@ export interface TownHouse {
   readonly id: string;
   readonly tile: TileCoord;
   readonly facing: Direction;
+  /** Which suburban model stands on the lot, so its footprint can be derived. */
+  readonly model: BuildingKind;
   /** World-space centre of the house lot. */
   readonly position: Vec2;
 }

@@ -27,7 +27,7 @@ import treeSmall from '../../assets/kits/city-kit-suburban/tree-small.glb?url';
 import cone from '../../assets/kits/toy-car-kit/item-cone.glb?url';
 import pine from '../../assets/kits/toy-car-kit/tree-pine.glb?url';
 import vehicleTruck from '../../assets/kits/toy-car-kit/vehicle-truck.glb?url';
-import type { ParkedCarKind } from '../town/townTypes';
+import type { BuildingKind, ParkedCarKind } from '../town/townTypes';
 
 /**
  * The kit models the town mounts, named by the role they play.
@@ -59,17 +59,24 @@ export const ROAD_MODELS = {
   end: roadEnd,
 } as const;
 
-/** House models, one per lot (chosen in this order by house index). */
-export const BUILDING_MODELS: readonly string[] = [
-  buildingTypeA,
-  buildingTypeB,
-  buildingTypeC,
-  buildingTypeD,
-  buildingTypeF,
-  buildingTypeH,
-  buildingTypeQ,
-  buildingTypeR,
-];
+/**
+ * House models by kind.
+ *
+ * Which model stands on a lot is authored in the map rather than cycled by
+ * index, because the pure layer needs each house's geometry — the wall a parked
+ * car must clear comes from the fitted depth of *this* model — and because a
+ * positional rule re-skins every street the moment a house is inserted.
+ */
+export const BUILDING_MODELS: Readonly<Record<BuildingKind, string>> = {
+  'type-a': buildingTypeA,
+  'type-b': buildingTypeB,
+  'type-c': buildingTypeC,
+  'type-d': buildingTypeD,
+  'type-f': buildingTypeF,
+  'type-h': buildingTypeH,
+  'type-q': buildingTypeQ,
+  'type-r': buildingTypeR,
+};
 
 /** Park and verge greenery: suburban street trees plus a toy pine. */
 export const NATURE_MODELS = {
@@ -132,7 +139,7 @@ export const PARKED_CAR_MODELS: Readonly<Record<ParkedCarKind, string>> = {
 export const TOWN_MODELS: readonly string[] = [
   ...new Set([
     ...Object.values(ROAD_MODELS),
-    ...BUILDING_MODELS,
+    ...Object.values(BUILDING_MODELS),
     ...Object.values(NATURE_MODELS),
     ...Object.values(PROP_MODELS),
     ...Object.values(VEHICLE_MODELS),

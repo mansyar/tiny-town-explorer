@@ -32,25 +32,36 @@ export const TOWN_MAP: TownMapSpec = {
   // height. Revisit once the Kenney kit's real tile scale is measured.
   tileSize: 1,
   rows: ['######', '#PP#L#', '#LL#L#', '#LL#L#', '#LL#L#', '######'],
+  // Eight models across ten lots, each named rather than cycled by index: the
+  // house on a lot decides the wall its kerb can offer a parked car, so the
+  // choice is authored data the placement rules can be tested against.
   houses: [
-    { id: 'house-1', tile: { x: 1, y: 2 }, facing: 'west' },
-    { id: 'house-2', tile: { x: 2, y: 2 }, facing: 'east' },
-    { id: 'house-3', tile: { x: 1, y: 3 }, facing: 'west' },
-    { id: 'house-4', tile: { x: 2, y: 3 }, facing: 'east' },
-    { id: 'house-5', tile: { x: 1, y: 4 }, facing: 'south' },
-    { id: 'house-6', tile: { x: 2, y: 4 }, facing: 'east' },
-    { id: 'house-7', tile: { x: 4, y: 1 }, facing: 'north' },
-    { id: 'house-8', tile: { x: 4, y: 2 }, facing: 'east' },
-    { id: 'house-9', tile: { x: 4, y: 3 }, facing: 'east' },
-    { id: 'house-10', tile: { x: 4, y: 4 }, facing: 'south' },
+    { id: 'house-1', tile: { x: 1, y: 2 }, facing: 'west', model: 'type-a' },
+    { id: 'house-2', tile: { x: 2, y: 2 }, facing: 'east', model: 'type-b' },
+    { id: 'house-3', tile: { x: 1, y: 3 }, facing: 'west', model: 'type-c' },
+    { id: 'house-4', tile: { x: 2, y: 3 }, facing: 'east', model: 'type-d' },
+    { id: 'house-5', tile: { x: 1, y: 4 }, facing: 'south', model: 'type-f' },
+    { id: 'house-6', tile: { x: 2, y: 4 }, facing: 'east', model: 'type-h' },
+    { id: 'house-7', tile: { x: 4, y: 1 }, facing: 'north', model: 'type-q' },
+    { id: 'house-8', tile: { x: 4, y: 2 }, facing: 'east', model: 'type-r' },
+    { id: 'house-9', tile: { x: 4, y: 3 }, facing: 'east', model: 'type-a' },
+    { id: 'house-10', tile: { x: 4, y: 4 }, facing: 'south', model: 'type-b' },
   ],
   // Offsets nudge props to the kerb of the street they belong to.
+  //
+  // Three of them also step *along* that kerb to the corner of their lot, so a
+  // parked car can share the street: a car occupies its tile's centre, and a
+  // prop at the lot's centre sits exactly where the car's body goes. Moving the
+  // prop 0.45 along the kerb leaves 0.045 of daylight between the two, which is
+  // what lets the pole on lot (1,2) and the cones on (1,3) and (2,2) keep the
+  // kerbs they were authored for instead of being pushed onto kerbs no car can
+  // use.
   props: [
-    { kind: 'cone', tile: { x: 2, y: 2 }, offset: { x: 0.35, y: 0 } },
-    { kind: 'cone', tile: { x: 1, y: 3 }, offset: { x: -0.35, y: 0 } },
+    { kind: 'cone', tile: { x: 2, y: 2 }, offset: { x: 0.35, y: -0.45 } },
+    { kind: 'cone', tile: { x: 1, y: 3 }, offset: { x: -0.35, y: 0.45 } },
     { kind: 'cone', tile: { x: 4, y: 2 }, offset: { x: 0.35, y: 0 } },
     { kind: 'cone', tile: { x: 2, y: 4 }, offset: { x: 0, y: 0.35 } },
-    { kind: 'powerPole', tile: { x: 1, y: 2 }, offset: { x: -0.3, y: 0 } },
+    { kind: 'powerPole', tile: { x: 1, y: 2 }, offset: { x: -0.3, y: -0.45 } },
     { kind: 'powerPole', tile: { x: 4, y: 3 }, offset: { x: 0.3, y: 0 } },
     { kind: 'powerPole', tile: { x: 1, y: 4 }, offset: { x: -0.3, y: 0 } },
     { kind: 'tree', tile: { x: 1, y: 1 }, offset: { x: 0.2, y: 0.2 } },
