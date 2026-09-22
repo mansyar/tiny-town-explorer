@@ -29,14 +29,16 @@ from their geometries programmatically, the ice-cream marker's method):
 - dumpster.glb (city-kit-roads, Kenney CC0, registry-mounted in Phase 4):
   234 triangles, 35,868 bytes.
 - litter (parkLitterFx primitives): tied bag 90 tris, crumpled paper 20
-  tris; parkLitter parks five fixed pieces (three on the west lot, two on
-  the east) -> 240-310 tris mounted per round depending on the mix.
+  tris; FR1 mounts eight pieces (five on the park tiles, three kerbside)
+  -> 160-720 tris per round by mix, about 400 in a typical alternating
+  layout.
 - pup (puppyFx.createPuppy): 232 triangles — matches Phase 4's hand count
   and FR14's 200-300 band.
 - Against the standing 37,904-triangle scene (incl. the shadow pass):
-  dumpster + litter + pup sum under +800 tris, keeping the build inside
-  the 50k budget with >11k headroom. A full scene re-count lands in the
-  device pass (Task 2), as the ice-cream track did.
+  litter + dumpster + pup sum under ~1,200 tris even at an all-bag worst
+  case (~400 litter typical + 234 + 232), keeping the build inside the 50k
+  budget with >10k headroom. A full scene re-count lands in the device
+  pass (Task 2), as the ice-cream track did.
 
 Precache delta (pnpm build, vite-plugin-pwa 1.3.0):
 - 42 entries / 3.3 MiB (tech-stack baseline) -> 44 entries / 3,396.22 KiB:
