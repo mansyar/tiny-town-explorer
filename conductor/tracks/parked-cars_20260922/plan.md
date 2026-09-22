@@ -44,10 +44,11 @@
   - [x] Implement the prop→box obstacle mapping (box shape, `solid: false`) and keep the existing circle mapping for every other prop (a prop with neither a radius nor a footprint now throws rather than being skipped, which is the bug this replaces)
   - [x] Refactor + coverage (663/663 tests, 53 files; `collision.ts` 100% on all four metrics, `vehicleMotor.ts` 100% statements/functions/lines and 94.82% branches — the residue is one comparison branch in the new deepest-overlap helper plus one pre-existing line in `pushClear`; the first draft of that helper tripped Biome's cognitive-complexity limit at 17 and was split into two functions)
   - [x] **Found and fixed while driving the tests (deviation from this task's sub-tasks):** a bonk whose recoil direction points at a wall springs the car *into* it — a parked car leaves 0.037 to the house behind it while the recoil travels 0.14, so the tail-bonk a turning truck takes off a parked car put its nose inside house-8. The motor's spring-back now clears solid hitboxes, leaving crashables drivable. Proven red-first: with the clamp disabled, both the new regression test and the pre-existing `never creeps into a building` test fail.
-- [ ] Task: Tap-snap exclusion (FR6)
-  - [ ] Write failing tests: a tap inside the prop snap radius of a parked car keeps the finger's ground point and reports no `propId`; taps near cones and poles still snap; the dead-zone honk and newest-wins are unchanged; a parked car never becomes a drive target or a mission target
-  - [ ] Implement the snap-target flag on prop data and its use in the router
-  - [ ] Refactor + coverage
+- [x] Task: Tap-snap exclusion (FR6) `ea906cc`
+  - [x] Write failing tests: a tap inside the prop snap radius of a parked car keeps the finger's ground point and reports no `propId`; taps near cones and poles still snap; the dead-zone honk and newest-wins are unchanged; a parked car never becomes a drive target or a mission target (5 tests, red first — the router snapped to `parkedSedan-1`'s centre; the dead-zone honk and newest-wins are the existing suite's, and still pass untouched)
+  - [x] Implement the snap-target flag on prop data and its use in the router (a required `snappable` on every published prop, set from the *kind* by the grid so a map cannot author a car as tappable; the router takes the nearest prop that says yes)
+  - [x] Refactor + coverage (668/668 tests, 53 files; `inputRouter.ts` 100% on all four metrics, `townGrid.ts` 100% statements/lines, 94.59% branches — two pre-existing nullish fallbacks)
+  - [x] **Reading of FR6 chosen, and asserted:** exclusion is per prop, not a veto on snapping. A tap inside 0.45 of both a parked car and a cone snaps to the cone, because that is the prop the kid meant; the parked car is simply never a candidate.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 – Kerb reservation across the missions (TDD)
