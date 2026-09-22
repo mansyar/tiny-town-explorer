@@ -33,3 +33,56 @@ pre-existing nullish fallbacks).
 
 Generated with Codebuff
 Co-Authored-By: Codebuff <noreply@codebuff.com>
+
+------------------------------------------------------------------
+
+PHASE COMPLETION VERIFICATION REPORT — Phase 2: Collision and tap rules
+Track: Static Parked Cars Around Town (parked-cars_20260922)
+
+Automated verification
+  Announcement: "I will now run the automated test suite to verify the phase."
+  Command: pnpm check && pnpm typecheck && CI=true pnpm test
+  Result:  green — biome clean (122 files), tsc --noEmit clean,
+           668 tests passed across 53 test files.
+
+Phase scope (git diff --name-only f91ae7a HEAD, f91ae7a being Phase 1's
+checkpoint)
+  conductor/tracks/parked-cars_20260922/plan.md
+  src/game/collision/collision.ts (+test)
+  src/game/input/inputRouter.ts (+test)
+  src/game/town/townGrid.ts (+test)
+  src/game/vehicle/vehicleMotor.ts (+test)
+
+Coverage for phase changes (step 2.3)
+  Every changed code file has a corresponding test file; none was missing, so no
+  new test file was created for this phase.
+  Touched-module coverage: collision.ts 100% on statements, branches, functions
+  and lines; inputRouter.ts 100% on all four; vehicleMotor.ts 100%
+  statements/functions/lines and 94.82% branches (one comparison branch in the
+  new deepest-overlap helper, one pre-existing line in pushClear); townGrid.ts
+  100% statements/lines, 94.59% branches (two pre-existing nullish fallbacks).
+
+What the phase changed beyond its sub-tasks
+  The task's own tests found an older fault: a bonk whose recoil direction
+  points at a wall springs the car into it, because a parked car leaves 0.037 to
+  the house behind it while the recoil travels 0.14. Proven red-first by
+  disabling the clamp, which failed both the new regression test and the
+  pre-existing "never creeps into a building" test. The spring-back now clears
+  solid hitboxes and leaves crashables drivable.
+
+Manual verification plan presented
+  pnpm dev, then drive the truck into a parked car (bonk and continue) and tap
+  the ground beside one (the truck goes to the finger's point, not the car).
+  Known intermediate state, disclosed before the checkpoint: parked-car
+  placements still carry no fitWithin, so the cars render at kit scale (several
+  tiles long, with real shadows) until Phase 4. That does not merely spoil the
+  view — a car that large covers the street and the kerbs it stands beside, so a
+  tap aimed at the pavement lands inside its footprint. A visual pass at this
+  checkpoint therefore cannot judge the interaction faithfully; the contracts
+  are proven by tests that drive the real town geometry with the player's own
+  capsule.
+
+User confirmation
+  "Confirm the phase on the automated evidence (Recommended)" — accepted the
+  collision and tap contracts as proven by the tests and kept the plan's order,
+  so the measured fit and the merged blob shadow land together in Phase 4.
