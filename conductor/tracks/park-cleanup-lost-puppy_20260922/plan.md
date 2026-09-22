@@ -59,7 +59,7 @@
   - [x] Licence-check a CC0 bark source, transcode to mono 44.1 kHz MP3 with loudness normalisation, place it in `src/assets/audio/` with provenance beside it, register it in the audio registry, and measure the byte delta for the precache note (BigSoundBank #0682 "Barking of a Spitz" CC0 by Joseph SARDIN; `bark.mp3` mono 44.1 kHz 16,989 B via house loudnorm recipe; README provenance rows + paragraph; `SampledSound`/`SOUND_MODELS` gain `bark`; delta +16.6 KiB → 384 KiB total, recorded in the commit's git note; 514/514 pass)
 - [x] Task: Sweep FX + celebration wiring (reuse-verified, no new code)
   - [x] Confirm reuse: the `gulp` burst on a sweep, a `poof` per collected piece, `confetti` + `cheer` + `sunFx` on both completions; record the manual steps (all four confirmed to exist: `gulp` sound + green burst ride the truck's own `cast()` — `vehicleSystem.ts` event → `sampledSoundFor`/`fx.burst('gulp')` at `main.ts:392`/`402`; `poof` is an existing `abilityFx` BurstKind awaiting Phase 5's per-piece call; celebration = the fire recipe `fx.burst('confetti')` + `sun.show()` + `audio.play('cheer')` at `main.ts:657-663`, existing sun linger 2.2 s accepted for spec's ~2.5 s; manual steps recorded in the closing commit's git note; no new code — 514/514 pass at last gates)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) [checkpoint: `51d9c4f`]
 
 ## Phase 5 – Wiring (mixed: logic TDD, glue manual)
 
