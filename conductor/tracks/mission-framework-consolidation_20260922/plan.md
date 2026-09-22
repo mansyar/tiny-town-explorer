@@ -38,9 +38,9 @@ phase.*
   - [x] Write failing tests: one adapter interface covers cone/ring, litter, puppy spot, fire target — show/hide/arm/disarm/tap-resolution driven by FSM state (red first)
   - [x] Implement the shared marker module
   - [x] Refactor + coverage (>80%) — missionMarkers.ts: 100% stmts/branch/funcs
-- [~] Task: Migrate the four missions' markers onto the adapter
-  - [ ] Re-point fire, order, litter, puppy markers through the shared layer; Phase 1 matrix tests are the acceptance gate (must stay green)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Migrate the four missions' markers onto the adapter `10be20b`
+  - [x] Re-point fire, order, litter, puppy markers through the shared layer; Phase 1 matrix tests are the acceptance gate (must stay green)
+- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 – Shared celebration/linger + unified completion sparkle (TDD)
 
