@@ -1,0 +1,34 @@
+Phase 6 Task 4 — Update tech-stack.md (asset delta + bark provenance)
+
+Three surgical edits to conductor/tech-stack.md:
+
+1. Rendering section, new bullet after the ice-cream marker bullet:
+   "Park clean-up and lost puppy (added 2026-09-22)" — primitives plus one
+   newly mounted vendored GLB, measured from geometries (not estimated):
+   litter = 8 pieces of tied bag (90 tris) or crumpled paper (20 tris),
+   ~400 tris/round by mix; puppy = 232 tris, 4 shared MeshLambertMaterials,
+   inside FR14's 200-300 band; dumpster = City Kit (Roads) dumpster.glb
+   already vendored at scaffold (234 tris, 35.9 KiB) mounted as the park
+   landmark, no new art files. Sum under ~1,200 tris over the standing
+   37,904-triangle scene = >10k headroom to the 50k spec budget. Markers
+   and celebration FX reuse the first two missions' primitive patterns;
+   mission FSMs cost no render time.
+
+2. Audio section, new bullet: the bark — "Barking of a Spitz"
+   (BigSoundBank #0682, Joseph SARDIN, CC0), mono 44.1 kHz MP3 with the
+   house loudnorm recipe, 16,989 B. The sound bank ships no license file
+   to vendor, so provenance = src/assets/audio/README.md table row + prose
+   credit. Total: nine clips, 384 KiB.
+
+3. Compatibility notes refreshed with track-current numbers:
+   - vite-plugin-pwa precache: 44 entries, 3,396 KiB (bark + dumpster added
+     ~51.6 KiB over the old 42-entry, 3.3 MiB baseline).
+   - Vitest: 516 tests across 43 files (was 361 across 28 — stale line).
+
+Measurement sources: scripts/measure-assets.ts measureModel for
+dumpster.glb; traverse-sum of the exact geometries in parkLitterFx.ts /
+puppyFx.ts for litter and pup (ice-cream marker's method); vite build's
+generateSW manifest for precache entries/size. All recorded in the Phase 6
+Task 1 gates note on 04dd8e6.
+
+Docs-only change; no code touched.
