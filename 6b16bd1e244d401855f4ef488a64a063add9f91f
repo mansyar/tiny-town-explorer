@@ -1,0 +1,28 @@
+Task: Hiding spots + owner house (FR6, FR10)
+
+Summary:
+- New src/game/mission/puppySpots.ts: four authored hiding spots (SPOT_DEFS:
+  spot-trees / spot-dumpster / spot-garden / spot-verge on non-road tiles),
+  each drawn with the mission rotation's never-twice-in-a-row rule
+  (drawSpot filters out lastSpotId, uniform floor(random * candidates) draw,
+  clamped index); drawOwnerHouse delegates to chooseOwnerHouse.
+- chooseOwnerHouse reuses MIN_HOUSE_DISTANCE (the fire pacer's >=2-tile
+  separation rule) to filter farEnough houses, degrading to all houses when
+  the tiny town runs out of far ones (zero-failure beats perfect distance);
+  empty houses -> undefined.
+
+Why: FR6/FR10 - authored spots make the siren a real search; owner house
+from houses >=2 tiles from the hiding spot reusing the proven pacer rule.
+
+Tests: puppySpots.test.ts (10, red first): >=3 spots on non-road reachable
+tiles (findPath from spawn), never same spot twice over 40 draws,
+lastSpotId tracking, owner house >=MIN_HOUSE_DISTANCE for rolls 0/0.5/0.99 x
+every spot, fallback when only a near house exists, empty houses -> undefined,
+default-Math.random path (no seed injected).
+
+Coverage fix: first pass was 70% branch (<80% target) - removed type-only
+dead guards (impossible undefined guard, never-empty ternary, optional-chain
+on proven-non-empty candidates) using the as-cast pattern from missionRotation;
+reached 100% stmts/branch/funcs/lines.
+
+Gates: biome clean, tsc clean, 500/500 tests (41 files), coverage 100/100/100/100.
