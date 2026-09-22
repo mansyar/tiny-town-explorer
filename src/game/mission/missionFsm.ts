@@ -1,0 +1,117 @@
+/**
+ * Generic mission FSM (FR1): one state machine the four missions configure
+ * with their own declared states, celebrating state, and linger duration.
+ *
+ * The FSM owns the skeleton every mission used to hand-roll: the current
+ * state, guarded transitions (`attempt`), tick/tap delegation with a
+ * one-transition-per-event lock, the celebration linger, a once-per-entry
+ * celebration emit, and `abort()` cleanup from any state (FR6). Mission
+ * behaviour arrives as callbacks — the handler passed to `update`/`tap` — so
+ * no mission keeps bespoke transition plumbing.
+ */
+
+/** Configuration: data per mission, never code branches (FR1/FR3). */
+export interface MissionFsmConfig<S extends string> {
+  /** Every state this mission may ever be in; anything else is refused. */
+  readonly states: readonly S[];
+  /** Where `abort()` and the celebration linger land. */
+  readonly initialState: S;
+  /** The celebrating/lingering state; entering it emits `onCelebrate`. */
+  readonly celebratingState: S;
+  /** Seconds to linger in `celebratingState` before returning to idle. */
+  readonly lingerSeconds: number;
+  /** Fired once per entry into the celebrating state. */
+  readonly onCelebrate?: (from: S) => void;
+  /** Fired once per successful `abort()`; the cleanup hook. */
+  readonly onAbort?: (from: S) => void;
+}
+
+export interface MissionFsm<S extends string> {
+  getState(): S;
+  /**
+   * Attempt one transition: current state must be in `from`, `to` must be
+   * declared and different, `when` must not be false, and no earlier
+   * transition may have fired inside the current update/tap event.
+   */
+  attempt(from: S | readonly S[], to: S, when?: boolean): boolean;
+  /**
+   * One frame: delegates to `handler` unless celebrating, where the linger
+   * owns the frame and no handler runs.
+   */
+  update(delta: number, handler?: (delta: number) => void): void;
+  /** One tap pass: always delegates; the handler claims by returning truthy. */
+  tap<T>(handler: () => T): T;
+  /** Tear down from any non-idle state: back to idle, timer reset, cleanup. */
+  abort(): boolean;
+}
+
+export function createMissionFsm<S extends string>(
+  config: MissionFsmConfig<S>,
+): MissionFsm<S> {
+  const { states, initialState, celebratingState, lingerSeconds } = config;
+  let state = initialState;
+  let completeElapsed = 0;
+  let inEvent = false;
+  let transitioned = false;
+
+  function canAttempt(from: S | readonly S[], to: S, when: boolean): boolean {
+    if (!when || !states.includes(to)) return false;
+    if (inEvent && transitioned) return false;
+    const sources = typeof from === 'string' ? [from] : from;
+    return sources.includes(state) && to !== state;
+  }
+
+  function attempt(from: S | readonly S[], to: S, when = true): boolean {
+    if (!canAttempt(from, to, when)) return false;
+    const previous = state;
+    state = to;
+    if (inEvent) transitioned = true;
+    if (to === celebratingState && previous !== celebratingState) {
+      config.onCelebrate?.(previous);
+    }
+    return true;
+  }
+
+  function update(delta: number, handler?: (delta: number) => void): void {
+    if (state === celebratingState) {
+      completeElapsed += delta;
+      if (completeElapsed >= lingerSeconds) {
+        state = initialState;
+        completeElapsed = 0;
+      }
+      return;
+    }
+    inEvent = true;
+    transitioned = false;
+    try {
+      handler?.(delta);
+    } finally {
+      inEvent = false;
+      transitioned = false;
+    }
+  }
+
+  function tap<T>(handler: () => T): T {
+    inEvent = true;
+    transitioned = false;
+    try {
+      return handler();
+    } finally {
+      inEvent = false;
+      transitioned = false;
+    }
+  }
+
+  function abort(): boolean {
+    if (state === initialState) return false;
+    const previous = state;
+    state = initialState;
+    completeElapsed = 0;
+    inEvent = false;
+    transitioned = false;
+    config.onAbort?.(previous);
+    return true;
+  }
+
+  return { getState: () => state, attempt, update, tap, abort };
+}
