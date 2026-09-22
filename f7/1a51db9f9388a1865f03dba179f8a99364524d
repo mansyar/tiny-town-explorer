@@ -1,0 +1,85 @@
+Task: Puppy visibility correction (FR7, AC8) — Phase 5, found in the gate
+
+Summary
+-------
+Two independent defects in the shipped lost-puppy mission, both found by
+inspection after the Phase 5 walkthrough raised the question "what if the pup
+is behind a building?":
+
+1. SPOT AUTHORING. `puppySpots`' only written rule was "on a non-road tile the
+   town's pathing can reach". Two of four spots failed worse than that:
+   - `spot-garden` (tile 2,3 offset -0.3/+0.35) sat inside house-4's lot.
+   - `spot-verge` (tile 1,4 offset -0.35/0) sat inside house-5's lot.
+   Houses fill up to HOUSE_LOT_FIT (0.86) of their lot, so half-extents run
+   ~0.29-0.43 against those deltas. The pup is PUPPY_HEIGHT = 0.2, i.e. a
+   20 cm dog inside/against a wall.
+   `spot-garden` was the severe one: hemmed in by adjacent houses whose gaps
+   (1.0 pitch - 0.86 fill = 0.14) are narrower than the car (CAR_RADIUS 0.26,
+   diameter 0.52), the closest legal car position to it was > 1.3 away, well
+   outside PICKUP_RADIUS 0.6. The pup could never be collected, and because
+   `isBusy()` stays true for a non-idle mission, the town's busy gate would
+   hold shut for the rest of the session - a soft-lock, not a cosmetic bug.
+
+2. OCCLUSION. The paw print is the mission's signpost and the only marker in
+   the game at ground level (PAW_BASE_HEIGHT 0.06); the order cone and the
+   heart both float at MARKER_BASE_HEIGHT 1.7, documented as "above a Kenney
+   house roof". The camera is a fixed orthographic view along
+   CAMERA_DIRECTION (1, sqrt2, 1) - 35.3 degrees of elevation, not the "~45"
+   the comment claims - so a house hides ground up to ~1.41x its height on the
+   side away from the camera, and a 0.2-tall pup hides behind a tree at the
+   distance the authored spots place it. The design says "the pup hides, the
+   paw print is the signpost"; the signpost was the one thing that could be
+   hidden, which breaks the pillar that every concept is conveyed by a visible
+   icon.
+
+Approach (approved by the track owner: fix inside this track, FR7/AC8)
+---------------------------------------------------------------------
+Data half: two new pure, tested predicates in `puppySpots` -
+`isClearOfHouses` and `isScoopable` - measured against the HOUSE_LOT_FIT cap
+rather than the mounted art, so any spot that passes them passes whatever the
+renderer draws, including after an art swap. `isScoopable` samples rings at
+four radii (32 angles each) for a legal car position within PICKUP_RADIUS.
+The two lot spots moved to the kerb of the street each house faces;
+`spot-garden` -> house-4's east kerb (2,3 offset 0.48/0.25), `spot-verge` ->
+house-5's south verge (1,4 offset 0.2/0.48). The two park hides stay, where
+hiding is genuinely honest (tree and dumpster between pup and camera).
+
+Rendering half: `createPawMarker` now sets `depthTest: false`,
+`depthWrite: false` and an explicit render order on its meshes, so the print
+draws after the scene and over whatever the pup is behind. One shared material
+per marker, so the change is three lines of configuration. The heart keeps
+normal depth testing - it is above the roofline - and a new test pins that
+asymmetry so the exemption cannot spread by accident.
+
+Files modified / added
+----------------------
+- src/game/mission/puppySpots.ts        (rules + re-authored spot table)
+- src/game/mission/puppySpots.test.ts   (+3 tests, red first)
+- src/game/mission/puppyMarker.ts       (paw drawn over occluders)
+- src/game/mission/puppyMarker.test.ts  (new: 3 tests)
+- conductor/tracks/.../spec.md, plan.md (FR7/AC8, out-of-scope exception)
+
+Verification
+------------
+- Red first: 5 failures (missing predicates + the paw's draw settings).
+- CI=true pnpm test      -> 50 files / 617 tests passed (was 611; +6)
+- pnpm typecheck         -> clean
+- pnpm check (biome)     -> clean, 118 files
+- The old positions are pinned as rejected: `isClearOfHouses` false for both,
+  and `isScoopable` false for `spot-garden` specifically, so the soft-lock
+  case cannot come back unnoticed.
+- Manual: needs a look in the browser - the pup at a kerb, and the paw print
+  visible over a house/tree while the pup is hidden.
+
+Why
+---
+A hiding spot is a promise that the pup is findable and collectible. The rule
+that was written down ("on a non-road tile") could not tell the difference
+between a hiding place and the inside of a wall, and nothing tested the
+difference - which is exactly where the fault lived.
+
+Known trade-off
+---------------
+The two lot spots are now kerbside (visible pup) rather than behind a house.
+The fiction of hiding survives on the two park spots; a pup that is visible
+but reachable-and-scoopable beats one that is hidden and unfinishable.
