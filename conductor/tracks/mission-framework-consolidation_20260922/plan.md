@@ -11,7 +11,7 @@
 anything — they pin today's semantics and must stay green through every later
 phase.*
 
-- [ ] Task: Per-mission state matrix (AC3)
+- [x] Task: Per-mission state matrix (AC3) `197324f`
   - [ ] Write matrix tests: for each of fire / ice cream / park / puppy × each FSM state, assert marker visibility and tap-correctness (no puppy spot tappable during fire mission, no cone after serve, etc.), red first where a gap exists
   - [ ] Implement only missing assertions/minimal hooks; coverage on new test helpers
 - [ ] Task: Mid-mission abort parity harness (FR6, AC4)
