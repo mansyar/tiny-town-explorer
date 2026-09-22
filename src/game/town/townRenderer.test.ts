@@ -1,4 +1,4 @@
-import { BoxGeometry, Group, Mesh, MeshLambertMaterial } from 'three';
+import { Box3, BoxGeometry, Group, Mesh, MeshLambertMaterial } from 'three';
 import { describe, expect, it, vi } from 'vitest';
 import type { ModelLibrary } from '../assets/modelLibrary';
 import { createTownGrid } from './townGrid';
@@ -145,6 +145,7 @@ describe('mountTown', () => {
           position: { x: 0, z: 0 },
           yaw: 0,
           fitWithin: 1,
+          isBuilding: true,
         },
       ],
     };
@@ -158,6 +159,48 @@ describe('mountTown', () => {
     // Roads and props are not buildings, so nothing is published for them.
     expect(town.houseFootprints.has('road-0-0')).toBe(false);
 
+    town.dispose();
+  });
+
+  it('publishes nothing for a fitted, non-building placement (FR9)', async () => {
+    // A parked car takes the same cap as a house but is not a building: it
+    // publishes its own footprint, and a second hitbox keyed to the same prop
+    // would be a competing answer to the same question.
+    const plan: TownPlan = {
+      placements: [
+        {
+          kind: 'model',
+          name: 'parkedSedan-1',
+          url: 'sedan.glb',
+          position: { x: 0, z: 0 },
+          yaw: 0,
+          fitWithin: 0.55,
+          seatHeight: 0.02,
+        },
+      ],
+    };
+    const town = await mountTown(grid, stubLibrary(deepModel).library, plan);
+
+    expect(town.houseFootprints.size).toBe(0);
+    expect(town.group.getObjectByName('parkedSedan-1')?.scale.x).toBeCloseTo(0.275);
+
+    town.dispose();
+  });
+
+  it('seats a parked car on the kerb top and everything else on the ground', async () => {
+    // Parked cars sit on the kerb top, not the ground: their footprint crosses
+    // lawn, kerb and asphalt, and the kerb is the highest of the three.
+    const town = await mountTown(grid, stubLibrary(deepModel).library);
+    const car = town.group.getObjectByName('parkedSedan-1');
+    const road = town.group.getObjectByName('road-0-0');
+
+    // Measured from the mounted object, not from its origin: a kit model may be
+    // authored around its centre, so the origin's height says nothing about
+    // where the wheels are.
+    expect(car).toBeDefined();
+    expect(new Box3().setFromObject(car ?? new Group()).min.y).toBeCloseTo(0.02, 6);
+    // Everything that asks for nothing still rests on the ground.
+    expect(new Box3().setFromObject(road ?? new Group()).min.y).toBeCloseTo(0, 6);
     town.dispose();
   });
 

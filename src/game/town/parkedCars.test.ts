@@ -7,6 +7,7 @@ import {
   PARKED_CAR_FIT,
   PARKED_CAR_KERB_OFFSET,
   PARKED_CAR_KINDS,
+  parkedCarFittedHeight,
   parkedCarFootprint,
   parkedCarHalfExtents,
 } from './townTypes';
@@ -104,6 +105,21 @@ describe('parked-car model data', () => {
     for (const kind of PARKED_CAR_KINDS) {
       const extents = PARKED_CAR_EXTENTS[kind];
       expect(extents.length).toBeGreaterThan(extents.width);
+      expect(extents.height).toBeGreaterThan(0);
+      expect(extents.height).toBeLessThan(extents.length);
+    }
+  });
+
+  it('scales each model by the same cap the renderer fits it at (FR2)', () => {
+    // The measured heights are kit-space, so the fitted height is what the
+    // shadow needs — and it has to follow the same fit, or the art and the
+    // shadow would disagree about how tall a car is.
+    for (const kind of PARKED_CAR_KINDS) {
+      const extents = PARKED_CAR_EXTENTS[kind];
+      const height = parkedCarFittedHeight(kind);
+      expect(height).toBeCloseTo((extents.height * PARKED_CAR_FIT) / extents.length, 6);
+      expect(height).toBeGreaterThan(0);
+      expect(height).toBeLessThan(PARKED_CAR_FIT);
     }
   });
 

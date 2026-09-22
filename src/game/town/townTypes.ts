@@ -154,22 +154,26 @@ export const PROP_COLLISION_RADIUS: Readonly<Record<CirclePropKind, number>> = {
 };
 
 /**
- * Kit-space horizontal extents of each parked model, measured from the
- * committed GLBs with `pnpm assets:measure` (2026-09-22): `length` is the axis
- * the car is longest along (the Car Kit authors that on model z), `width` the
- * one across it.
+ * Kit-space extents of each parked model, measured from the committed GLBs with
+ * `pnpm assets:measure` (2026-09-22, `--top=60`): `length` is the axis the car
+ * is longest along (the Car Kit authors that on model z), `width` the one
+ * across it, and `height` its box above the ground — which is what decides where
+ * the blob shadow lands (FR7).
  *
  * Recorded here because collision needs a parked car's footprint *before* the
  * art is mounted — the renderer measures the same models at mount time, and
  * Phase 4's task checks the two agree.
  */
 export const PARKED_CAR_EXTENTS: Readonly<
-  Record<ParkedCarKind, { readonly length: number; readonly width: number }>
+  Record<
+    ParkedCarKind,
+    { readonly length: number; readonly width: number; readonly height: number }
+  >
 > = {
-  parkedSedan: { length: 2.55, width: 1.5 },
-  parkedHatchback: { length: 2.85, width: 1.3 },
-  parkedVan: { length: 2.75, width: 1.5 },
-  parkedSuv: { length: 2.7, width: 1.5 },
+  parkedSedan: { length: 2.55, width: 1.5, height: 1.3 },
+  parkedHatchback: { length: 2.85, width: 1.3, height: 1.1 },
+  parkedVan: { length: 2.75, width: 1.5, height: 1.35 },
+  parkedSuv: { length: 2.7, width: 1.5, height: 1.3 },
 };
 
 /**
@@ -207,11 +211,35 @@ export function parkedCarHalfExtents(kind: ParkedCarKind): {
   readonly halfWidth: number;
 } {
   const extents = PARKED_CAR_EXTENTS[kind];
-  const scale = Math.min(1, PARKED_CAR_FIT / extents.length);
+  const scale = parkedCarScale(kind);
   return {
     halfLength: (extents.length * scale) / 2,
     halfWidth: (extents.width * scale) / 2,
   };
+}
+
+/**
+ * Height a fitted parked car reaches above the ground it is seated on, in world
+ * units (FR7).
+ *
+ * Measured rather than guessed: the blob shadow lands where the sun would throw
+ * the car's roof, so its offset is this height times the sun's ground direction,
+ * and the models are not all the same shape — the van is 0.27 tall once fitted,
+ * the hatchback 0.21.
+ */
+export function parkedCarFittedHeight(kind: ParkedCarKind): number {
+  return PARKED_CAR_EXTENTS[kind].height * parkedCarScale(kind);
+}
+
+/**
+ * Uniform scale the renderer fits a parked model at: the cap over its *longest*
+ * horizontal axis, which is the axis `fitScale` measures, matching it exactly.
+ *
+ * Never above 1: a model already smaller than the cap keeps its own size, the
+ * same way `fitScale` refuses to scale art up.
+ */
+function parkedCarScale(kind: ParkedCarKind): number {
+  return Math.min(1, PARKED_CAR_FIT / PARKED_CAR_EXTENTS[kind].length);
 }
 
 /**

@@ -85,8 +85,11 @@ export async function mountTown(
     const object = await mountModel(placement, library);
     group.add(object);
     // Measured after fitting and turning, so the footprint is the mounted art
-    // rather than the cap code could have predicted from the lot alone.
-    if (placement.fitWithin !== undefined) {
+    // rather than the cap code could have predicted from the lot alone. Only
+    // buildings publish: a parked car takes a cap too, but it already publishes
+    // its own footprint, and a second hitbox keyed to the same prop would be a
+    // competing answer to the same question (FR9).
+    if (placement.isBuilding === true) {
       const size = new Box3().setFromObject(object).getSize(new Vector3());
       houseFootprints.set(placement.name, { halfX: size.x / 2, halfZ: size.z / 2 });
     }
@@ -138,7 +141,11 @@ async function mountModel(
       object.scale.multiplyScalar(scale);
     }
   }
-  object.position.y -= new Box3().setFromObject(object).min.y;
+  // Seat on the ground, or at the placement's own height above it: measuring the
+  // model's lowest point is what makes the kits' different origins (and a bob
+  // authored into the art) invisible to the caller.
+  object.position.y +=
+    (placement.seatHeight ?? 0) - new Box3().setFromObject(object).min.y;
   object.position.x += placement.position.x;
   object.position.z += placement.position.z;
   object.rotation.y = placement.yaw;

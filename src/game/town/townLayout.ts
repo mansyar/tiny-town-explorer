@@ -6,7 +6,14 @@ import {
 } from '../assets/modelRegistry';
 import type { TownGrid } from './townGrid';
 import type { Direction, RoadConnections, RoadShape, Vec2 } from './townTypes';
-import { DIRECTION_STEPS, DIRECTIONS, HOUSE_LOT_FIT, isParkedCarKind } from './townTypes';
+import {
+  DIRECTION_STEPS,
+  DIRECTIONS,
+  HOUSE_LOT_FIT,
+  isParkedCarKind,
+  PARKED_CAR_FIT,
+  PARKED_CAR_SEAT_HEIGHT,
+} from './townTypes';
 
 /**
  * The town's placement plan: what to mount, and exactly where.
@@ -52,10 +59,28 @@ export interface ModelPlacement {
   /**
    * Largest horizontal extent this instance may occupy, in world units. The
    * renderer measures the model and scales it down to fit; kit buildings run up
-   * to 1.83 units wide and would otherwise overhang a one-tile lot. Absent
-   * means mount at the kit's own scale.
+   * to 1.83 units wide and would otherwise overhang a one-tile lot, and the Car
+   * Kit authors its cars about four times town scale. Absent means mount at the
+   * kit's own scale.
    */
   readonly fitWithin?: number;
+  /**
+   * Height above the ground to seat the model at, in world units. Absent seats
+   * it on the ground. A parked car seats on the **kerb top**: its footprint
+   * crosses lawn (0.00), kerb (+0.02) and asphalt (+0.01), so the ground seat it
+   * would otherwise get sinks its wheels into the kerb (FR3).
+   */
+  readonly seatHeight?: number;
+  /**
+   * Whether this placement is a building, i.e. whether the renderer publishes
+   * its measured footprint for collision (FR9).
+   *
+   * Deliberately separate from {@link ModelPlacement.fitWithin}, which used to
+   * double as "this is a house": a parked car takes a cap too, and publishing it
+   * as a building would hand collision a second, competing hitbox for a prop
+   * that already publishes its own.
+   */
+  readonly isBuilding?: boolean;
 }
 
 export type Placement = GroundPlacement | ModelPlacement;
@@ -218,22 +243,32 @@ export function planTown(grid: TownGrid): TownPlan {
       position: house.position,
       yaw: yawForDirection(house.facing),
       fitWithin: grid.tileSize * HOUSE_LOT_FIT,
+      isBuilding: true,
     });
   });
 
   grid.props.forEach((prop, index) => {
+    const parked = isParkedCarKind(prop.kind);
     placements.push({
       kind: 'model',
       name: prop.id,
-      url: isParkedCarKind(prop.kind)
-        ? PARKED_CAR_MODELS[prop.kind]
-        : PROP_MODELS[prop.kind],
+      url: parked ? PARKED_CAR_MODELS[prop.kind] : PROP_MODELS[prop.kind],
       position: prop.position,
       // Trees get a deterministic quarter-turn each so a park row does not read
       // as one model stamped eight times; a parked car keeps the yaw its
       // placement authored, so it lies along its own street; upright props stay
       // axis-aligned.
       yaw: prop.yaw ?? (prop.kind === 'tree' ? (index % 4) * QUARTER_TURN : 0),
+      // A parked car is fitted to the same cap its footprint was derived from,
+      // so the art the kid sees is the box collision sweeps (FR2, FR9), and
+      // seats on the kerb top rather than the ground. Not a building: it
+      // publishes its own footprint, and the house map must stay houses.
+      ...(parked
+        ? {
+            fitWithin: grid.tileSize * PARKED_CAR_FIT,
+            seatHeight: grid.tileSize * PARKED_CAR_SEAT_HEIGHT,
+          }
+        : {}),
     });
   });
 

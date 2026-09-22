@@ -4,7 +4,13 @@ import { createTownGrid } from './townGrid';
 import type { ModelPlacement } from './townLayout';
 import { planTown, roadPlacementFor, yawForDirection } from './townLayout';
 import { TOWN_MAP } from './townMap';
-import { HOUSE_LOT_FIT, type RoadConnections } from './townTypes';
+import {
+  HOUSE_LOT_FIT,
+  isParkedCarKind,
+  PARKED_CAR_FIT,
+  PARKED_CAR_SEAT_HEIGHT,
+  type RoadConnections,
+} from './townTypes';
 
 const grid = createTownGrid(TOWN_MAP);
 const plan = planTown(grid);
@@ -162,7 +168,29 @@ describe('planTown — houses and props', () => {
       const placement = models(prop.id);
       expect(placement, prop.id).toBeDefined();
       expect(placement?.position).toEqual(prop.position);
-      expect(placement?.fitWithin).toBeUndefined();
+      if (isParkedCarKind(prop.kind)) {
+        // A car is fitted to the same cap its footprint was derived from (FR2),
+        // seated on the kerb top (FR3), and never published as a building
+        // (FR9) — it publishes its own footprint instead.
+        expect(placement?.fitWithin, prop.id).toBeCloseTo(PARKED_CAR_FIT, 6);
+        expect(placement?.seatHeight, prop.id).toBeCloseTo(PARKED_CAR_SEAT_HEIGHT, 6);
+        expect(placement?.isBuilding, prop.id).toBeUndefined();
+      } else {
+        // Kit-sized props mount as authored: no cap, no seat, no footprint.
+        expect(placement?.fitWithin, prop.id).toBeUndefined();
+        expect(placement?.seatHeight, prop.id).toBeUndefined();
+        expect(placement?.isBuilding, prop.id).toBeUndefined();
+      }
+    }
+  });
+
+  it('marks every house as a building, so collision gets its measured footprint', () => {
+    for (const house of grid.houses) {
+      const placement = models(house.id);
+      expect(placement?.isBuilding, house.id).toBe(true);
+      // The cap and the flag travel together but mean different things (FR9):
+      // the cap scales the model, the flag says the footprint is for collision.
+      expect(placement?.fitWithin, house.id).toBeCloseTo(HOUSE_LOT_FIT, 6);
     }
   });
 
