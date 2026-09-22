@@ -57,10 +57,11 @@ phase.*
 
 - [x] Task: Move all four missions onto the framework (AC7) `eef84ae`
   - [x] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission — all four now declare stages + linger and let `missionFsm` own transitions; `completeElapsed`/`let state`/`toIdle` survive only inside the framework. In-flight refinement: the framework gained `onIdle` (the linger's return to idle) so each mission drops its own side data there; 5 new FSM tests, red first. Suite green after each mission (fire → ice cream → park → puppy): 48 files / 603 tests.
-- [ ] Task: Puppy visibility correction (TDD + scene) — FR7, AC8 (found in the Phase 5 gate)
-  - [ ] Write failing tests: every authored hiding spot stands clear of every house footprint, and a legal car position exists within the drive-over radius of it (the Phase 5 walkthrough showed `spot-garden` unreachable behind `house-4` and `spot-verge` inside `house-5`'s wall), plus the paw marker's over-occluder draw settings (red first)
-  - [ ] Re-author the two lot spots onto kerbside ground the car can actually reach; keep the two park hides
-  - [ ] Render the paw marker over town geometry so the signpost survives the pup hiding behind a house, tree or dumpster
+- [x] Task: Puppy visibility correction (TDD + scene) — FR7, AC8 (found in the Phase 5 gate) `f71a51d`
+  - [x] Write failing tests: every authored hiding spot stands clear of every house footprint, and a legal car position exists within the drive-over radius of it (the Phase 5 walkthrough showed `spot-garden` unreachable behind `house-4` and `spot-verge` inside `house-5`'s wall), plus the paw marker's over-occluder draw settings (red first — 5 failures)
+  - [x] Re-author the two lot spots onto kerbside ground the car can actually reach (`spot-garden` on house-4's east kerb, `spot-verge` on house-5's south verge); keep the two park hides, where hiding is honest
+  - [x] Render the paw marker over town geometry so the signpost survives the pup hiding behind a house, tree or dumpster — `depthTest: false`, `depthWrite: false`, drawn after the scene; the heart keeps normal depth testing because it floats above the roofline
+  - [x] Gates: `pnpm check` + `pnpm typecheck` + `CI=true pnpm test` → 50 files / 617 tests green
 - [ ] Task: `main.ts` wiring (manual-verify)
   - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission — statically confirmed: `main.ts`'s mission surface is unchanged (all four public APIs identical, registry/tick/tap paths untouched); the playthrough itself is the phase's open gate.
   - [x] Verification affordance (in-flight refinement, `0b46ad4`): dev-only `?calmGap=<seconds>` shortens the town's calm gap so the four-mission walkthrough does not spend minutes waiting. Shorten-only (capped at the shipped maximum), DEV-gated, absent from the production bundle (verified by build + grep of `dist/`); busy pause and never-twice rule untouched.
