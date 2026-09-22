@@ -32,3 +32,59 @@ generateSW manifest for precache entries/size. All recorded in the Phase 6
 Task 1 gates note on 04dd8e6.
 
 Docs-only change; no code touched.
+
+———
+Phase 6 verification report — Verification + docs
+
+Scope (55b6b29..9188247): 3 files, +91/-8 — conductor/tech-stack.md (+24),
+docs/playtest.md (+63), plan.md (12 +/-). Zero code changes — this phase's
+tasks were gates, a device sitting, and documentation.
+
+Task evidence:
+- Task 1 Full gates (commit 04dd8e6 + note): Biome 106 files clean; tsc
+  clean; CI=true pnpm test:coverage 516/516 (43 files) twice; NFR4-named
+  modules all >=94.5% statements, game/mission excluding the GP3-exempt
+  visual files 98.18% (649/661); NFR2 measurements — dumpster 234
+  tris/35,868 B via assets:measure, litter tied bag 90 / crumpled paper
+  20 x 8 pieces (~400 per round by mix), pup 232 (geometry traverse, the
+  ice-cream marker's method), together under ~1,200 tris over the standing
+  37,904-triangle scene; precache 42 entries/3.3 MiB -> 44
+  entries/3,396.22 KiB (+bark 16.98 kB, +dumpster 35.86 kB).
+- Task 2 Device pass (commit 826d3d5 + note): AC11 sitting over the LAN
+  dev server on the iPad 9th-gen floor — park and puppy each completed
+  with sound ON (bark, gulp rhythm, both cheers, no stutter reported) and
+  again muted with every cue reading visually (poof, gulp burst, pulse,
+  paw, heart, confetti). Verdict AC11 Met; user-confirmed.
+- Task 3 playtest.md (commit e75d585 + note): "Park clean-up and lost
+  puppy" section — AC1-AC11 table all Met with per-row evidence (test
+  counts, Task 1 gate numbers, both drives), desktop-drive note, 7-step
+  device checklist, report-back prompts; issues: none, both passes clean.
+- Task 4 tech-stack.md (commit 9188247 + note): rendering bullet with the
+  puppy/litter/dumpster triangle delta; audio bullet with the bark's
+  provenance (BigSoundBank #0682 "Barking of a Spitz", Joseph SARDIN,
+  CC0; README table row + prose credit; nine clips, 384 KiB total);
+  compatibility lines refreshed — precache 44 entries/3,396 KiB, Vitest
+  516 tests/43 files (replacing the stale 361/28).
+
+Checkpoint gates (fresh run, protocol step 3): pnpm check clean (106
+files); pnpm typecheck clean; CI=true pnpm test 516/516 (43 files),
+exit 0.
+
+Manual verification (protocol step 4; user-confirmed "Yes — checks
+confirmed"):
+1. playtest.md new section renders — heading matches the v1/ice-cream
+   rhythm, the 11-row AC table has intact pipes, sibling sections
+   well-formed.
+2. tech-stack.md new bullets render with clean UTF-8 (no mojibake) and
+   all cited numbers present.
+3. Cross-document consistency — 516/43 and the asset/bark figures agree
+   across playtest.md, tech-stack.md, audio README, and the Task 1/2/4
+   notes.
+4. Plan structure — all Phase 6 tasks [x] except this checkpoint task;
+   the "## Phase 6 - Verification + docs" heading and History intact.
+
+Test pairing (protocol step 2): zero code files in scope, so no new test
+files are required; the full suite was proven green twice within this
+phase (Task 1 coverage run and this checkpoint run).
+
+Phase checkpoint: 9188247.
