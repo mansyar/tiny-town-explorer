@@ -12,7 +12,9 @@ track" — plus one bundled micro-feature: a **unified completion sparkle** that
 gives every mission the same visual completion beat.
 
 Type: **Refactor + minor feature**. The child-facing game plays the same,
-except the new sparkle.
+except the new sparkle — plus one correction (FR7) that the Phase 5 gate
+uncovered in the shipped lost-puppy mission: two of its four hiding spots put
+the puppy where the car cannot reach or the camera cannot see it.
 
 ## Functional Requirements
 
@@ -49,6 +51,17 @@ today.
 celebration lingering, sparkle pending) must clean up exactly as today's
 missions do — no orphan markers, no post-abort celebrations.
 
+**FR7 — Lost-puppy visibility (correction, added 2026-09-22 from the Phase 5
+gate):** The puppy hides, and the paw print is its signpost — so the signpost
+must never be lost. Every authored hiding spot must (a) stand clear of every
+building footprint, so the puppy is not embedded in a wall, and (b) be
+*scoopable*: a legal car position must exist within the drive-over radius, or
+the errand can never be completed and the town's busy gate locks forever. The
+paw marker must additionally render over town geometry, so a puppy hiding
+behind a house, tree or dumpster still shows the kid where to drive. The
+puppy itself may stay hidden — hiding is the fiction; losing the *marker* is
+the bug.
+
 ## Non-Functional Requirements
 
 - **NFR1:** Existing test suite stays green (current baseline: **516 tests /
@@ -82,6 +95,10 @@ missions do — no orphan markers, no post-abort celebrations.
 - **AC7:** Per-mission bespoke FSM/marker/celebration code is gone — a single
   framework module exists, and each mission file shrinks to configuration +
   adapters.
+- **AC8 — puppy visibility:** Tests prove every authored hiding spot is clear
+  of every house footprint and within the drive-over radius of a legal car
+  position, and that the paw marker is configured to draw over occluders
+  (FR7).
 
 ## Out of Scope
 
@@ -91,5 +108,8 @@ missions do — no orphan markers, no post-abort celebrations.
 - New vehicle models, audio clips, or scene/camera changes.
 - The sticker board, traffic/parked cars, and any persistence.
 - Visual redesign of existing markers/celebrations (behavior preserved; only
-  code location changes).
+  code location changes). **Exception, approved 2026-09-22:** FR7/AC8 — the
+  lost-puppy paw marker's draw order and two of its hiding spots — because the
+  Phase 5 gate showed the puppy could be spawned unreachable and invisible,
+  which breaks the zero-failure pillar rather than merely changing a look.
 - Refactors outside `src/game/mission/` (except the minimal sparkle FX hook).

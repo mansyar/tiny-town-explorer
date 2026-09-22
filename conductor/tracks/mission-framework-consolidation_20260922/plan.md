@@ -57,6 +57,10 @@ phase.*
 
 - [x] Task: Move all four missions onto the framework (AC7) `eef84ae`
   - [x] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission — all four now declare stages + linger and let `missionFsm` own transitions; `completeElapsed`/`let state`/`toIdle` survive only inside the framework. In-flight refinement: the framework gained `onIdle` (the linger's return to idle) so each mission drops its own side data there; 5 new FSM tests, red first. Suite green after each mission (fire → ice cream → park → puppy): 48 files / 603 tests.
+- [ ] Task: Puppy visibility correction (TDD + scene) — FR7, AC8 (found in the Phase 5 gate)
+  - [ ] Write failing tests: every authored hiding spot stands clear of every house footprint, and a legal car position exists within the drive-over radius of it (the Phase 5 walkthrough showed `spot-garden` unreachable behind `house-4` and `spot-verge` inside `house-5`'s wall), plus the paw marker's over-occluder draw settings (red first)
+  - [ ] Re-author the two lot spots onto kerbside ground the car can actually reach; keep the two park hides
+  - [ ] Render the paw marker over town geometry so the signpost survives the pup hiding behind a house, tree or dumpster
 - [ ] Task: `main.ts` wiring (manual-verify)
   - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission — statically confirmed: `main.ts`'s mission surface is unchanged (all four public APIs identical, registry/tick/tap paths untouched); the playthrough itself is the phase's open gate.
   - [x] Verification affordance (in-flight refinement, `0b46ad4`): dev-only `?calmGap=<seconds>` shortens the town's calm gap so the four-mission walkthrough does not spend minutes waiting. Shorten-only (capped at the shipped maximum), DEV-gated, absent from the production bundle (verified by build + grep of `dist/`); busy pause and never-twice rule untouched.
@@ -73,6 +77,16 @@ phase.*
 
 ## History
 
+- 2026-09-22 – Phase 5 gate found a defect in shipped lost-puppy work: two of
+  the four authored hiding spots sat inside a house's 0.86-tile footprint
+  (`spot-garden` in `house-4`, `spot-verge` in `house-5`), and the paw marker —
+  the mission's only ground-level marker — was occludable by the very props the
+  pup hides behind. `spot-garden` is worse than cosmetic: hemmed by adjacent
+  houses whose gaps are narrower than the car, it leaves the pup unreachable,
+  and an unfinishable errand holds the town's busy gate shut for the rest of
+  the session. Fixed under FR7/AC8 by amending this track's spec (the
+  out-of-scope entry for marker visuals now carries an explicit exception,
+  approved by the track owner) rather than opening a separate track.
 - 2026-09-22 – Phase 5 in flight. The migration left `main.ts` untouched (all
   four mission public APIs identical), so the phase's human gate is a
   four-mission playthrough — and the town's 60–90s calm gap turned that gate
