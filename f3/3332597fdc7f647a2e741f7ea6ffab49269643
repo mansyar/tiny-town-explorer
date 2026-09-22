@@ -1,9 +1,9 @@
-Phase 5 Task 2 — HUD police-button pulse hint (FR6)
+Phase 5 Task 2 ΓÇö HUD police-button pulse hint (FR6)
 
 Implementation:
 - VehicleHud gains setPolicePulse(pulsing): toggles `is-pulsing` on the
   police button (buttons-map lookup).
-- index.html: `police-pulse` keyframes — brightness(1 <-> 1.22) +
+- index.html: `police-pulse` keyframes ΓÇö brightness(1 <-> 1.22) +
   scale(1 <-> 1.09) at 1.1s ease-in-out infinite, on
   .hud-button--police.is-pulsing only. The standalone `scale` property is
   animated rather than `transform` so the active button's lift (is-active
@@ -15,7 +15,7 @@ Implementation:
   clearers, so pulse and pending flag cannot drift apart.
 
 Gates: pnpm check clean; pnpm typecheck clean; CI=true pnpm test 516/516
-(43 files, unchanged — HUD glue is manual-verify per plan).
+(43 files, unchanged ΓÇö HUD glue is manual-verify per plan).
 
 Manual verification steps (dev server http://localhost:5173/):
 1. Let the rotation reach the lost-puppy round: whine sounds and the police
@@ -26,3 +26,55 @@ Manual verification steps (dev server http://localhost:5173/):
    (no jump or flatten).
 4. Press the siren: paw blooms and the pulse stops immediately; free-play
    siren with no puppy running never pulses anything.
+
+Phase 5 verification report
+
+Scope: 51d9c4f..f333325 = 10 files changed, 783 insertions(+), 128 deletions(-)
+(plan bookkeeping to b081f35: +787/-134). Tasks: registry wiring (feat
+0c149e2 + task note), HUD police pulse (feat f333325 + task note),
+input-routing audit (plan-only 6050ea9 + audit note).
+
+Test pairs (protocol step 2): missionRegistry.test.ts (13 tests, includes
+the new missionFocus resolver red-first test) and parkPickup.test.ts (14
+tests, includes the new reset() stale-id red-first test); main.ts and
+vehicleHud.ts are coverage-excluded DOM glue (vitest.config.ts comment;
+workflow principle 3 — verified manually below); parkLitterFx.ts and
+puppyMarker.ts are visual scene code (TDD-exempt, same judgment recorded in
+the Phase 4 report); index.html / plan.md non-code.
+
+Automated: biome clean (106 files, no fixes), tsc clean, CI=true vitest
+516/516 (43 files) exit 0 — baseline 514 + 2 new red-first tests.
+
+Design notes: missionFocus passed as optional resolver param to
+createMissionRegistry (FR12, per-entry closures replaced); drive-over during
+"spawned" auto-responds through the synchronous FSM respond()/morph so
+finish()'s "only after the kid answered" gate stands; parkPickup.reset()
+clears stale litter-N ids each round; voiceGulp gating — one gulp per
+drive-over piece (FR3) vs sweep voiced once by the cast group and gated on
+litter.length > 0 (FR4); puppyPending owns isIdle() and the FR6 police pulse
+and is cleared only when a police car's siren answers; pressAbility split
+into applyAbilityEvent + onSirenCast and tickPuppyMission split into
+advanceDoorRun + clearPuppyStage to hold cognitive complexity <= 15; absorb()
+dropped the dead carPosition param; last-litter guard before celebrate().
+
+Manual (user-confirmed in browser):
+- Park round: litter + dumpster visible with chime; drive-over poofs each
+  piece with its own gulp; distant tap responds once then morphs to garbage
+  truck; ability sweep voices one gulp for the whole cluster; last piece =
+  confetti + sun + cheer then quiet (AC3).
+- Puppy round: spawn = one whine, no paw marker, police button breathes
+  (invites without outshining the ability button); active highlight and pulse
+  coexist; siren yips, paw blooms, pulse stops immediately, second press
+  does nothing (latch, AC5); helper hand retargets to the paw; roof hop with
+  yip + heart (AC6); in-range owner-house tap runs the pup to the door ->
+  confetti; out-of-range/searching taps gently ignored (zero-failure).
+- Muted play still reads visually (poof, morph, pulse, paw, confetti).
+- Touch routing: newest destination wins; honk never cancels the route.
+- Regression: fire + ice-cream missions, free-play abilities, parent panel
+  unchanged; zero on-screen text throughout.
+- Phase 4 deferred in-world steps now verified: litter bounce/celebration,
+  puppy spawn + hop-aboard + door run celebration, bark audible.
+
+Gates at checkpoint: biome clean, tsc clean, 516/516 (43 files).
+
+Phase checkpoint: f333325.
