@@ -39,13 +39,13 @@
   - [x] Write failing tests: 3+ authored spots, each a reachable non-road tile; the owner house is a house ≥2 tiles from the spot; a spot is never chosen twice running (10 tests in `puppySpots.test.ts`, red first)
   - [x] Implement `puppySpots.ts` (four authored spots; never-twice draw; `chooseOwnerHouse` reuses `MIN_HOUSE_DISTANCE` with zero-failure fallback; 500/500 pass)
   - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `puppySpots.ts` after removing type-only dead branches)
-- [~] Task: Siren latch, pickup and homecoming (FR7, FR8, FR9, FR10)
-  - [ ] Write failing tests: no marker and no delivery before the siren; the siren latches "answered" exactly once and blooms the paw; pickup inside 0.6 and not at 0.61; the heart exists only while carrying; delivery needs the house tap inside 1.9; one marker at every state
-  - [ ] Implement `puppyMission.ts` and its gates
-  - [ ] Refactor + coverage
-- [ ] Task: Helper hand across three missions (FR12)
-  - [ ] Write failing tests: `missionFocus` resolves exactly one destination for three missions — litter while the park asks, the siren button before the puppy is answered, the paw spot after, the owner house while carrying
-  - [ ] Implement the three-way focus + the siren-button target
+- [x] Task: Siren latch, pickup and homecoming (FR7, FR8, FR9, FR10) `ea10089`
+  - [x] Write failing tests: no marker and no delivery before the siren; the siren latches "answered" exactly once and blooms the paw; pickup inside 0.6 and not at 0.61; the heart exists only while carrying; delivery needs the house tap inside 1.9; one marker at every state (8 red-first FSM tests in `puppyMission.test.ts`; marker visibility is state-derived and verified in Phase 5 wiring)
+  - [x] Implement `puppyMission.ts` and its gates (FSM + `resolvePuppyTap`; `PICKUP_RADIUS` exported from `parkPickup.ts` for reuse; 508/508 pass)
+  - [x] Refactor + coverage (100% stmts/branch/funcs/lines on `puppyMission.ts`)
+- [~] Task: Helper hand across four missions (FR12)
+  - [ ] Write failing tests: `missionFocus` resolves exactly one destination for four missions — litter while the park asks, the siren button before the puppy is answered, the paw spot after, the owner house while carrying
+  - [ ] Implement the four-way focus + the siren-button target
   - [ ] Refactor + coverage
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
