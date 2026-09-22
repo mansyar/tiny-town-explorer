@@ -20,10 +20,10 @@
 
 ## Phase 1 – Parking data and placement rules (TDD)
 
-- [ ] Task: Parked-car kinds + authored map instances (FR1, FR9)
-  - [ ] Write failing tests for the data contract: the map authors six parked cars across four models; each instance carries a model, a kerb offset and a yaw; the grid publishes the fitted footprint (half extents + yaw) alongside position; existing prop kinds keep their current shape and defaults
-  - [ ] Implement the parked-car prop kinds and the authored `townMap.ts` rows (offset from the kerb, yaw parallel to the street), plus the grid's publication of model/footprint
-  - [ ] Refactor + coverage (target >80% on the touched logic)
+- [x] Task: Parked-car kinds + authored map instances (FR1, FR9) `f242c5d`
+  - [x] Write failing tests for the data contract: the map authors six parked cars across four models; each instance carries a model, a kerb offset and a yaw; the grid publishes the fitted footprint (half extents + yaw) alongside position; existing prop kinds keep their current shape and defaults (12 tests in `parkedCars.test.ts`, red first — the suite died on `isParkedCarKind is not a function` before the data layer existed)
+  - [x] Implement the parked-car prop kinds and the authored `townMap.ts` rows (offset from the kerb, yaw parallel to the street), plus the grid's publication of model/footprint (`PARKED_CAR_EXTENTS` measured from the kit, `PARKED_CAR_FIT` 0.55, `PARKED_CAR_KERB_OFFSET` 0.46; `parkedCarFootprint` throws on a non-quarter-turn yaw; parked props publish `yaw` + footprint and no `collisionRadius`; two pre-existing assertions updated to the new contract — 633/633 pass)
+  - [x] Refactor + coverage (100% stmts on `townGrid.ts` and `townMap.ts`, 95.45% on `townTypes.ts`; the one uncovered line is the diagonal-yaw throw, whose test belongs to Phase 2's hitbox task)
 - [ ] Task: Kerbside placement and clearance contracts (FR2, FR3, FR4)
   - [ ] Write failing tests: every parked car sits alongside a `straight` road tile (never a bend, junction or end kerb) and on a kerb whose house wall is at least 0.652 from the street's centre line, with the wall derived as `1.00 − fitted depth ÷ 2` from the house's own kit extents and the 0.86 fit cap; each seats on the kerb top (+0.02); for every street tile a centre-line drive never impacts a parked car; no parked car overlaps a house's fitted footprint, another parked car, an existing prop, a mission kerb (the reservation), or any of the four authored spawn capsules; the fit never scales a model up
   - [ ] Make each house's model identity derivable in the pure layer (it is chosen by index in `townLayout` today), so wall eligibility is testable rather than trusted
