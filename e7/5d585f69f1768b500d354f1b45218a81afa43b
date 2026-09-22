@@ -1,0 +1,26 @@
+Phase 6 Task 3 — Update docs/playtest.md (AC1–AC11)
+
+Added a "Park clean-up and lost puppy" section in the file's established
+shape, matching the v1 and ice-cream sections:
+- Intro: two new missions sharing one town, drawn so nothing repeats
+  back to back.
+- AC1–AC11 table, every verdict Met, with per-row evidence: covering test
+  counts (parkMission 9, parkPickup 14, parkLitter 7, missionRotation 12,
+  missionBusy 5, missionFocus 13, helperHand 13, puppyMission gates),
+  Phase 6 Task 1 gate numbers (Biome 106 files clean, tsc clean, 516 tests
+  / 43 files, mission-excl-visual 98.18% = 649/661), and the two drives
+  (Phase 5 browser verification; AC11 iPad LAN sitting).
+- "How the desktop pass was driven": the real render loop with real
+  inputs via the Phase 5 verification plus the Phase 6 gate sitting;
+  nothing needed accelerating because the rotation reaches both missions
+  in shipped time.
+- A one-sitting device checklist (7 steps): park chime and litter slots;
+  tap → poof-morph → per-piece gulp rhythm; sweep voices the cluster once
+  and the last piece celebrates; the whine with no marker and the police
+  pulse as invitation; siren → yip + paw + hand retarget; board → door
+  run → cheer; muted replay where every cue must still read.
+- Report-back prompts (harsh bark, stuttering gulp, sweep misses,
+  pulse readability, anything a 3–5-year-old would get wrong).
+- Issues section: none — both passes completed clean on the first try.
+
+Docs-only change (63 insertions on one file); no code touched.
