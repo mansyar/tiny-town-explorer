@@ -35,7 +35,7 @@
 
 ## Phase 3 – Lost Puppy mission logic + helper hand (TDD)
 
-- [ ] Task: Hiding spots + owner house (FR6, FR10)
+- [~] Task: Hiding spots + owner house (FR6, FR10)
   - [ ] Write failing tests: 3+ authored spots, each a reachable non-road tile; the owner house is a house ≥2 tiles from the spot; a spot is never chosen twice running
   - [ ] Implement `puppySpots.ts`
   - [ ] Refactor + coverage
