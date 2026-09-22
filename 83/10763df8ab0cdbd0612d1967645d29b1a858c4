@@ -1,0 +1,40 @@
+Task (Phase 5, wiring): Scene and obstacle wiring (FR5, FR7, FR9)
+
+What changed
+- ModelPlacement gains castsShadow; planTown authors false for parked cars and
+  true for houses; mountModel applies it to every mesh when present.
+- Two tests, red first: the layout contract (every parked car says false, every
+  house says true) and the renderer honouring it (meshes stop casting, keep
+  receiving).
+
+Why
+- The model library sets castShadow on every mesh it prepares, so before this
+  there was no way for a placement to opt out. FR7's whole premise -- cars carry
+  a blob *instead of* a real shadow, to avoid six more casters in the 1024 map --
+  was therefore unimplemented, and each car paid the shadow pass it was supposed
+  to avoid while its blob double-darkened the same ground.
+
+Measured (GL draws counted per frame on the running game, the same method as the
+recorded 37,802-triangle / 133-draw baseline in tech-stack.md)
+- No parked cars at all (temporary local edit to TOWN_MAP, reverted and verified
+  with git diff --exit-code): 138 draw calls, 38,310 triangles.
+- Before this fix: 245 draw calls, 59,768 triangles.
+- After this fix: 171 draw calls, 51,130 triangles.
+- So six cars + one blob mesh = +33 draw calls, +12,820 triangles, against the
+  plan's expected +32.
+
+Correction carried forward from 9413100's note
+- The kit's 8,676 triangles are the FOUR DISTINCT MODELS. Six instances are
+  sedan x2 + hatchback x2 + van + suv = 12,796, which the measurement above
+  confirms. The 52,056 in the earlier note was that sum multiplied by six by
+  mistake, and no budget note should repeat it.
+
+Still open, disclosed
+- A tap driven through the browser did not visibly move the truck, so the
+  drive-through (bonk head-on, graze, centre-line drive past every car) is
+  unverified here and remains the user's manual step on their own device.
+- The scene now measures 51,130 triangles/frame against the spec's ~50k budget:
+  1.1k over. Recorded in tech-stack.md with the levers (fewer cars, lower-detail
+  models) rather than hidden.
+
+Gates: pnpm check clean, pnpm typecheck clean, 712 tests / 57 files.
