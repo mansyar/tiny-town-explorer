@@ -1,0 +1,31 @@
+Task: Helper hand across four missions (FR12)
+
+Summary:
+- missionFocus.ts grown two -> four missions: input gains parkState/parkAt,
+  puppyPending/puppyState/puppySpotAt/puppyOwnerAt; output gains optional
+  target: "siren". Priority chain pinned fire -> order -> park -> puppy (the
+  order they landed in the game), first awaiting wins, else car fallback -
+  still exactly one destination.
+- Puppy's three demo steps: pending -> siren button (marked target:"siren"
+  with the car as destination, since the HUD button has no world position -
+  the marker tells the caller to demo the button, not trace a road);
+  searching -> paw spot; carrying -> owner house.
+- parkAwaitsKid exported from parkMission.ts (spawned || responding - same
+  shape as fireAwaitsKid/orderAwaitsKid) so the hand cannot disagree with the
+  park FSM about when the kid has arrived.
+- Existing tests spread the quiet base; two full-literal tests updated to
+  spread quiet for the new required fields.
+
+Why: FR12 - missionFocus is the spec-named pure chooser; helperHand API
+untouched (still takes a Vec2 destination). The siren target is marker-based
+so Phase 5 wiring can skip the route trace and press the ability instead.
+
+Tests: missionFocus.test.ts (13 total, 6 new red-first): litter while park
+asks (spawned/responding await; collecting/complete do not), siren button
+before found (awaiting + car + target:siren), paw spot while searching,
+owner house while carrying, out-of-way after siren/delivery/missing spot,
+all-four overlap pins fire first and park over puppy. parkAwaitsKid exercised
+through these.
+
+Gates: biome clean, tsc clean, 514/514 tests, coverage missionFocus.ts and
+parkMission.ts both 100/100/100/100.
