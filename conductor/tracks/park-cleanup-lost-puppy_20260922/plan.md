@@ -73,7 +73,7 @@
 
 ## Phase 6 – Verification + docs
 
-- [ ] Task: Full gates (NFR2, NFR4)
+- [~] Task: Full gates (NFR2, NFR4)
   - [ ] `pnpm check`, `pnpm typecheck`, `CI=true pnpm test`, coverage >80% on logic; measure the new triangle and precache deltas
 - [ ] Task: Device pass (AC11)
   - [ ] Desktop drive of both missions in the real render loop, then the iPad sitting — bark, gulp and cheer audible, and again with sound off
