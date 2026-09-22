@@ -1,14 +1,19 @@
+import { createMissionFsm } from './missionFsm';
 import { type MarkerAdapter, markerTap } from './missionMarkers';
 
 /**
- * The park clean-up's state machine: litter is out, the kid has answered it,
- * the truck is among it, and the town's patient resolution afterwards.
+ * The park clean-up: litter is out, the kid has answered it, the truck is
+ * among it, and the town's patient resolution afterwards.
  *
- * Pure and clocked by `update`, mirroring `missionManager.ts` so the third
- * mission inherits the same feel without sharing its state. What makes this
- * one different is the verb: collection happens under the wheels (FR3, in
- * `parkPickup.ts`), so the FSM never asks *how many pieces are left* — the
- * pickup rules report the last piece via `finish()`.
+ * The lifecycle is no longer hand-rolled (FR1). The stages and the completion
+ * linger are declared once and `missionFsm` owns the transitions, the
+ * one-transition-per-event lock and the linger; what stays here is only what
+ * makes this errand a *clean-up* — the drive-over range and the verb. Pure and
+ * clocked by `update`, so the third mission inherits the fire mission's feel
+ * without sharing its state. What makes this one different is the verb:
+ * collection happens under the wheels (FR3, in `parkPickup.ts`), so the FSM
+ * never asks *how many pieces are left* — the pickup rules report the last
+ * piece via `finish()`.
  *
  *   idle ──spawn()──► spawned ──respond()──► responding ⇄ collecting ──finish()──► complete
  *     ▼                   (tap a piece)     (arrive ⇄ drive away)                     │
@@ -67,56 +72,48 @@ export interface ParkMission {
 }
 
 export function createParkMission(): ParkMission {
-  let state: ParkState = 'idle';
-  let completeElapsed = 0;
-
-  const toIdle = (): void => {
-    state = 'idle';
-    completeElapsed = 0;
-  };
+  // Declared stages, declared linger (FR1): the module owns the transitions
+  // that used to be assigned by hand here. The clean-up carries no side data
+  // across the run — the litter field itself lives with the town — so neither
+  // lifecycle hook is needed.
+  const fsm = createMissionFsm<ParkState>({
+    states: ['idle', 'spawned', 'responding', 'collecting', 'complete'],
+    initialState: 'idle',
+    celebratingState: 'complete',
+    lingerSeconds: COMPLETE_LINGER_SECONDS,
+  });
 
   return {
-    snapshot: () => ({ state }),
+    snapshot: () => ({ state: fsm.getState() }),
 
     spawn(): boolean {
-      if (state !== 'idle') {
-        return false;
-      }
-      state = 'spawned';
-      return true;
+      return fsm.attempt('idle', 'spawned');
     },
 
     respond(): boolean {
-      if (state !== 'spawned') {
-        return false;
-      }
-      state = 'responding';
-      return true;
+      return fsm.attempt('spawned', 'responding');
     },
 
     finish(): boolean {
-      if (state !== 'responding' && state !== 'collecting') {
-        return false;
-      }
-      completeElapsed = 0;
-      state = 'complete';
-      return true;
+      // The last piece can be taken on the way over or among the litter, so
+      // both stages may finish the errand — never a stage the kid has not
+      // answered.
+      return fsm.attempt(['responding', 'collecting'], 'complete');
     },
 
     update(deltaSeconds, distanceToLitter): void {
-      const delta = Math.max(deltaSeconds, 0);
-      if (state === 'responding' && distanceToLitter <= COLLECT_RANGE) {
-        state = 'collecting';
-      } else if (state === 'collecting' && distanceToLitter > COLLECT_RANGE) {
-        // Driving off interrupts the sweep rather than cancelling it: the
-        // litter waits patiently, and collecting re-arms on the way back.
-        state = 'responding';
-      } else if (state === 'complete') {
-        completeElapsed += delta;
-        if (completeElapsed >= COMPLETE_LINGER_SECONDS) {
-          toIdle();
+      fsm.update(deltaSeconds, () => {
+        // The same call decides both directions: close enough means the truck
+        // is collecting, driving off takes it away again. Driving off
+        // interrupts the sweep rather than cancelling it — the litter waits
+        // patiently, and collecting re-arms on the way back.
+        const state = fsm.getState();
+        if (state === 'responding' && distanceToLitter <= COLLECT_RANGE) {
+          fsm.attempt('responding', 'collecting');
+        } else if (state === 'collecting' && distanceToLitter > COLLECT_RANGE) {
+          fsm.attempt('collecting', 'responding');
         }
-      }
+      });
     },
   };
 }

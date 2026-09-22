@@ -1,14 +1,19 @@
 import type { Vec2 } from '../town/townTypes';
+import { createMissionFsm } from './missionFsm';
 import type { MarkerAdapter } from './missionMarkers';
 
 /**
- * The ice-cream order's state machine: which house ordered, whether the kid
- * has answered it, whether serve is in reach, and its patient resolution.
+ * The ice-cream order: which house ordered, whether the kid has answered it,
+ * whether serve is in reach, and its patient resolution.
  *
- * Pure and clocked by `update`, mirroring `missionManager.ts` so the second
- * mission inherits the same feel without sharing its state: a whole delivery
- * runs in a test in milliseconds. Single-serve — one tap visibly matters —
- * and `spawned` waits indefinitely rather than timing out.
+ * The lifecycle is no longer hand-rolled (FR1). The stages and the completion
+ * linger are declared once and `missionFsm` owns the transitions, the
+ * one-transition-per-event lock and the linger; what stays here is only what
+ * makes this errand an *order* — which house is waiting, single-serve, and the
+ * range that arms serve. Pure and clocked by `update`, so a whole delivery
+ * runs in a test in milliseconds — a second mission inheriting the fire
+ * mission's feel without sharing its state. Single-serve — one tap visibly
+ * matters — and `spawned` waits indefinitely rather than timing out.
  *
  *   idle ──spawn()──► spawned ──respond()──► driving ⇄ active ──serve──► complete
  *     ▲                                       (arrive ⇄ drives away)              │
@@ -64,62 +69,67 @@ export interface IceCreamMission {
 }
 
 export function createIceCreamMission(): IceCreamMission {
-  let state: IceCreamState = 'idle';
   let orderHouseId: string | undefined;
-  let completeElapsed = 0;
 
-  const toIdle = (): void => {
-    state = 'idle';
+  /**
+   * The run is over — landed in idle by the linger, or torn down by `abort()`.
+   * The house stops wanting ice cream, so no orphan cone is left behind
+   * (FR6, AC4).
+   */
+  const clearOrder = (): void => {
     orderHouseId = undefined;
-    completeElapsed = 0;
   };
 
+  // Declared stages, declared linger (FR1): the module owns the transitions
+  // that used to be assigned by hand here, including the linger's return to
+  // idle and the abort teardown.
+  const fsm = createMissionFsm<IceCreamState>({
+    states: ['idle', 'spawned', 'driving', 'active', 'complete'],
+    initialState: 'idle',
+    celebratingState: 'complete',
+    lingerSeconds: COMPLETE_LINGER_SECONDS,
+    onIdle: clearOrder,
+    onAbort: clearOrder,
+  });
+
   return {
-    snapshot: () => ({ state, orderHouseId }),
+    snapshot: () => ({ state: fsm.getState(), orderHouseId }),
 
     isServeReady: (distanceToHouse) =>
-      state === 'active' && distanceToHouse <= SERVE_RANGE,
+      fsm.getState() === 'active' && distanceToHouse <= SERVE_RANGE,
 
     spawn(houseId): boolean {
-      if (state !== 'idle') {
+      // Guarded, so an open order can never be half-replaced: the house is
+      // only claimed once the transition has been won.
+      if (!fsm.attempt('idle', 'spawned')) {
         return false;
       }
       orderHouseId = houseId;
-      state = 'spawned';
       return true;
     },
 
     respond(): boolean {
-      if (state !== 'spawned') {
-        return false;
-      }
-      state = 'driving';
-      return true;
+      return fsm.attempt('spawned', 'driving');
     },
 
     serve(): boolean {
-      if (state !== 'active') {
-        return false;
-      }
-      completeElapsed = 0;
-      state = 'complete';
-      return true;
+      return fsm.attempt('active', 'complete');
     },
 
     update(deltaSeconds, distanceToHouse): void {
-      const delta = Math.max(deltaSeconds, 0);
-      if (state === 'driving' && distanceToHouse <= SERVE_RANGE) {
-        state = 'active';
-      } else if (state === 'active' && distanceToHouse > SERVE_RANGE) {
-        // Driving off interrupts the delivery rather than cancelling it: the
-        // order waits patiently, and serve re-arms on the way back.
-        state = 'driving';
-      } else if (state === 'complete') {
-        completeElapsed += delta;
-        if (completeElapsed >= COMPLETE_LINGER_SECONDS) {
-          toIdle();
+      fsm.update(deltaSeconds, () => {
+        // Proximity arrives by distance rather than by an event so the same
+        // call decides both directions: close enough arms serve, driving off
+        // takes it away again. Driving off interrupts the delivery rather than
+        // cancelling it — the order waits patiently, and serve re-arms on the
+        // way back.
+        const state = fsm.getState();
+        if (state === 'driving' && distanceToHouse <= SERVE_RANGE) {
+          fsm.attempt('driving', 'active');
+        } else if (state === 'active' && distanceToHouse > SERVE_RANGE) {
+          fsm.attempt('active', 'driving');
         }
-      }
+      });
     },
   };
 }

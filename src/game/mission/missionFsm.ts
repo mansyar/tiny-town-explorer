@@ -8,6 +8,13 @@
  * celebration emit, and `abort()` cleanup from any state (FR6). Mission
  * behaviour arrives as callbacks — the handler passed to `update`/`tap` — so
  * no mission keeps bespoke transition plumbing.
+ *
+ * The three lifecycle edges a mission can own side data across are all
+ * callbacks: `onCelebrate` (the run just won), `onIdle` (the linger landed
+ * back in idle, so the run's own state should be dropped) and `onAbort` (the
+ * run was torn down early). Without `onIdle` a mission would have to mask its
+ * stale fields behind the current state, which is the bespoke plumbing this
+ * module exists to delete.
  */
 
 /** Configuration: data per mission, never code branches (FR1/FR3). */
@@ -22,6 +29,12 @@ export interface MissionFsmConfig<S extends string> {
   readonly lingerSeconds: number;
   /** Fired once per entry into the celebrating state. */
   readonly onCelebrate?: (from: S) => void;
+  /**
+   * Fired once when the celebration linger lands back in `initialState` — the
+   * run is over, so whatever the mission carried for it can be dropped. Not
+   * fired by `abort()`, which has its own hook.
+   */
+  readonly onIdle?: (from: S) => void;
   /** Fired once per successful `abort()`; the cleanup hook. */
   readonly onAbort?: (from: S) => void;
 }
@@ -74,10 +87,15 @@ export function createMissionFsm<S extends string>(
 
   function update(delta: number, handler?: (delta: number) => void): void {
     if (state === celebratingState) {
-      completeElapsed += delta;
+      // A negative frame is a frame that did not happen: clamping keeps the
+      // linger from being un-spent, the same rule every mission applied to its
+      // own completion timer before this module owned it.
+      completeElapsed += Math.max(delta, 0);
       if (completeElapsed >= lingerSeconds) {
+        const previous = state;
         state = initialState;
         completeElapsed = 0;
+        config.onIdle?.(previous);
       }
       return;
     }

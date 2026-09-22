@@ -1,13 +1,18 @@
+import { createMissionFsm } from './missionFsm';
 import { type MarkerAdapter, markerTap } from './missionMarkers';
 import { PICKUP_RADIUS } from './parkPickup';
 
 /**
  * The Lost Puppy errand (FR7–FR10): the kid presses the siren, drives over
- * the pup to scoop it up, then taps the owner's house to deliver it. Pure FSM
- * shaped like `missionManager.ts` and `iceCreamMission.ts`, with two ranges —
- * the shared drive-over radius (reused from `parkPickup.ts`, so a pickup feels
- * identical in both missions) and {@link DELIVERY_RANGE}, the shared mission
- * range every other mission arms at.
+ * the pup to scoop it up, then taps the owner's house to deliver it. The
+ * lifecycle is no longer hand-rolled (FR1): the stages and the completion
+ * linger are declared once and `missionFsm` owns the transitions, the
+ * one-transition-per-event lock and the linger — so a fourth mission adds no
+ * new transition plumbing. What stays here is only what makes this an
+ * *errand*: two ranges — the shared drive-over radius (reused from
+ * `parkPickup.ts`, so a pickup feels identical in both missions) and
+ * {@link DELIVERY_RANGE}, the shared mission range every other mission arms
+ * at — plus the siren latch.
  *
  * ```text
  * idle ──siren()──▶ searching ──drive over──▶ carrying ──deliver()──▶ complete
@@ -87,50 +92,63 @@ export interface PuppyMission {
 }
 
 export function createPuppyMission(): PuppyMission {
-  let state: PuppyState = 'idle';
+  /** Whether the door tap is live: carrying, and within delivery range. */
   let armed = false;
-  let completeElapsed = 0;
 
-  const toIdle = (): void => {
-    state = 'idle';
+  /** The run is over — landed in idle by the linger, or torn down by abort. */
+  const clearPup = (): void => {
     armed = false;
-    completeElapsed = 0;
   };
 
+  // Declared stages, declared linger (FR1): the module owns the transitions
+  // that used to be assigned by hand here, including the linger's return to
+  // idle and the abort teardown.
+  const fsm = createMissionFsm<PuppyState>({
+    states: ['idle', 'searching', 'carrying', 'complete'],
+    initialState: 'idle',
+    celebratingState: 'complete',
+    lingerSeconds: COMPLETE_LINGER_SECONDS,
+    onIdle: clearPup,
+    onAbort: clearPup,
+  });
+
   return {
-    snapshot: () => ({ state }),
+    snapshot: () => ({ state: fsm.getState() }),
 
     siren(): boolean {
-      if (state !== 'idle') return false;
-      state = 'searching';
-      return true;
+      // Idle-only by construction: the siren is the one-shot that opens the
+      // errand, so a second press can never restart or reset it (FR7).
+      return fsm.attempt('idle', 'searching');
     },
 
     deliver(): boolean {
-      if (state !== 'carrying') return false;
-      state = 'complete';
+      if (!fsm.attempt('carrying', 'complete')) {
+        return false;
+      }
       armed = false;
-      completeElapsed = 0;
       return true;
     },
 
-    isDeliverReady: () => state === 'carrying' && armed,
+    isDeliverReady: () => fsm.getState() === 'carrying' && armed,
 
     update(deltaSeconds, distanceToPup, distanceToOwner): void {
-      const delta = Math.max(0, deltaSeconds);
-      if (state === 'searching' && distanceToPup <= PICKUP_RADIUS) {
-        state = 'carrying';
-        armed = false;
-        return;
-      }
-      if (state === 'carrying') {
-        armed = distanceToOwner <= DELIVERY_RANGE;
-        return;
-      }
-      if (state === 'complete') {
-        completeElapsed += delta;
-        if (completeElapsed >= COMPLETE_LINGER_SECONDS) toIdle();
-      }
+      fsm.update(deltaSeconds, () => {
+        const state = fsm.getState();
+        if (state === 'searching') {
+          // Drive over the pup to scoop it up (FR8). Delivery is not armed on
+          // the pickup frame: the kid has only just picked it up.
+          if (distanceToPup <= PICKUP_RADIUS) {
+            fsm.attempt('searching', 'carrying');
+            armed = false;
+          }
+          return;
+        }
+        if (state === 'carrying') {
+          // The door tap arms through here the way the hose and serve do: near
+          // the owner house it is live, and driving away disarms it again.
+          armed = distanceToOwner <= DELIVERY_RANGE;
+        }
+      });
     },
   };
 }

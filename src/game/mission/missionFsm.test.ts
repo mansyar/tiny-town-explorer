@@ -221,6 +221,63 @@ describe('linger', () => {
     fsm.update(99);
     expect(fsm.getState()).toBe('idle');
   });
+
+  it('ignores a negative frame, so the linger is never dragged backwards', () => {
+    const fsm = makeFsm();
+    walkToCelebrating(fsm);
+    fsm.update(-5);
+    expect(fsm.getState()).toBe('complete');
+    // Every mission clamps its own frames the same way: a bogus delta is a
+    // frame that did not happen, not one that un-spends the celebration.
+    fsm.update(2.5);
+    expect(fsm.getState()).toBe('idle');
+  });
+});
+
+describe('idle return (FR6)', () => {
+  it('emits onIdle once when the linger lands back in idle', () => {
+    const onIdle = vi.fn();
+    const fsm = makeFsm({ onIdle });
+    walkToCelebrating(fsm);
+    fsm.update(1.3);
+    expect(onIdle).not.toHaveBeenCalled();
+    fsm.update(1.2);
+    expect(fsm.getState()).toBe('idle');
+    expect(onIdle).toHaveBeenCalledTimes(1);
+    expect(onIdle).toHaveBeenCalledWith('complete');
+  });
+
+  it('never re-emits while the town stays idle', () => {
+    const onIdle = vi.fn();
+    const fsm = makeFsm({ onIdle });
+    walkToCelebrating(fsm);
+    fsm.update(99);
+    fsm.update(1);
+    fsm.update(1);
+    expect(onIdle).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits once per completed run', () => {
+    const onIdle = vi.fn();
+    const fsm = makeFsm({ onIdle });
+    walkToCelebrating(fsm);
+    fsm.update(99);
+    walkToCelebrating(fsm);
+    fsm.update(99);
+    expect(onIdle).toHaveBeenCalledTimes(2);
+  });
+
+  it('stays silent when the run is torn down by abort instead', () => {
+    const onAbort = vi.fn();
+    const onIdle = vi.fn();
+    const fsm = makeFsm({ onAbort, onIdle });
+    walkToCelebrating(fsm);
+    fsm.update(1.3);
+    expect(fsm.abort()).toBe(true);
+    fsm.update(99);
+    expect(onAbort).toHaveBeenCalledTimes(1);
+    expect(onIdle).not.toHaveBeenCalled();
+  });
 });
 
 describe('abort from any state (FR6)', () => {

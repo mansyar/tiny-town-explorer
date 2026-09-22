@@ -1,15 +1,20 @@
 import type { Vec2 } from '../town/townTypes';
+import { createMissionFsm } from './missionFsm';
 import type { MarkerAdapter } from './missionMarkers';
 
 /**
- * The fire mission's state machine: what is burning, whether the kid has
- * answered it, whether the hose is in reach, and how many bursts are left.
+ * The fire mission: what is burning, whether the kid has answered it, whether
+ * the hose is in reach, and how many bursts are left.
  *
- * Pure and clocked by `update`, so a whole mission can be run in a test in
- * milliseconds and the feel of it pinned without a renderer (conductor/workflow
- * guard: mission pacing and rules are test-first). It owns no timers of its own
- * beyond the resolution window — *when* a fire appears is the pacing module's
- * job, and *where* is the town's.
+ * The lifecycle is no longer hand-rolled (FR1). The stages and the completion
+ * linger are declared once and `missionFsm` owns the transitions, the
+ * one-transition-per-event lock and the linger; what stays here is only what
+ * makes this errand a *fire* — which house burns, how many bursts it takes,
+ * and the range that arms the hose. Pure and clocked by `update`, so a whole
+ * mission can be run in a test in milliseconds and the feel of it pinned
+ * without a renderer (conductor/workflow guard: mission pacing and rules are
+ * test-first). It owns no timers of its own beyond the resolution window —
+ * *when* a fire appears is the pacing module's job, and *where* is the town's.
  *
  *   idle ──spawn()──► spawned ──respond()──► driving ⇄ active ──last burst──► complete
  *     ▲                                       (arrive ⇄ drives away)              │
@@ -88,68 +93,78 @@ export function createMissionManager(
 ): MissionManager {
   const random = options.random ?? Math.random;
 
-  let state: MissionState = 'idle';
   let fireHouseId: string | undefined;
   let burstsLeft = 0;
-  let completeElapsed = 0;
 
-  const toIdle = (): void => {
-    state = 'idle';
+  /**
+   * The run is over — landed in idle by the linger, or torn down by `abort()`.
+   * Either way the house stops burning and the burst count resets, so no
+   * orphan flame is left behind (FR6, AC4).
+   */
+  const clearFire = (): void => {
     fireHouseId = undefined;
     burstsLeft = 0;
-    completeElapsed = 0;
   };
 
-  return {
-    snapshot: () => ({ state, fireHouseId, burstsLeft }),
+  // Declared stages, declared linger (FR1): the module owns the transitions
+  // that used to be assigned by hand here, including the linger's return to
+  // idle and the abort teardown.
+  const fsm = createMissionFsm<MissionState>({
+    states: ['idle', 'spawned', 'driving', 'active', 'complete'],
+    initialState: 'idle',
+    celebratingState: 'complete',
+    lingerSeconds: COMPLETE_LINGER_SECONDS,
+    onIdle: clearFire,
+    onAbort: clearFire,
+  });
 
-    isHoseReady: (distanceToFire) => state === 'active' && distanceToFire <= HOSE_RANGE,
+  return {
+    snapshot: () => ({ state: fsm.getState(), fireHouseId, burstsLeft }),
+
+    isHoseReady: (distanceToFire) =>
+      fsm.getState() === 'active' && distanceToFire <= HOSE_RANGE,
 
     spawn(houseId): boolean {
-      if (state !== 'idle') {
+      // Guarded, so a running stage can never be half-replaced: the id and the
+      // burst count are only touched once the transition has been won.
+      if (!fsm.attempt('idle', 'spawned')) {
         return false;
       }
       fireHouseId = houseId;
       burstsLeft = BURSTS_MIN + Math.floor(random() * (BURSTS_MAX - BURSTS_MIN + 1));
-      state = 'spawned';
       return true;
     },
 
     respond(): boolean {
-      if (state !== 'spawned') {
-        return false;
-      }
-      state = 'driving';
-      return true;
+      return fsm.attempt('spawned', 'driving');
     },
 
     spray(): boolean {
-      if (state !== 'active') {
+      if (fsm.getState() !== 'active') {
         return false;
       }
       burstsLeft -= 1;
       if (burstsLeft <= 0) {
         burstsLeft = 0;
-        completeElapsed = 0;
-        state = 'complete';
+        fsm.attempt('active', 'complete');
       }
       return true;
     },
 
     update(deltaSeconds, distanceToFire): void {
-      const delta = Math.max(deltaSeconds, 0);
-      if (state === 'driving' && distanceToFire <= HOSE_RANGE) {
-        state = 'active';
-      } else if (state === 'active' && distanceToFire > HOSE_RANGE) {
-        // Driving off interrupts the rescue rather than cancelling it: the fire
-        // keeps burning, patiently, and the hose re-arms on the way back.
-        state = 'driving';
-      } else if (state === 'complete') {
-        completeElapsed += delta;
-        if (completeElapsed >= COMPLETE_LINGER_SECONDS) {
-          toIdle();
+      fsm.update(deltaSeconds, () => {
+        // Proximity arrives by distance rather than by an event so the same
+        // call decides both directions: close enough arms the hose, driving
+        // off takes it away again. Driving off interrupts the rescue rather
+        // than cancelling it — the fire keeps burning, patiently, and the
+        // hose re-arms on the way back.
+        const state = fsm.getState();
+        if (state === 'driving' && distanceToFire <= HOSE_RANGE) {
+          fsm.attempt('driving', 'active');
+        } else if (state === 'active' && distanceToFire > HOSE_RANGE) {
+          fsm.attempt('active', 'driving');
         }
-      }
+      });
     },
   };
 }
