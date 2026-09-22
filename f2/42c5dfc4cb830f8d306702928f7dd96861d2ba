@@ -1,0 +1,41 @@
+Task: Parked-car kinds + authored map instances (FR1, FR9) — Phase 1, task 1
+
+Summary of changes:
+- Parked-car prop kinds (parkedSedan, parkedHatchback, parkedVan, parkedSuv)
+  added to the town's prop union, with a type guard so the circle-only paths
+  cannot be handed a parked car by accident.
+- The four Car Kit models measured into PARKED_CAR_EXTENTS (length/width) so a
+  footprint can be derived before the art is mounted, plus PARKED_CAR_FIT
+  (0.55), PARKED_CAR_KERB_OFFSET (0.46) and parkedCarFootprint(), which throws
+  on a yaw that is not a quarter turn.
+- Six instances authored in townMap.ts on the streets they park against, four
+  of them on kerbs whose house wall measures >= 0.652 from the street's centre
+  line, two facing the other way so a street does not read as a parade.
+- createTownGrid publishes, per parked prop, the authored yaw and the
+  axis-aligned half extents already swapped by it; collisionRadius becomes
+  optional and is absent for parked cars; collectObstacles lists only the props
+  that carry a radius. Parked-car model URLs join the registry and TOWN_MODELS.
+
+Files created:
+- src/game/town/parkedCars.test.ts (12 tests, written first and failing on a
+  missing data layer before the implementation landed)
+
+Files modified:
+- src/game/town/townTypes.ts, townMap.ts, townGrid.ts
+- src/game/assets/modelRegistry.ts (+ its test's group list)
+- src/game/town/townLayout.ts (resolves the parked model URL and keeps the
+  authored yaw when planning the mount)
+- src/game/collision/collision.ts (+ its crashable-props assertion)
+
+Why:
+The placement work in the next task has to prove a lane-clearance and
+wall-clearance contract, and it can only do that if the cars' geometry exists as
+pure data first. Two pre-existing assertions were updated rather than worked
+around: the registry test enumerates the model groups (parked cars are a new
+group) and the collision test asserted that every prop becomes a circle — the
+contract this task deliberately changes for parked cars.
+
+Verification: pnpm check, pnpm typecheck, CI=true pnpm test (633 tests, 51
+files) green; coverage on the touched logic — townGrid.ts 100%, townMap.ts
+100%, townTypes.ts 95.45% (the untested line is the diagonal-yaw throw, whose
+test belongs to the Phase 2 hitbox task).
