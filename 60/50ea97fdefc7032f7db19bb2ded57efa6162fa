@@ -1,0 +1,42 @@
+Phase 5 Task 3 — Input routing (FR2, FR7, FR10): test audit, no new code
+
+Decision: every routing decision the plan listed already has red-first
+coverage from Phases 1-3; writing parallel tests would be churn, so this
+task is reuse-verified (same treatment as the Phase 4 FX reuse task).
+
+Audit — decision -> covering test(s):
+- tap a piece = respond (FR2):
+  parkMission.test.ts 'answers only a tap that lands on a piece, and only
+  once' + 'ignores a tap that misses the litter, and a tap on a quiet town'
+  (resolveParkTap: onPiece && spawned -> respond exactly once).
+- owner-house deliver gated (FR10):
+  puppyMission.test.ts 'resolves to deliver only when carrying, on the
+  house, and in range' + 'arms delivery only near the owner house, and
+  disarms when driving away' + 'never delivers from searching, and
+  delivers exactly once' (resolvePuppyTap: carrying && onOwnerHouse &&
+  armed); aim->house boolean: orderFlow.test.ts 'which house a tap was
+  aimed at' (isTapOnHouse inside/outside).
+- ability press latches the siren once (FR7):
+  puppyMission.test.ts:31-34 — first siren() true (walk test, :19), second
+  false ('ignores the siren while the pup is already out'); the main.ts
+  onSirenCast glue is manual-verify.
+- newest-wins preserved:
+  inputRouter.test.ts 'supersedes the previous destination with the newest
+  one' + 'lets a honk keep its sequence number without stealing the
+  destination'.
+- (supporting) registry first-claim-wins:
+  missionRegistry.test.ts 'offers taps to missions until one answers'.
+
+Gates unchanged since Task 2: pnpm check clean; pnpm typecheck clean;
+CI=true pnpm test 516/516 (43 files) — no source touched by this task.
+
+Manual verification on touch — deferred to the Phase Verification
+checkpoint (plan Task: Phase Verification & Checkpoint) with the rest of
+the hands-on pass. On a touch device:
+1. Tap a litter piece while spawned -> respond + morph to garbage, once
+   (re-tapping the piece mid-morph is ignored).
+2. Tap the owner house while carrying within 1.9 -> deliver; tap it from
+   afar, or while the pup is still searching -> nothing happens.
+3. Press the siren twice -> paw blooms on the first press only.
+4. Mash two drive destinations quickly -> the newest route wins; a honk
+   under the car never cancels the route in progress.
