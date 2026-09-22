@@ -66,6 +66,28 @@ describe('the gap comes from the caller’s own numbers', () => {
   });
 });
 
+describe('picking a house without the clock', () => {
+  it('hands back a house and remembers it, leaving the countdown alone', () => {
+    const unit = pacer();
+    const before = unit.secondsUntilDue();
+    expect(unit.pickHouse()).toBe('house-1');
+    expect(unit.lastHouseId()).toBe('house-1');
+    expect(unit.secondsUntilDue()).toBe(before);
+  });
+
+  it('never hands back the house that just went', () => {
+    const unit = pacer({ minDistance: 0 });
+    expect(unit.pickHouse()).toBe('house-1');
+    expect(unit.pickHouse()).toBe('house-2');
+  });
+
+  it('picks nothing in a town with no houses', () => {
+    const unit = pacer({ houses: [] });
+    expect(unit.pickHouse()).toBeUndefined();
+    expect(unit.lastHouseId()).toBeUndefined();
+  });
+});
+
 describe('the separation rule is the caller’s too', () => {
   it('can land next door when no distance is asked for', () => {
     const unit = pacer({

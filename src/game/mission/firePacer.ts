@@ -49,6 +49,12 @@ export interface FirePacer {
   /** The house that burned last, or `undefined` before the first fire. */
   lastHouseId(): string | undefined;
   /**
+   * Picks a house now, without touching the calm gap — for the shared mission
+   * rotation, which owns *when* the town acts while this module still owns
+   * *where* a fire lands (two houses from the last one).
+   */
+  pickHouse(): string | undefined;
+  /**
    * Ticks the calm gap and returns the house to light up, if it is time.
    *
    * `busy` is true while any mission is already running: the countdown pauses
@@ -70,6 +76,7 @@ export function createFirePacer(options: FirePacerOptions): FirePacer {
   return {
     secondsUntilFire: () => pacer.secondsUntilDue(),
     lastHouseId: () => pacer.lastHouseId(),
+    pickHouse: () => pacer.pickHouse(),
     update: (deltaSeconds, busy) => pacer.update(deltaSeconds, busy),
   };
 }

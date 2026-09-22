@@ -28,6 +28,7 @@ import {
   fireAwaitsKid,
 } from './game/mission/missionManager';
 import { createMissionRegistry } from './game/mission/missionRegistry';
+import { createMissionRotation } from './game/mission/missionRotation';
 import {
   createOrderBeats,
   isTapOnHouse,
@@ -134,6 +135,11 @@ async function main(): Promise<void> {
   // and the beats keep its cue and its celebration to one each per order.
   const orders = createIceCreamMission();
   const orderPacer = createIceCreamPacer({ houses: houseLots });
+  // One shared calm gap decides *when* the town acts next and — never the
+  // same mission twice (spec FR11) — *who* goes. The pool is only missions
+  // that can actually spawn today; park and puppy join it in Phase 5. Each
+  // pacer below still decides *where* its own mission lands.
+  const rotation = createMissionRotation({ missions: ['fire', 'iceCream'] });
   const orderMarker = createOrderMarker();
   scene.add(orderMarker.object);
   const orderBeats = createOrderBeats();
@@ -604,21 +610,24 @@ async function main(): Promise<void> {
   }
 
   /**
-   * The two pacers, kept in one place so the shared gate is read once: one
-   * town, one turn, whichever mission takes it first.
+   * One shared calm gap for the town (spec FR11): the rotation says when the
+   * town is next due and, never the same mission twice, whose turn it is — so
+   * only one spawn can be considered per frame, and the chosen mission's own
+   * pacer picks where it lands.
    */
   function tickPacers(delta: number): void {
-    let busy = missions.isBusy();
+    const due = rotation.update(delta, missions.isBusy());
 
-    const fireDue = pacer.update(delta, busy);
-    if (fireDue !== undefined && lightFire(fireDue)) {
-      // The fire took the town's turn this frame, so an order that came due in
-      // the very same frame waits rather than landing on top of it.
-      busy = true;
-    }
-    const orderDue = orderPacer.update(delta, busy);
-    if (orderDue !== undefined) {
-      lightOrder(orderDue);
+    if (due === 'fire') {
+      const house = pacer.pickHouse();
+      if (house !== undefined) {
+        lightFire(house);
+      }
+    } else if (due === 'iceCream') {
+      const house = orderPacer.pickHouse();
+      if (house !== undefined) {
+        lightOrder(house);
+      }
     }
   }
 

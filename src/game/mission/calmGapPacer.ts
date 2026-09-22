@@ -50,6 +50,12 @@ export interface CalmGapPacer {
   /** The house that went last, or `undefined` before the first mission. */
   lastHouseId(): string | undefined;
   /**
+   * Picks a house *now*, without touching the countdown — for a caller whose
+   * timing lives elsewhere (the mission rotation) but still wants this
+   * module's separation rule and last-house memory.
+   */
+  pickHouse(): string | undefined;
+  /**
    * Ticks the gap and returns the house to use, if it is time.
    *
    * `busy` is true while a mission is already running: the countdown pauses
@@ -101,9 +107,19 @@ export function createCalmGapPacer(options: CalmGapPacerOptions): CalmGapPacer {
     return candidates[index];
   };
 
+  const pickHouse = (): string | undefined => {
+    const house = chooseHouse();
+    if (house === undefined) {
+      return undefined;
+    }
+    lastHouseId = house.id;
+    return house.id;
+  };
+
   return {
     secondsUntilDue: () => remaining,
     lastHouseId: () => lastHouseId,
+    pickHouse,
 
     update: (deltaSeconds, busy) => {
       const delta = Math.max(deltaSeconds, 0);

@@ -5,13 +5,13 @@
 > `workflow.md` Guiding Principle 3. **(mixed)** = both inside one phase.
 > Every phase ends with the workflow's verification and checkpoint protocol.
 
-## Phase 1 – Shared foundation: registry seam + three-mission rotation (TDD)
+## Phase 1 – Shared foundation: registry seam + four-mission rotation (TDD)
 
 - [x] Task: Mission registry seam (FR13) `ec9f115`
   - [x] Write failing tests for the registry contract: a mission contributes tick/tap/focus; exactly one mission is active at a time; the pass order is stable; a mission with nothing to do contributes nothing (12 tests in `missionRegistry.test.ts`, red first)
   - [x] Implement the registry and move the fire and ice-cream missions behind it — their existing suites stayed green and untouched (445/445 pass)
   - [x] Refactor + coverage (100% on `missionRegistry.ts`, >80% target)
-- [ ] Task: Three-mission rotation (FR11)
+- [~] Task: Four-mission rotation (FR11)
   - [ ] Write failing tests: the next mission is never the one that just ran; the calm gap stays 60–90 s; any active mission pauses every pacer; the draw is uniform across the other two
   - [ ] Implement the rotation chooser over the shared calm-gap pacer and busy gate
   - [ ] Refactor + coverage

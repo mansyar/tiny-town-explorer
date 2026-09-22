@@ -12,8 +12,8 @@ the first mission whose verb is driving rather than tapping. **Lost Puppy** send
 the police car to answer a whine with its siren, find where the puppy hides,
 carry it home and deliver it to the owner's door.
 
-Three missions now share one town, so pacing gains exactly one new rule: never
-the same mission twice in a row.
+Four missions now share one town (fire, ice-cream, park, puppy), so pacing
+gains exactly one new rule: never the same mission twice in a row.
 
 ## Functional Requirements
 
@@ -64,12 +64,12 @@ the same mission twice in a row.
 
 - **FR11 – Pacing:** the device-verified 60–90 s calm gap and the
   town-at-a-time gate are unchanged; one new rule — the next mission is drawn
-  from the other two, so a mission never repeats back to back. No mission spawns
-  while any other runs.
+  from the other three, so a mission never repeats back to back. No mission
+  spawns while any other runs.
 - **FR12 – Helper hand:** 10 s idle → route trace + one demo tap on the *current
   step's* target — litter (park respond), the siren button (before the puppy is
   found), the paw spot, or the owner house — with the ≥10 s cooldown and
-  unchanged `helperHand` API. `missionFocus` grows from two missions to three yet
+  unchanged `helperHand` API. `missionFocus` grows from two missions to four yet
   still resolves exactly one destination.
 - **FR13 – Mission registry seam:** adding a third mission must not add a third
   copy of the tick/tap block in `main.ts`. A thin registry takes per-mission
@@ -113,7 +113,7 @@ the same mission twice in a row.
   appears only then.
 - **AC7:** Tapping the owner house in range delivers with confetti + cheer →
   idle.
-- **AC8:** Three missions never overlap; the 60–90 s calm gap holds; no mission
+- **AC8:** Four missions never overlap; the 60–90 s calm gap holds; no mission
   repeats back to back.
 - **AC9:** One marker at a time in both missions; after 10 s idle the hand demos
   the current step once.

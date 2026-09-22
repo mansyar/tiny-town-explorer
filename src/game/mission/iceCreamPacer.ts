@@ -50,6 +50,12 @@ export interface IceCreamPacer {
   /** The house that ordered last, or `undefined` before the first order. */
   lastHouseId(): string | undefined;
   /**
+   * Picks a house now, without touching the calm gap — for the shared mission
+   * rotation, which owns *when* the town acts while this module still owns
+   * *where* an order lands (two houses from the last one).
+   */
+  pickHouse(): string | undefined;
+  /**
    * Ticks the calm gap and returns the house to serve, if it is time.
    *
    * `busy` is true while any mission is already running: the countdown pauses
@@ -71,6 +77,7 @@ export function createIceCreamPacer(options: IceCreamPacerOptions): IceCreamPace
   return {
     secondsUntilOrder: () => pacer.secondsUntilDue(),
     lastHouseId: () => pacer.lastHouseId(),
+    pickHouse: () => pacer.pickHouse(),
     update: (deltaSeconds, busy) => pacer.update(deltaSeconds, busy),
   };
 }

@@ -45,6 +45,24 @@ function untilOrder(
   return { houseId: undefined, elapsed };
 }
 
+describe('picking a house without the clock', () => {
+  it('hands back a house on demand and leaves the calm gap alone', () => {
+    const unit = pacer();
+    const before = unit.secondsUntilOrder();
+    expect(unit.pickHouse()).toBe('house-1');
+    expect(unit.lastHouseId()).toBe('house-1');
+    expect(unit.secondsUntilOrder()).toBe(before);
+  });
+
+  it('still avoids the house that just went', () => {
+    const unit = pacer(fixedRandom(0));
+    const first = unit.pickHouse();
+    const second = unit.pickHouse();
+    expect(second).toBeDefined();
+    expect(second).not.toBe(first);
+  });
+});
+
 describe('the calm gap', () => {
   it('starts somewhere inside sixty and ninety seconds', () => {
     expect(pacer(fixedRandom(0)).secondsUntilOrder()).toBe(CALM_MIN_SECONDS);
