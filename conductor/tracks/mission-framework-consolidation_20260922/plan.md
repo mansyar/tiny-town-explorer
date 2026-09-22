@@ -42,7 +42,7 @@ phase.*
   - [x] Re-point fire, order, litter, puppy markers through the shared layer; Phase 1 matrix tests are the acceptance gate (must stay green)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `04af704`
 
-## Phase 4 – Shared celebration/linger + unified completion sparkle (TDD)
+## Phase 4 – Shared celebration/linger + unified completion sparkle (TDD) [checkpoint: 0542340]
 
 - [x] Task: Celebration & linger as data
   - [x] Write failing tests: confetti/cheer/sun recipe per mission expressed as data; linger duration preserved per mission; celebration fires exactly once (red first)
@@ -51,11 +51,11 @@ phase.*
   - [x] Write failing tests: fires exactly once per completion; zero fires in free play or mission start; survives tap-spam and interruption during linger (red first)
   - [x] Implement the completion-site sparkle trigger (logic) + FX hook (manual-verify), paired with existing celebration audio — never sound-only
   - [x] Refactor + coverage (>80% on sparkle/celebration logic) — missionCelebration.ts: 100% stmts/branch/funcs
-- [~] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `0542340`
 
 ## Phase 5 – Mission migration + deletion (mixed)
 
-- [ ] Task: Move all four missions onto the framework (AC7)
+- [~] Task: Move all four missions onto the framework (AC7)
   - [ ] Convert fire, ice cream, park, puppy FSM/marker/celebration code to configuration + adapters; delete bespoke transition code; full suite green after each mission
 - [ ] Task: `main.ts` wiring (manual-verify)
   - [ ] Confirm registry/tick/tap paths unchanged externally; manual walkthrough spawn → respond → celebrate → sparkle for each mission
