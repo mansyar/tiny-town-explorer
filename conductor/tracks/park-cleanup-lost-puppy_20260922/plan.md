@@ -63,7 +63,7 @@
 
 ## Phase 5 – Wiring (mixed: logic TDD, glue manual)
 
-- [ ] Task: `main.ts` integration through the registry (FR1–FR10)
+- [~] Task: `main.ts` integration through the registry (FR1–FR10)
   - [ ] Write failing tests for the wiring decisions only, implement, then manual-verify spawn → respond → collect → celebrate and spawn → whine → siren → pickup → deliver
 - [ ] Task: HUD police-button pulse hint (FR6)
   - [ ] Implement the pulse and its clear on answer; manual-verify it reads as an invitation and never competes with the ability button
