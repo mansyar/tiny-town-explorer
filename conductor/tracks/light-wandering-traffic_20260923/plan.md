@@ -56,17 +56,22 @@
 
 ## Phase 2 – Per-car motor options and the wandering brain (TDD)
 
-- [ ] Task: Per-instance speed and turn rate (FR2)
-  - [ ] Write failing tests: `createVehicleMotor` accepts `speed`/`turnRate` in
+- [x] Task: Per-instance speed and turn rate (FR2) `1283b09`
+  - [x] Write failing tests: `createVehicleMotor` accepts `speed`/`turnRate` in
     `VehicleMotorOptions`, defaults exactly to today's `DRIVE_SPEED` 1.6 /
     `TURN_RATE` 4.5 (the existing suite must pass untouched as the
     default-behaviour proof); a motor at 0.9 covers ground at 0.9 per second
     under the same frame-driven harness (red first)
-  - [ ] Implement the two options in `vehicleMotor.ts`, constants becoming
+  - [x] Implement the two options in `vehicleMotor.ts`, constants becoming
     defaults rather than module globals
-  - [ ] Refactor + coverage (`vehicleMotor.test.ts` stays the densest suite in
+  - [x] Refactor + coverage (`vehicleMotor.test.ts` stays the densest suite in
     the repo; residue ≥94% branches as today)
-- [ ] Task: Seeded endless route brain (FR2)
+
+  **Done:** 2 red tests (1.6 covered instead of 0.9; 0.225 rad turned instead
+  of 0.1) then green in `1283b09`; the untouched 36-test suite is the
+  default-behaviour proof. 717 tests / 57 files; `vehicleMotor.ts` 100%
+  stmts / 95% branch (above the ≥94% bar).
+- [~] Task: Seeded endless route brain (FR2)
   - [ ] Write failing tests for `trafficBrain`: from a start tile it targets a
     random *other* road tile via `roadRoute`, hands over waypoints, and picks a
     fresh destination the moment one is reached — never stationary across a
