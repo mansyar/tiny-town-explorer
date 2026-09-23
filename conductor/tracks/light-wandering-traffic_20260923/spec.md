@@ -83,10 +83,15 @@ regress, and everything is measured, not estimated.
   voice, morph logic, HUD — do not learn that a second car exists; NPCs are
   excluded from `swapVehicle`, camera follow, engine audio and bonk counters.
 - **FR10 — Budget lever: six parked cars → four.** The two parked cars on the
-  roomiest kerbs are removed (lever one as documented in `tech-stack.md`),
-  freeing ≈4.1k triangles and ≈10 draws to pay for the movers. The result is
-  **measured** (`pnpm assets:measure` + the GL-counter method the baseline
-  used) and recorded in `tech-stack.md`.
+  **tightest** kerbs are removed — house-1's (a measured 0.038 wall gap) and
+  house-3's (0.071) — so the four survivors stand on the four roomiest kerbs,
+  exactly lever one as documented in `tech-stack.md`, freeing ≈4.1k triangles
+  and ≈10 draws to pay for the movers. (Amended during Phase 1: the first
+  draft said "the two parked cars on the roomiest kerbs are removed", which
+  contradicts the lever's "four cars on the four roomiest kerbs"; the
+  placement suite's measured gaps decide.) The result is **measured**
+  (`pnpm assets:measure` + the GL-counter method the baseline used) and
+  recorded in `tech-stack.md`.
 
 ## Non-Functional Requirements
 
@@ -187,5 +192,7 @@ regress, and everything is measured, not estimated.
   behaviour, not a bug.
 - Cruise speeds (~0.8–1.0 against the kid's 1.6) are starting points to tune by
   feel in the device pass.
-- Which two parked cars go is the plan's pick (FR10's "roomiest kerbs"); the
-  kerb reservation's declared list and the `townMap` rows shrink accordingly.
+- Which two parked cars go is measured, not guessed: the two smallest wall
+  gaps (house-1's kerb at 0.038, house-3's at 0.071), resolved in Phase 1
+  against the placement suite's gap arithmetic; the `townMap` rows shrink
+  accordingly.
