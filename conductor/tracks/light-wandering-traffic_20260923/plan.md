@@ -89,7 +89,7 @@
   728 tests / 58 files; `trafficBrain.ts` 100% statements/branch/funcs/lines.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `c0d59b0`
 
-## Phase 3 – Lane discipline and dynamic collision feed (TDD)
+## Phase 3 – Lane discipline and dynamic collision feed (TDD) [checkpoint: e2ef6e5]
 
 - [x] Task: Fixed lateral bias and the pass-clearance contract (FR3) `c8c546d`
   - [x] Write failing tests: each car holds its authored lateral bias (opposite
@@ -126,15 +126,21 @@
   read per sweep; no-supplier parity pinned by test; the walker test pins
   re-read-every-frame against snapshot implementations.
 - [x] Task: The one collision language, mover to mover (FR4) `e2ef6e5`
-  - [ ] Write failing tests: kid→mover bonks, squishes and resumes with the
+  - [x] Write failing tests: kid→mover bonks, squishes and resumes with the
     route cursor advancing and the mover's route untouched; mover→mover at a
     junction squashes (both report impact) and both carry on; no dynamic
     obstacle is ever `solid`; nothing in the feed can abandon a leg or strand a
     car (red first)
-  - [ ] Implement nothing beyond the feed — prove the semantics hold from
+  - [x] Implement nothing beyond the feed — prove the semantics hold from
     Phase 2–3 pieces (add only what a red test proves missing)
-  - [ ] Refactor + coverage
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  - [x] Refactor + coverage
+
+  **Done:** 3 FR4 red tests — 2 were arrival-assertion slips (the motor parks
+  within `ARRIVAL_RADIUS`, not on the point), 1 genuine (a misflagged `solid`
+  feed entry stranded the car 1.63 short). Minimal fix: `asCrashable()` forces
+  feed entries crashable — the feed cannot change the language. Green in
+  `e2ef6e5`. 742 tests / 58 files.
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `e2ef6e5`
 
 ## Phase 4 – Traffic system and input parity (TDD)
 
