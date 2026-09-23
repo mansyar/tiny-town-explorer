@@ -515,4 +515,9 @@ deviation; `tech-stack.md` carries the budget note).
 
 ### Verdicts (wandering traffic)
 
-_Recorded after the iPad sitting._
+All five passed on the iPad (2026-09-23): the town reads alive at play
+distance with the two cars driving the ring the whole sitting; bonks feel
+funny, never scary; all four missions complete with traffic driving and no
+mover ever covered or blocked mission art; the frame rate is unchanged
+within noise on the floor device; and the two civilian models appear offline
+— they ride art the precache already carried.
