@@ -24,10 +24,12 @@ const parkProps = grid.props.filter(
 
 describe('the park’s fixed litter slots', () => {
   it('lays five pieces, three on the first park tile and two on the second', () => {
-    const perTile = grid.parkTiles.map(
-      (tile) =>
-        items.filter((item) => item.tile.x === tile.x && item.tile.y === tile.y).length,
-    );
+    const perTile = grid.parkTiles
+      .map(
+        (tile) =>
+          items.filter((item) => item.tile.x === tile.x && item.tile.y === tile.y).length,
+      )
+      .filter((count) => count > 0);
 
     expect(items).toHaveLength(5);
     expect(perTile).toEqual([3, 2]);
@@ -68,7 +70,7 @@ describe('the park’s fixed litter slots', () => {
 
   it('scales its offsets with the tile size', () => {
     const big = fixedParkItems(createTownGrid({ ...TOWN_MAP, tileSize: 2 }));
-    const first = grid.parkTiles[0];
+    const first = items[0]?.tile;
     expect(first).toBeDefined();
     if (first === undefined) {
       return;

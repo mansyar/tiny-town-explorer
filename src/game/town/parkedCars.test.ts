@@ -198,6 +198,9 @@ describe('the props that were already there', () => {
       'tree',
       'tree',
       'dumpster',
+      'tree',
+      'tree',
+      'tree',
     ]);
     for (const prop of circles) {
       expect(prop.collisionRadius).toBeGreaterThan(0);

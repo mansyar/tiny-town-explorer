@@ -1,5 +1,5 @@
 /** Tile kinds in the authored town map. */
-export type TileKind = 'road' | 'lot' | 'park';
+export type TileKind = 'road' | 'lot' | 'park' | 'pond';
 
 /** Compass direction, used for house facings and road connections. */
 export type Direction = 'north' | 'east' | 'south' | 'west';
@@ -153,7 +153,8 @@ export interface TownMapSpec {
 
 /**
  * Resolves one character of an authored row string: `#` road, `L` (or `.`)
- * house lot, `P` park. Anything else is an authoring error.
+ * house lot, `P` park or meadow, `W` pond green. Anything else is an
+ * authoring error.
  *
  * A switch rather than a lookup object because the map characters are data,
  * not identifiers that the naming convention should police.
@@ -167,6 +168,8 @@ export function tileKindForCharacter(character: string): TileKind | undefined {
       return 'lot';
     case 'P':
       return 'park';
+    case 'W':
+      return 'pond';
     default:
       return undefined;
   }

@@ -71,7 +71,7 @@ export function kerbsideLotCandidates(grid: TownGrid): readonly TileCoord[] {
   for (let y = 0; y < grid.size; y++) {
     for (let x = 0; x < grid.size; x++) {
       const tile = { x, y };
-      if (grid.tileAt(tile) !== 'lot' || !touchesRingRoad(grid, tile)) {
+      if (grid.tileAt(tile) !== 'lot' || !touchesStreet(grid, tile)) {
         continue;
       }
       const edges = kerbEdgesOfPoint(grid, kerbPiecePosition(grid, tile));
@@ -106,14 +106,8 @@ function drawKerbsideLots(
   return chosen;
 }
 
-function touchesRingRoad(grid: TownGrid, tile: TileCoord): boolean {
-  return grid
-    .neighbours(tile)
-    .some(
-      (n) =>
-        grid.isRoad(n) &&
-        (n.x === 0 || n.x === grid.size - 1 || n.y === 0 || n.y === grid.size - 1),
-    );
+function touchesStreet(grid: TownGrid, tile: TileCoord): boolean {
+  return grid.neighbours(tile).some((n) => grid.isRoad(n));
 }
 
 /**
@@ -125,13 +119,7 @@ function touchesRingRoad(grid: TownGrid, tile: TileCoord): boolean {
  */
 export function kerbPiecePosition(grid: TownGrid, tile: TileCoord): Vec2 {
   const centre = grid.tileToWorld(tile);
-  const kerb = grid
-    .neighbours(tile)
-    .find(
-      (n) =>
-        grid.isRoad(n) &&
-        (n.x === 0 || n.x === grid.size - 1 || n.y === 0 || n.y === grid.size - 1),
-    );
+  const kerb = grid.neighbours(tile).find((n) => grid.isRoad(n));
   if (!kerb) return centre;
   return {
     x: centre.x + (kerb.x - tile.x) * KERB_OFFSET * grid.tileSize,

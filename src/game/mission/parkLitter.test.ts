@@ -26,15 +26,9 @@ function seeded(seed: number): () => number {
 
 const grid: TownGrid = createTownGrid();
 
-/** Kerbside means the lot touches the ring road — the map's outer edge. */
-const touchesRingRoad = (tile: TileCoord): boolean =>
-  grid
-    .neighbours(tile)
-    .some(
-      (n) =>
-        grid.isRoad(n) &&
-        (n.x === 0 || n.x === grid.size - 1 || n.y === 0 || n.y === grid.size - 1),
-    );
+/** Kerbside means the lot touches a street - either ring or the cross street. */
+const touchesStreet = (tile: TileCoord): boolean =>
+  grid.neighbours(tile).some((n) => grid.isRoad(n));
 
 const kerbTiles = (pieces: ReturnType<typeof spawnParkLitter>): TileCoord[] =>
   pieces.filter((piece) => grid.tileAt(piece.tile) === 'lot').map((piece) => piece.tile);
@@ -65,11 +59,11 @@ describe('spawnParkLitter', () => {
       }
     });
 
-    it('puts each kerbside piece on a lot that touches the ring road', () => {
+    it('puts each kerbside piece on a lot that touches a street', () => {
       const kerbs = kerbTiles(spawnParkLitter({ grid, random: fixedRandom(0) }));
       expect(kerbs).toHaveLength(3);
       for (const tile of kerbs) {
-        expect(touchesRingRoad(tile)).toBe(true);
+        expect(touchesStreet(tile)).toBe(true);
       }
     });
 
@@ -108,9 +102,7 @@ describe('spawnParkLitter', () => {
       const pool = kerbsideLotCandidates(town);
       expect(pool.length).toBeGreaterThan(3);
       for (const tile of pool) {
-        expect(touchesRingRoad(tile), `${tile.x},${tile.y} touches the ring road`).toBe(
-          true,
-        );
+        expect(touchesStreet(tile), `${tile.x},${tile.y} touches a street`).toBe(true);
       }
     });
 

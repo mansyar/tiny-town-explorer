@@ -165,7 +165,18 @@ describe('a wandering brain hands out endless seeded routes (FR2)', () => {
   it('hands over one lane point per road tile on the way', () => {
     const twoTile = createTownGrid({
       ...TOWN_MAP,
-      rows: ['......', '..##..', '......', '......', '......', '......'],
+      rows: [
+        '..........',
+        '..##......',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+      ],
     });
     const from = { x: 2, y: 1 };
     const to = { x: 3, y: 1 };
@@ -189,7 +200,18 @@ describe('a wandering brain hands out endless seeded routes (FR2)', () => {
   it('aims exactly at the destination tile’s lane point', () => {
     const twoTile = createTownGrid({
       ...TOWN_MAP,
-      rows: ['......', '..##..', '......', '......', '......', '......'],
+      rows: [
+        '..........',
+        '..##......',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+      ],
     });
     const from = { x: 2, y: 1 };
     const to = { x: 3, y: 1 };
@@ -316,7 +338,18 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
   it('gives the authored pair opposite sides of the same street', () => {
     const twoTile = createTownGrid({
       ...TOWN_MAP,
-      rows: ['......', '..##..', '......', '......', '......', '......'],
+      rows: [
+        '..........',
+        '..##......',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+      ],
     });
     const from = { x: 2, y: 1 };
     const normal = legNormal(from, { x: 3, y: 1 });
@@ -430,7 +463,18 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
   it('on curves the bias follows the tangent, with no corner jog', () => {
     const bend = createTownGrid({
       ...TOWN_MAP,
-      rows: ['......', '..#...', '..##..', '......', '......', '......'],
+      rows: [
+        '..........',
+        '..#.......',
+        '..##......',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+        '..........',
+      ],
     });
     const path = leg(
       createTrafficBrain({ grid: bend, random: () => 0.99, side: 1 }),

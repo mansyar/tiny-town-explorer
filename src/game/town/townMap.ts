@@ -4,37 +4,62 @@ import { PARKED_CAR_KERB_OFFSET, type TownMapSpec } from './townTypes';
 const KERB = PARKED_CAR_KERB_OFFSET;
 
 /**
- * The authored town: a 6x6 tile grid whose ring road plus one cross street
- * double as the driving graph.
+ * The authored town: a 10x10 tile grid whose two block loops meet at exactly
+ * one shared junction tile - the figure-eight (FR1). The north-west 6x6 keeps
+ * the original ring road and cross street byte-for-byte; the second block's
+ * loop is the square ring of (5..9)^2 and shares exactly one tile with the old
+ * network: (5,5), the old south-east corner, which becomes the town's crossing
+ * moment.
  *
- * `#` road, `L` house lot, `P` park. Row strings run north (top) first, so
- * the first character of the first row is the north-west tile.
+ * `#` road, `L` house lot, `P` park or meadow, `W` pond green. Row strings run
+ * north (top) first, so the first character of the first row is the
+ * north-west tile.
  *
  * ```text
- *    x0 x1 x2 x3 x4 x5
- * y0  #  #  #  #  #  #     ring road (all four sides)
- * y1  #  P  P  #  L  #
- * y2  #  L  L  #  L  #     cross street runs north-south at x3
- * y3  #  L  L  #  L  #
- * y4  #  L  L  #  L  #
- * y5  #  #  #  #  #  #
+ *    x0 x1 x2 x3 x4 x5 x6 x7 x8 x9
+ * y0  #  #  #  #  #  #  P  P  P  P
+ * y1  #  P  P  #  L  #  P  P  P  P
+ * y2  #  L  L  #  L  #  P  P  P  P
+ * y3  #  L  L  #  L  #  P  P  P  P
+ * y4  #  L  L  #  L  #  P  P  P  P
+ * y5  #  #  #  #  #  #  #  #  #  #     (5,5) junction: four arms
+ * y6  P  P  P  P  P  #  S  L  L  #     S shop lot at the junction corner
+ * y7  P  P  P  P  P  #  L  W  L  #     W pond green in the loop's heart
+ * y8  P  P  P  P  P  #  L  L  L  #
+ * y9  P  P  P  P  P  #  #  #  #  #
  * ```
  *
- * Every lot touches a street, so a mission can always park beside a house,
- * and the road network is a single connected loop for pathing.
+ * The `P` meadows padding the north-east and south-west are grass, not lots,
+ * so "every lot touches a street" still holds across both loops. The park
+ * mission keeps its two original `P` tiles and can never drift onto the pond,
+ * which is its own tile kind. `figureEight.test.ts` holds these claims to
+ * account.
  */
 /** A quarter turn: the yaw that lies a car along an east-west street. */
 const QUARTER_TURN = Math.PI / 2;
 
 export const TOWN_MAP: TownMapSpec = {
-  // One world unit per track tile keeps the 6x6 town at 6x6 units, which
-  // frames a roughly car-sized vehicle at the spec'd 15-20% of viewport
-  // height. Revisit once the Kenney kit's real tile scale is measured.
+  // One world unit per track tile. The orthographic window shows a fixed
+  // ~5.3 units around the car, so the doubled town draws no more per frame
+  // than the 6x6 did - only what is on screen counts.
   tileSize: 1,
-  rows: ['######', '#PP#L#', '#LL#L#', '#LL#L#', '#LL#L#', '######'],
-  // Eight models across ten lots, each named rather than cycled by index: the
-  // house on a lot decides the wall its kerb can offer a parked car, so the
-  // choice is authored data the placement rules can be tested against.
+  rows: [
+    '######PPPP',
+    '#PP#L#PPPP',
+    '#LL#L#PPPP',
+    '#LL#L#PPPP',
+    '#LL#L#PPPP',
+    '##########',
+    'PPPPP#LLL#',
+    'PPPPP#LWL#',
+    'PPPPP#LLL#',
+    'PPPPP#####',
+  ],
+  // Eight models across fourteen lots, each named rather than cycled by index:
+  // the house on a lot decides the wall its kerb can offer a parked car, so
+  // the choice is authored data the placement rules can be tested against. The
+  // second block's four use four more distinct silhouettes so the far side of
+  // the junction reads as its own neighbourhood.
   houses: [
     { id: 'house-1', tile: { x: 1, y: 2 }, facing: 'west', model: 'type-a' },
     { id: 'house-2', tile: { x: 2, y: 2 }, facing: 'east', model: 'type-b' },
@@ -46,6 +71,10 @@ export const TOWN_MAP: TownMapSpec = {
     { id: 'house-8', tile: { x: 4, y: 2 }, facing: 'east', model: 'type-r' },
     { id: 'house-9', tile: { x: 4, y: 3 }, facing: 'east', model: 'type-a' },
     { id: 'house-10', tile: { x: 4, y: 4 }, facing: 'south', model: 'type-b' },
+    { id: 'house-11', tile: { x: 7, y: 6 }, facing: 'north', model: 'type-c' },
+    { id: 'house-12', tile: { x: 8, y: 6 }, facing: 'east', model: 'type-q' },
+    { id: 'house-13', tile: { x: 6, y: 7 }, facing: 'west', model: 'type-h' },
+    { id: 'house-14', tile: { x: 8, y: 7 }, facing: 'east', model: 'type-f' },
   ],
   // Offsets nudge props to the kerb of the street they belong to.
   //
@@ -70,6 +99,12 @@ export const TOWN_MAP: TownMapSpec = {
     // tile, clear of the tree, the litter slots and spot-dumpster's corner.
     { kind: 'dumpster', tile: { x: 2, y: 1 }, offset: { x: 0.3, y: 0.3 } },
 
+    // The second block's gardens (FR2): one orchard tree per green lot ringing
+    // the pond, so the far side of the junction reads planted, not empty.
+    { kind: 'tree', tile: { x: 6, y: 8 }, offset: { x: 0.2, y: 0.2 } },
+    { kind: 'tree', tile: { x: 7, y: 8 }, offset: { x: 0.2, y: 0.2 } },
+    { kind: 'tree', tile: { x: 8, y: 8 }, offset: { x: 0.2, y: 0.2 } },
+
     // Four parked cars (FR1, FR10), authored on the *street* tile and offset
     // toward the kerb they sit against, with a yaw that lies them along that
     // street.
@@ -78,17 +113,18 @@ export const TOWN_MAP: TownMapSpec = {
     // street's centre line (`1.00 - fitted depth / 2`), because that is the
     // narrowest wall a car fitted to `PARKED_CAR_FIT` can clear while keeping
     // its inner edge out of the lane. Two kerbs in town cannot host a car at
-    // any offset — beside house-8 (type-r, wall 0.574) and house-5 (type-f,
-    // 0.576) — and the roomiest kerb of all (0.748) is the puppy's hiding
+    // any offset - beside house-8 (type-r, wall 0.574) and house-5 (type-f,
+    // 0.576) - and the roomiest kerb of all (0.748) is the puppy's hiding
     // place, so neither is used here.
     //
     // Six cars shipped in the parked-cars track; the light-wandering-traffic
-    // track spends lever one from `tech-stack.md` — "four cars on the four
-    // roomiest kerbs" — so the two tightest went (house-1's kerb at a 0.038
+    // track spends lever one from `tech-stack.md` - "four cars on the four
+    // roomiest kerbs" - so the two tightest went (house-1's kerb at a 0.038
     // gap, house-3's at 0.071) and these four stand at the largest gaps (0.074
     // to 0.147). Their freed kerbs rejoined the park mission's litter draw,
     // which now gets (1,2), (1,3), (2,4), (4,2), (4,3) and (4,4) to choose
-    // three from — only (4,1) is still taken here.
+    // three from - only (4,1) is still taken here. Phase 6 redistributes all
+    // six across the two rings.
     {
       kind: 'parkedVan',
       tile: { x: 4, y: 0 },
@@ -115,15 +151,16 @@ export const TOWN_MAP: TownMapSpec = {
     },
   ],
   // The puppy's hiding places (FR6): behind the park trees, beside the
-  // dumpster's corner, at a house's garden kerb, and on the far verge — each
-  // on a non-road tile the town's own pathing can reach. Authored here rather
-  // than scattered so every hiding place reads as a place (there is a reason
-  // the puppy chose *that* spot), while the draw still varies run to run.
+  // dumpster's corner, at a house's garden kerb, on the far verge - and now
+  // three in the second district so the puppy roams both loops. Each sits on a
+  // non-road tile the town's own pathing can reach. Authored here rather than
+  // scattered so every hiding place reads as a place (there is a reason the
+  // puppy chose *that* spot), while the draw still varies run to run.
   //
   // The two park hides put the pup behind a tree and the dumpster, where the
   // camera genuinely loses it. The two lot spots sit on the *kerb* of the
-  // street their house faces — `house-4` faces east onto the cross street,
-  // `house-5` south onto the ring road — outside the house's capped footprint
+  // street their house faces - `house-4` faces east onto the cross street,
+  // `house-5` south onto the ring road - outside the house's capped footprint
   // and within a car's reach of the road (`mission/puppySpots.ts` re-derives
   // those two rules per spot and its tests hold every spot to them).
   hidingSpots: [
@@ -134,10 +171,15 @@ export const TOWN_MAP: TownMapSpec = {
     // Lot spots: the kerb of the street each house faces.
     { id: 'spot-garden', tile: { x: 2, y: 3 }, offset: { x: 0.48, y: 0.25 } },
     { id: 'spot-verge', tile: { x: 1, y: 4 }, offset: { x: 0.2, y: 0.48 } },
+    // Second-district hides, all on houseless green so no footprint can ever
+    // crowd them: the pond's edge, behind the orchard tree, and the far lawn.
+    { id: 'spot-pond', tile: { x: 7, y: 7 }, offset: { x: 0, y: 0.4 } },
+    { id: 'spot-orchard', tile: { x: 6, y: 8 }, offset: { x: -0.3, y: -0.3 } },
+    { id: 'spot-lawn', tile: { x: 8, y: 8 }, offset: { x: 0.3, y: -0.3 } },
   ],
 
   // The park mission's fixed litter layout (FR6): five pieces at fixed
-  // readable slots — three on the west park tile, two on the east — kept clear
+  // readable slots - three on the west park tile, two on the east - kept clear
   // of the two authored trees (offsets ±0.2). The park is the mission's focal
   // point, so its layout reads the same every round; only the three kerbside
   // lots are drawn from the seed. Keyed to `P` tiles only: the pond green is
@@ -160,10 +202,13 @@ export const TOWN_MAP: TownMapSpec = {
     },
   ],
 
+  // Four vehicles, two per district (FR9), so both halves read as one town
+  // from the first second: the old cross street and north ring, the new loop's
+  // north edge and south edge.
   spawnPoints: [
     { x: 3, y: 2 },
     { x: 1, y: 0 },
-    { x: 5, y: 3 },
-    { x: 4, y: 5 },
+    { x: 7, y: 5 },
+    { x: 7, y: 9 },
   ],
 };

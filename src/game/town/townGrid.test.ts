@@ -64,11 +64,11 @@ describe('town bounds', () => {
 });
 
 describe('createTownGrid — authored map parsing', () => {
-  it('parses the 6x6 layout into tile kinds', () => {
+  it('parses the 10x10 layout into tile kinds', () => {
     const grid = createTownGrid(TOWN_MAP);
 
-    expect(grid.size).toBe(6);
-    expect(grid.tiles).toHaveLength(6);
+    expect(grid.size).toBe(10);
+    expect(grid.tiles).toHaveLength(10);
 
     expect(grid.tileAt({ x: 0, y: 0 })).toBe('road');
     expect(grid.tileAt({ x: 3, y: 1 })).toBe('road');
@@ -76,17 +76,17 @@ describe('createTownGrid — authored map parsing', () => {
     expect(grid.tileAt({ x: 2, y: 1 })).toBe('park');
     expect(grid.tileAt({ x: 2, y: 2 })).toBe('lot');
     expect(grid.tileAt({ x: 4, y: 4 })).toBe('lot');
-    expect(grid.tileAt({ x: 6, y: 0 })).toBeUndefined();
+    expect(grid.tileAt({ x: 10, y: 0 })).toBeUndefined();
     expect(grid.tileAt({ x: -1, y: 0 })).toBeUndefined();
 
-    expect(countTiles(grid)).toEqual({ road: 24, lot: 10, park: 2 });
+    expect(countTiles(grid)).toEqual({ road: 39, lot: 18, park: 42, pond: 1 });
   });
 
   it('builds house lots with world positions from the authored specs', () => {
     const grid = createTownGrid(TOWN_MAP);
 
-    expect(grid.houses).toHaveLength(10);
-    expect(new Set(grid.houses.map((house) => house.id)).size).toBe(10);
+    expect(grid.houses).toHaveLength(14);
+    expect(new Set(grid.houses.map((house) => house.id)).size).toBe(14);
 
     const first = grid.houses[0];
     expect(first).toBeDefined();
@@ -124,7 +124,7 @@ describe('createTownGrid — authored map parsing', () => {
   it('exposes park tiles and road spawn points', () => {
     const grid = createTownGrid(TOWN_MAP);
 
-    expect(grid.parkTiles).toHaveLength(2);
+    expect(grid.parkTiles).toHaveLength(42);
     expect(grid.spawnPoints.length).toBeGreaterThanOrEqual(1);
     expect(grid.spawnPoints).toHaveLength(TOWN_MAP.spawnPoints.length);
 
@@ -194,8 +194,8 @@ describe('world mapping', () => {
   it('centres the town on the origin and round-trips tile coordinates', () => {
     const grid = createTownGrid(TOWN_MAP);
 
-    expect(grid.tileToWorld({ x: 0, y: 0 })).toEqual({ x: -2.5, z: -2.5 });
-    expect(grid.tileToWorld({ x: 5, y: 5 })).toEqual({ x: 2.5, z: 2.5 });
+    expect(grid.tileToWorld({ x: 0, y: 0 })).toEqual({ x: -4.5, z: -4.5 });
+    expect(grid.tileToWorld({ x: 9, y: 9 })).toEqual({ x: 4.5, z: 4.5 });
 
     for (let y = 0; y < grid.size; y++) {
       for (let x = 0; x < grid.size; x++) {
@@ -334,7 +334,7 @@ function eachTile(grid: TownGrid): TileCoord[] {
 }
 
 function countTiles(grid: TownGrid): Record<TileKind, number> {
-  const counts: Record<TileKind, number> = { road: 0, lot: 0, park: 0 };
+  const counts: Record<TileKind, number> = { road: 0, lot: 0, park: 0, pond: 0 };
   for (const coord of eachTile(grid)) {
     const kind = grid.tileAt(coord);
     if (kind !== undefined) counts[kind]++;

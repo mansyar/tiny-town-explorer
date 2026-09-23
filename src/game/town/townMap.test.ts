@@ -114,7 +114,7 @@ describe('the authored map', () => {
     // Row strings run north (top) first, so a transposed string would move the
     // park tiles into the west column and re-point every kerb the placement
     // rules measure against.
-    expect(TOWN_MAP.rows).toHaveLength(6);
+    expect(TOWN_MAP.rows).toHaveLength(10);
     for (const coord of [
       { x: 0, y: 0 },
       { x: 5, y: 0 },
