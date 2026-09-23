@@ -16,25 +16,43 @@
 > the must-not-grow contract (NFR2) is judged against the fully-assembled
 > scene.
 
-## Phase 1 – Budget lever: six parked cars → four (TDD)
+## Phase 1 – Budget lever: six parked cars → four (TDD) [checkpoint: be8a4c7]
 
-- [ ] Task: Remove the two roomiest parked cars (FR10)
-  - [ ] Write failing tests for the four-car contract: the map authors four
-    parked cars (the two with the largest measured wall gaps removed); the
+- [x] Task: Remove the two tightest-kerb parked cars (FR10) `be8a4c7`
+  - [x] Write failing tests for the four-car contract: the map authors four
+    parked cars (the two with the smallest measured wall gaps removed); the
     remaining four keep every placement contract (straight-segment, wall
     ≥0.652, kerb-top seat, spawn clearance, non-overlap); the two freed kerb
     edges rejoin the litter candidate pool and `spawnParkLitter`'s draw floor is
     still asserted (pool stays varied by seed); `declaredKerbViolations` still
     passes (red first — the data contract asserts six today)
-  - [ ] Remove the two `townMap.ts` rows (identified by the placement suite's
+  - [x] Remove the two `townMap.ts` rows (identified by the placement suite's
     wall-gap measurements and recorded in the commit note), and confirm the
     kerb reservation needs no rule change — only the shrunk authoring list
-  - [ ] Refactor + coverage (`parkedCars*.test.ts`, `kerbReservation.test.ts`,
+  - [x] Refactor + coverage (`parkedCars*.test.ts`, `kerbReservation.test.ts`,
     `kerbInvariant.test.ts`, `townMap.test.ts` green; >80% on every touched
     logic module)
-  - [ ] Measure the delta with the GL-counter method and `pnpm assets:measure`
+  - [x] Measure the delta with the GL-counter method and `pnpm assets:measure`
     (expected ≈−4.1k triangles / ≈−10 draws), recorded for Phase 6's roll-up
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+  **Found and fixed (in-flight correction, Workflow Task Correction 1):** the
+  task title, this plan's wording and FR10 said "the two roomiest kerbs are
+  removed" — the opposite of lever one ("four cars on the four roomiest
+  kerbs"). The placement suite's measured wall gaps decide the pair: the two
+  tightest went — house-1's kerb (sedan@(0,2), gap 0.038) and house-3's
+  (hatchback@(0,3), gap 0.071) — and the kept four stand at the largest gaps
+  (0.074 / 0.081 / 0.119 / 0.147). Spec FR10 and the Flagged Assumption were
+  corrected in `afcc114`.
+  **Measured (input to Phase 6's roll-up):** `pnpm assets:measure` — sedan.glb
+  2,032 tris and hatchback-sports.glb 2,088 tris per instance (4 draw calls
+  each) + 2 blob quads = **4,124 triangles and 8 draws removed**. GL-counter
+  hook at the dev server (30 steady frames): 51,130 → **47,064 tris** and
+  171 → **163 draws** (−4,066 / −8; the 58-triangle gap between the model
+  sum and the frame count is the same kind of session quirk the parked-cars
+  pass recorded as +12,820 measured vs +12,808 predicted). The scene is under
+  the ~50k heuristic again, with ≈4.1k headroom for the two movers. 715
+  tests / 57 files green (712 baseline − 1 superseded six-count test + 4 new).
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `be8a4c7`
 
 ## Phase 2 – Per-car motor options and the wandering brain (TDD)
 
