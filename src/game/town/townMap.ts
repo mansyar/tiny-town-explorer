@@ -114,6 +114,52 @@ export const TOWN_MAP: TownMapSpec = {
       yaw: QUARTER_TURN,
     },
   ],
+  // The puppy's hiding places (FR6): behind the park trees, beside the
+  // dumpster's corner, at a house's garden kerb, and on the far verge — each
+  // on a non-road tile the town's own pathing can reach. Authored here rather
+  // than scattered so every hiding place reads as a place (there is a reason
+  // the puppy chose *that* spot), while the draw still varies run to run.
+  //
+  // The two park hides put the pup behind a tree and the dumpster, where the
+  // camera genuinely loses it. The two lot spots sit on the *kerb* of the
+  // street their house faces — `house-4` faces east onto the cross street,
+  // `house-5` south onto the ring road — outside the house's capped footprint
+  // and within a car's reach of the road (`mission/puppySpots.ts` re-derives
+  // those two rules per spot and its tests hold every spot to them).
+  hidingSpots: [
+    // Park hides: open grass with the tree and the dumpster between the pup
+    // and the camera, so "hidden" is honest here.
+    { id: 'spot-trees', tile: { x: 1, y: 1 }, offset: { x: -0.3, y: -0.3 } },
+    { id: 'spot-dumpster', tile: { x: 2, y: 1 }, offset: { x: 0.3, y: -0.3 } },
+    // Lot spots: the kerb of the street each house faces.
+    { id: 'spot-garden', tile: { x: 2, y: 3 }, offset: { x: 0.48, y: 0.25 } },
+    { id: 'spot-verge', tile: { x: 1, y: 4 }, offset: { x: 0.2, y: 0.48 } },
+  ],
+
+  // The park mission's fixed litter layout (FR6): five pieces at fixed
+  // readable slots — three on the west park tile, two on the east — kept clear
+  // of the two authored trees (offsets ±0.2). The park is the mission's focal
+  // point, so its layout reads the same every round; only the three kerbside
+  // lots are drawn from the seed. Keyed to `P` tiles only: the pond green is
+  // its own tile kind, so the layout can never drift onto it.
+  parkSlots: [
+    {
+      tile: { x: 1, y: 1 },
+      slots: [
+        { x: -0.3, y: -0.35 },
+        { x: 0.35, y: -0.3 },
+        { x: -0.3, y: 0.35 },
+      ],
+    },
+    {
+      tile: { x: 2, y: 1 },
+      slots: [
+        { x: 0.3, y: -0.35 },
+        { x: -0.35, y: -0.3 },
+      ],
+    },
+  ],
+
   spawnPoints: [
     { x: 3, y: 2 },
     { x: 1, y: 0 },

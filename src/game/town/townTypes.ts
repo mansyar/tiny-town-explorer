@@ -108,6 +108,35 @@ export interface PropSpec {
 }
 
 /**
+ * An authored puppy hiding place (FR6).
+ *
+ * Lives in the map beside the houses and props it reads as a place among, so a
+ * new town authors its own hiding places and the mission layer never hardcodes
+ * a tile. The nudge puts the pup behind something: a spot on a lot sits at the
+ * kerb of the street its house faces, outside the capped house footprint and
+ * within a car's reach of the road.
+ */
+export interface HidingSpotSpec {
+  readonly id: string;
+  readonly tile: TileCoord;
+  /** Nudge within the tile, in tile units (y maps to world z). */
+  readonly offset: TileOffset;
+}
+
+/**
+ * The park mission's authored litter layout for one `P` tile (FR6).
+ *
+ * Keyed to the tile it decorates rather than to an index, so the layout is
+ * checked against the map — and a green that is not the park (the pond is its
+ * own tile kind) can never receive litter.
+ */
+export interface ParkSlotSpec {
+  readonly tile: TileCoord;
+  /** Fixed readable slots within the tile, in tile units (y maps to world z). */
+  readonly slots: readonly TileOffset[];
+}
+
+/**
  * The whole hand-authored town: one row string per grid row (north row
  * first) using {@link TILE_CHARACTERS}.
  */
@@ -117,6 +146,8 @@ export interface TownMapSpec {
   readonly rows: readonly string[];
   readonly houses: readonly HouseSpec[];
   readonly props: readonly PropSpec[];
+  readonly hidingSpots: readonly HidingSpotSpec[];
+  readonly parkSlots: readonly ParkSlotSpec[];
   readonly spawnPoints: readonly TileCoord[];
 }
 

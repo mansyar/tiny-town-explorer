@@ -10,6 +10,8 @@ const BASE_SPEC: TownMapSpec = {
   rows: ['...', '...', '...'],
   houses: [],
   props: [],
+  hidingSpots: [],
+  parkSlots: [],
   spawnPoints: [],
 };
 

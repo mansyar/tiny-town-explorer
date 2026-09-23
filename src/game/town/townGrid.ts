@@ -2,6 +2,8 @@ import { TOWN_MAP } from './townMap';
 import type {
   BuildingKind,
   Direction,
+  HidingSpotSpec,
+  ParkSlotSpec,
   PropKind,
   RoadConnections,
   RoadShape,
@@ -88,6 +90,10 @@ export interface TownGrid {
   readonly houses: readonly TownHouse[];
   readonly props: readonly TownProp[];
   readonly parkTiles: readonly TileCoord[];
+  /** The puppy's authored hiding places, in map order (FR6). */
+  readonly hidingSpots: readonly HidingSpotSpec[];
+  /** The park mission's authored litter layouts, in map order (FR6). */
+  readonly parkSlots: readonly ParkSlotSpec[];
   /** World-space spawn positions, in authored order. */
   readonly spawnPoints: readonly Vec2[];
   /** Outer edges of the town's tiles: the extent of the playable world. */
@@ -242,6 +248,8 @@ export function createTownGrid(spec: TownMapSpec = TOWN_MAP): TownGrid {
     houses,
     props,
     parkTiles,
+    hidingSpots: spec.hidingSpots,
+    parkSlots: spec.parkSlots,
     spawnPoints: spec.spawnPoints.map(tileToWorld),
     bounds,
     tileAt,
