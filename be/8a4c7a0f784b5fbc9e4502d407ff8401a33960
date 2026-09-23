@@ -16,3 +16,29 @@ conductor/tracks/light-wandering-traffic_20260923/{spec,plan}.md
 Why: pay the movers' triangle bill up front (spec FR10/NFR2) and give the
 park mission back the kerbs the tightest cars occupied. 47,064 tris /
 163 draws measured after (-4,066 / -8 from 51,130 / 171).
+
+Phase 1 verification report (workflow.md Phase Completion Verification)
+
+Scope (files changed since the track started):
+  src/game/town/townMap.ts (data), parkedCars.test.ts, parkedCarsPlacement.test.ts,
+  parkedShadows.test.ts, townLayout.test.ts, collision.test.ts,
+  src/game/mission/parkLitter.test.ts (test updates + comments), conductor docs.
+
+Automated: `pnpm check` (Biome, 130 files) clean; `tsc --noEmit` clean;
+`CI=true pnpm test` 715/715 across 57 files (712 baseline - 1 superseded
+six-count test + 4 new FR10 tests). Coverage: townMap.ts, townTypes.ts,
+collision.ts, kerbReservation.ts, pathfinder.ts at 100%; parkLitter.ts
+97.6% - every touched logic module >80%.
+
+Measured (plan measurement sub-task): GL-counter hook at the dev server over
+30 steady frames - 47,064 tris / 163 draws (from 51,130 / 171; -4,066 / -8).
+pnpm assets:measure: sedan.glb 2,032 + hatchback-sports.glb 2,088 tris per
+instance.
+
+Manual: verification plan presented (four parked cars at the roomiest kerbs,
+west street open, bonks and blobs unchanged, litter draw gains the freed
+kerbs, missions and parent panel spot-check) and the user confirmed
+"Yes - confirmed".
+
+Intermediate caveats disclosed: the town is briefly under-manned (the movers
+land in Phases 5-6) and the final budget line is re-measured in Phase 6.
