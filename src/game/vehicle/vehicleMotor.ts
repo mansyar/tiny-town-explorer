@@ -304,7 +304,9 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
    * unchanged, so a world without movers behaves exactly as it always has.
    */
   const liveObstacles = (): readonly Obstacle[] =>
-    dynamicObstacles === undefined ? obstacles : [...obstacles, ...dynamicObstacles()];
+    dynamicObstacles === undefined
+      ? obstacles
+      : [...obstacles, ...dynamicObstacles().map(asCrashable)];
 
   /**
    * First contact along this frame's motion for the whole capsule.
@@ -509,4 +511,12 @@ function shortestTurn(angle: number): number {
 /** Clamps to ±`limit`, preserving the sign of the value being clamped. */
 function clampMagnitude(value: number, limit: number): number {
   return Math.max(-limit, Math.min(limit, value));
+}
+
+/**
+ * A mover is never a wall: the feed cannot change the collision language, so
+ * a misflagged entry is crashed into rather than allowed to abandon a leg.
+ */
+function asCrashable(obstacle: Obstacle): Obstacle {
+  return obstacle.solid ? { ...obstacle, solid: false } : obstacle;
 }

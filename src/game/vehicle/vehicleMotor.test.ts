@@ -818,3 +818,116 @@ describe('a live obstacle feed (FR5)', () => {
     expect(fed.heading()).toBe(plain.heading());
   });
 });
+
+describe('the one collision language, mover to mover (FR4)', () => {
+  /** A mover's box footprint — crashable, like every other car in the town. */
+  const boxOf = (id: string, at: { x: number; z: number }, solid = false): Obstacle => ({
+    id,
+    solid,
+    shape: { kind: 'box', centre: at, halfX: 0.2, halfZ: 0.2 },
+  });
+
+  it('the kid bonks a mover, resumes, and the mover drives on untouched', () => {
+    // One language: the kid squishes, bonks and carries on; the NPC drives on
+    // without noticing — its own route is never the kid's to interrupt.
+    const mover = createVehicleMotor({
+      position: { x: 2, z: 0 },
+      heading: EAST,
+      speed: 0.9,
+    });
+    mover.setPath(directTo({ x: 3, z: 0 }));
+    const kid = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [
+        boxOf('traffic-0', { x: mover.position.x, z: mover.position.z }),
+      ],
+    });
+    kid.setPath(directTo({ x: 4, z: 0 }));
+
+    for (let frame = 0; frame < 60 * 6; frame++) {
+      kid.update(1 / 60);
+      mover.update(1 / 60);
+    }
+
+    // The kid squished the mover on the way past: a bonk, then the journey.
+    expect(kid.bonkCount()).toBeGreaterThanOrEqual(1);
+    expect(kid.isDriving()).toBe(false);
+    expect(Math.hypot(kid.position.x - 4, kid.position.z)).toBeLessThanOrEqual(
+      ARRIVAL_RADIUS,
+    );
+    // The mover never even noticed.
+    expect(mover.bonkCount()).toBe(0);
+    expect(mover.isDriving()).toBe(false);
+    expect(Math.hypot(mover.position.x - 3, mover.position.z)).toBeLessThanOrEqual(
+      ARRIVAL_RADIUS,
+    );
+  });
+
+  it('two movers crossing at a junction squish, then both carry on', () => {
+    // Meeting exactly at the crossroads, in step: eastbound and southbound.
+    let eastbound!: ReturnType<typeof createVehicleMotor>;
+    let southbound!: ReturnType<typeof createVehicleMotor>;
+    eastbound = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      speed: 0.9,
+      dynamicObstacles: () => [
+        boxOf('traffic-1', {
+          x: southbound.position.x,
+          z: southbound.position.z,
+        }),
+      ],
+    });
+    southbound = createVehicleMotor({
+      position: { x: 1.5, z: -1.5 },
+      heading: 0,
+      speed: 0.9,
+      dynamicObstacles: () => [
+        boxOf('traffic-0', {
+          x: eastbound.position.x,
+          z: eastbound.position.z,
+        }),
+      ],
+    });
+    eastbound.setPath(directTo({ x: 3, z: 0 }));
+    southbound.setPath(directTo({ x: 1.5, z: 1.5 }));
+
+    for (let frame = 0; frame < 60 * 8; frame++) {
+      eastbound.update(1 / 60);
+      southbound.update(1 / 60);
+    }
+
+    // Both felt it — a squash has two sides...
+    expect(eastbound.bonkCount()).toBeGreaterThanOrEqual(1);
+    expect(southbound.bonkCount()).toBeGreaterThanOrEqual(1);
+    // ...and neither was stranded by it.
+    expect(eastbound.isDriving()).toBe(false);
+    expect(southbound.isDriving()).toBe(false);
+    expect(
+      Math.hypot(eastbound.position.x - 3, eastbound.position.z),
+    ).toBeLessThanOrEqual(ARRIVAL_RADIUS);
+    expect(
+      Math.hypot(southbound.position.x - 1.5, southbound.position.z - 1.5),
+    ).toBeLessThanOrEqual(ARRIVAL_RADIUS);
+  });
+
+  it('no feed entry can strand a car: a mover is never a wall', () => {
+    // Bump, squish, carry on — one language. A feed that misflagged its
+    // movers solid would abandon the leg at them and strand the car: the
+    // motor must not let the feed change the language.
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [boxOf('traffic-0', { x: 2, z: 0 }, true)],
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    run(motor, 6);
+
+    expect(motor.isDriving()).toBe(false);
+    expect(Math.hypot(motor.position.x - 3, motor.position.z)).toBeLessThanOrEqual(
+      ARRIVAL_RADIUS,
+    );
+  });
+});
