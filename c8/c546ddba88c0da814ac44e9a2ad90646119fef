@@ -1,0 +1,15 @@
+Task: Fixed lateral bias and the pass-clearance contract (FR3)
+
+Changes: TRAFFIC_PASS_CLEARANCE 0.03 / TRAFFIC_LATERAL_BIAS 0.177 /
+TRAFFIC_KERB_SLACK 0.04 named constants; TrafficBrainOptions.side (+-1,
+the authored pair); take() hands over lane points - one per route tile,
+perpendicular bias per leg, angle bisector at corners (lanePoints, bisect,
+axis-stable legNormal so opposite travel shares lanes).
+
+Files: src/game/traffic/trafficBrain.ts, trafficBrain.test.ts
+
+Why: FR3's fixed opposite lateral biases. Head-on AND overtake both hold
+2x0.177 = 0.354 separation between the two movers because each keeps its
+own side of the street axis (the pair is opposite). Three Phase-2 tests
+evolved from road centres to lane points (contracts superseded by FR3);
+the endless/seeded/never-stationary contracts stand untouched.
