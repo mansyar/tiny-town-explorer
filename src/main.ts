@@ -453,6 +453,11 @@ async function main(): Promise<void> {
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
   let motor: VehicleMotor | undefined;
   let actor: Awaited<ReturnType<typeof createVehicleActor>> | undefined;
+  // The wanderers and their actors mount across the same async window (the
+  // town's GLBs are still loading), so the loop meets them as undefined too.
+  let traffic: ReturnType<typeof createTrafficSystem> | undefined;
+  let trafficActors: Awaited<ReturnType<typeof mountTrafficActors>> | undefined;
+  let trafficShadows: ReturnType<typeof mountTrafficShadows> | undefined;
 
   let bonks = 0;
   let hud: VehicleHud | undefined;
@@ -473,16 +478,16 @@ async function main(): Promise<void> {
   // Two of the town's own cars wander the ring on their own errands (FR1):
   // silent, seeded and sealed - the system says update/poses/footprints and
   // knows nothing of the camera, the engine note or the taps.
-  const traffic = createTrafficSystem({
+  traffic = createTrafficSystem({
     grid,
     // A fixed seed, so the town's wander replays exactly, launch after launch.
     seed: 20260923,
   });
-  const trafficActors = await mountTrafficActors(library, traffic.poses());
+  trafficActors = await mountTrafficActors(library, traffic.poses());
   for (const object of trafficActors.objects) {
     town.group.add(object);
   }
-  const trafficShadows = mountTrafficShadows(grid, traffic);
+  trafficShadows = mountTrafficShadows(grid, traffic);
   if (trafficShadows !== undefined) {
     town.group.add(trafficShadows.mesh);
   }
@@ -494,7 +499,7 @@ async function main(): Promise<void> {
   const statics = collectObstacles(grid, town.houseFootprints);
   const vehicle = createVehicleMotor({
     obstacles: statics,
-    dynamicObstacles: () => traffic.footprints(),
+    dynamicObstacles: () => traffic?.footprints() ?? [],
   });
   motor = vehicle;
   vehicle.snapTo(spawn);
@@ -663,8 +668,8 @@ async function main(): Promise<void> {
    */
   function advance(delta: number): void {
     // The wanderers go first, so the kid's sweep meets where they now stand.
-    traffic.update(delta);
-    trafficActors.sync();
+    traffic?.update(delta);
+    trafficActors?.sync();
     trafficShadows?.sync();
     motor?.update(delta);
     actor?.sync();
