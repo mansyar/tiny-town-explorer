@@ -41,8 +41,6 @@ export interface TrafficSystemOptions {
   readonly grid: TownGrid;
   /** Decides starts and every route; the same seed replays the same town. */
   readonly seed: number;
-  /** The town's static hitboxes, shared with the kid's own motor. */
-  readonly obstacles?: readonly Obstacle[];
 }
 
 /**
@@ -86,7 +84,6 @@ interface Carriage {
 
 export function createTrafficSystem(options: TrafficSystemOptions): TrafficSystem {
   const { grid, seed } = options;
-  const statics = options.obstacles ?? [];
   const tiles = roadTiles(grid);
   const [first, second] = pickStarts(seeded(seed), tiles.length);
   const starts: readonly [number, number] = [first, second];
@@ -101,7 +98,6 @@ export function createTrafficSystem(options: TrafficSystemOptions): TrafficSyste
       grid,
       spec,
       start: tiles[starts[index] ?? 0] ?? { x: 0, y: 0 },
-      statics,
       random: seeded(seed * 2 + index),
       others: () => carriages.filter((_, i) => i !== index).map(footprintOf),
     }),
@@ -123,7 +119,6 @@ function buildCarriage(options: {
   grid: TownGrid;
   spec: MoverSpec;
   start: TileCoord;
-  statics: readonly Obstacle[];
   random: () => number;
   others: () => readonly Obstacle[];
 }): Carriage {
@@ -135,7 +130,12 @@ function buildCarriage(options: {
   });
   const motor = createVehicleMotor({
     position: options.grid.tileToWorld(options.start),
-    obstacles: options.statics,
+    // No static hitboxes on purpose: a wanderer's lane is authored road, and
+    // an ambient car that bonks around the furniture reads as a mistake. It
+    // meets the kid and its twin in the one collision language (FR4); all else
+    // is scenery it drives past. At the tightest its wheels edge 0.041 into the
+    // parked cars' strip — the carriageway has no room for two lanes and
+    // parking, so head-on clearance (0.354) is what the geometry allows.
     // The sweep radius is the car's own fitted half-width: capsule-vs-box
     // sweeps then honour TRAFFIC_PASS_CLEARANCE exactly, not just the boxes.
     radius: extents.halfWidth,

@@ -97,7 +97,11 @@
   (Car Kit sedan and hatchback-sports — the same two models the parked-cars
   budget lever freed) drive the ring for the whole session on seeded endless
   BFS routes at 0.8 and 1.0 units/s, holding opposite lanes (bias 0.177 =
-  widest fitted half-width 0.1618 + half the 0.03 pass clearance). Silent
+  widest fitted half-width 0.1618 + half the 0.03 pass clearance). A known
+  cosmetic at the tightest: the sedan mover's swept reach (0.3388 from the
+  centre line) edges 0.041 into the parked cars' strip (near edge 0.2982) on
+  same-side passes — the 0.60 carriageway has no room for two lanes and
+  parking, so head-on clearance is what the geometry allows. Silent
   (FR7), crashable like a cone (FR4), absent from the mission seam and the
   tap router (FR6), mounted through `vehicleActor` at the parked cars' 0.55
   fit with one merged following blob mesh. Measured on the running game at
