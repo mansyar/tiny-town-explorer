@@ -492,6 +492,38 @@ describe('driving a straight leg', () => {
   });
 });
 
+describe('per-car speed and turn rate (FR2)', () => {
+  it('trundles at the speed the caller gave it', () => {
+    // A mover's cruise: 0.9 against the hero's 1.6, so the kid always wins.
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: Math.PI / 2,
+      speed: 0.9,
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    run(motor, 1);
+
+    expect(motor.position.x).toBeCloseTo(0.9, 6);
+    expect(motor.speed()).toBeCloseTo(0.9, 10);
+    expect(motor.isDriving()).toBe(true);
+  });
+
+  it('turns at the turn rate the caller gave it', () => {
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: 0,
+      turnRate: 2,
+    });
+    motor.setPath(directTo({ x: 2, z: 0 }));
+
+    motor.update(0.05);
+
+    expect(motor.position.x).toBeCloseTo(0, 10);
+    expect(motor.heading()).toBeCloseTo(2 * 0.05, 6);
+  });
+});
+
 describe('rotate-then-drive', () => {
   it('turns in place while the destination is off to the side', () => {
     // Facing south, asked to drive due east: a quarter turn first.
@@ -699,5 +731,203 @@ describe('the alignment tolerance', () => {
   it('is small enough that a car driving a straight road barely turns', () => {
     expect(ALIGN_TOLERANCE).toBeGreaterThan(0);
     expect(ALIGN_TOLERANCE).toBeLessThan(Math.PI / 4);
+  });
+});
+
+describe('a live obstacle feed (FR5)', () => {
+  /** A mover: a crashable round footprint, like any other car in the town. */
+  const mover = (id: string, at: { x: number; z: number }): Obstacle => ({
+    id,
+    solid: false,
+    shape: { kind: 'circle', centre: at, radius: 0.15 },
+  });
+
+  it('hits a mover that steps into its path and drives past it afterwards', () => {
+    const feed: Obstacle[] = [];
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => feed,
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    // Clear road while nobody is crossing.
+    run(motor, 0.5);
+    expect(motor.bonkCount()).toBe(0);
+
+    // A mover crosses and stops in the lane, just ahead of the nose.
+    feed.push(mover('traffic-0', { x: 1.5, z: 0 }));
+    runUntil(motor, () => motor.isBouncing(), 3, 1 / 60);
+
+    expect(motor.bonkCount()).toBe(1);
+
+    // Crashable, like a cone: the bump cannot be allowed to cost the journey.
+    run(motor, 6);
+    expect(motor.isDriving()).toBe(false);
+    expect(motor.bonkCount()).toBe(1);
+  });
+
+  it('bumps a live mover once per route, and again on the next', () => {
+    const motor = createVehicleMotor({
+      heading: EAST,
+      dynamicObstacles: () => [mover('traffic-1', { x: 2, z: 0 })],
+    });
+
+    motor.setPath(directTo({ x: 3, z: 0 }));
+    run(motor, 5, 1 / 120);
+    expect(motor.bonkCount()).toBe(1);
+
+    motor.setPath(directTo({ x: 0, z: 0 }));
+    run(motor, 5, 1 / 120);
+    expect(motor.bonkCount()).toBe(2);
+  });
+
+  it('follows a mover as it walks — the feed is re-read every frame', () => {
+    // A car crossing the lane from the far side. It is in the way for only a
+    // few frames; a feed snapshotted at build time would sail right past it.
+    let walkerZ = -1.05;
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [mover('traffic-0', { x: 1.5, z: walkerZ })],
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    for (let frame = 0; frame < 120 && motor.bonkCount() === 0; frame++) {
+      walkerZ += 0.03;
+      motor.update(1 / 60);
+    }
+
+    expect(motor.bonkCount()).toBe(1);
+  });
+
+  it('with no feed at all, drives exactly as it does in an empty world', () => {
+    const plain = createVehicleMotor({ position: { x: 0, z: 0 }, heading: EAST });
+    const fed = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [],
+    });
+    plain.setPath(directTo({ x: 2, z: 0.3 }));
+    fed.setPath(directTo({ x: 2, z: 0.3 }));
+
+    run(plain, 1.5);
+    run(fed, 1.5);
+
+    expect(fed.position).toEqual(plain.position);
+    expect(fed.heading()).toBe(plain.heading());
+  });
+});
+
+describe('the one collision language, mover to mover (FR4)', () => {
+  /** A mover's box footprint — crashable, like every other car in the town. */
+  const boxOf = (id: string, at: { x: number; z: number }, solid = false): Obstacle => ({
+    id,
+    solid,
+    shape: { kind: 'box', centre: at, halfX: 0.2, halfZ: 0.2 },
+  });
+
+  it('the kid bonks a mover, resumes, and the mover drives on untouched', () => {
+    // One language: the kid squishes, bonks and carries on; the NPC drives on
+    // without noticing — its own route is never the kid's to interrupt.
+    const mover = createVehicleMotor({
+      position: { x: 2, z: 0 },
+      heading: EAST,
+      speed: 0.9,
+    });
+    mover.setPath(directTo({ x: 3, z: 0 }));
+    const kid = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [
+        boxOf('traffic-0', { x: mover.position.x, z: mover.position.z }),
+      ],
+    });
+    kid.setPath(directTo({ x: 4, z: 0 }));
+
+    for (let frame = 0; frame < 60 * 6; frame++) {
+      kid.update(1 / 60);
+      mover.update(1 / 60);
+    }
+
+    // The kid squished the mover on the way past: a bonk, then the journey.
+    expect(kid.bonkCount()).toBeGreaterThanOrEqual(1);
+    expect(kid.isDriving()).toBe(false);
+    expect(Math.hypot(kid.position.x - 4, kid.position.z)).toBeLessThanOrEqual(
+      ARRIVAL_RADIUS,
+    );
+    // The mover never even noticed.
+    expect(mover.bonkCount()).toBe(0);
+    expect(mover.isDriving()).toBe(false);
+    expect(Math.hypot(mover.position.x - 3, mover.position.z)).toBeLessThanOrEqual(
+      ARRIVAL_RADIUS,
+    );
+  });
+
+  it('two movers crossing at a junction squish, then both carry on', () => {
+    // Meeting exactly at the crossroads, in step: eastbound and southbound.
+    let eastbound!: ReturnType<typeof createVehicleMotor>;
+    let southbound!: ReturnType<typeof createVehicleMotor>;
+    eastbound = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      speed: 0.9,
+      dynamicObstacles: () => [
+        boxOf('traffic-1', {
+          x: southbound.position.x,
+          z: southbound.position.z,
+        }),
+      ],
+    });
+    southbound = createVehicleMotor({
+      position: { x: 1.5, z: -1.5 },
+      heading: 0,
+      speed: 0.9,
+      dynamicObstacles: () => [
+        boxOf('traffic-0', {
+          x: eastbound.position.x,
+          z: eastbound.position.z,
+        }),
+      ],
+    });
+    eastbound.setPath(directTo({ x: 3, z: 0 }));
+    southbound.setPath(directTo({ x: 1.5, z: 1.5 }));
+
+    for (let frame = 0; frame < 60 * 8; frame++) {
+      eastbound.update(1 / 60);
+      southbound.update(1 / 60);
+    }
+
+    // Both felt it — a squash has two sides...
+    expect(eastbound.bonkCount()).toBeGreaterThanOrEqual(1);
+    expect(southbound.bonkCount()).toBeGreaterThanOrEqual(1);
+    // ...and neither was stranded by it.
+    expect(eastbound.isDriving()).toBe(false);
+    expect(southbound.isDriving()).toBe(false);
+    expect(
+      Math.hypot(eastbound.position.x - 3, eastbound.position.z),
+    ).toBeLessThanOrEqual(ARRIVAL_RADIUS);
+    expect(
+      Math.hypot(southbound.position.x - 1.5, southbound.position.z - 1.5),
+    ).toBeLessThanOrEqual(ARRIVAL_RADIUS);
+  });
+
+  it('no feed entry can strand a car: a mover is never a wall', () => {
+    // Bump, squish, carry on — one language. A feed that misflagged its
+    // movers solid would abandon the leg at them and strand the car: the
+    // motor must not let the feed change the language.
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [boxOf('traffic-0', { x: 2, z: 0 }, true)],
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    run(motor, 6);
+
+    expect(motor.isDriving()).toBe(false);
+    expect(Math.hypot(motor.position.x - 3, motor.position.z)).toBeLessThanOrEqual(
+      ARRIVAL_RADIUS,
+    );
   });
 });

@@ -153,7 +153,9 @@ describe('parked cars as box obstacles (FR5)', () => {
     // other; a box that ignored the yaw would size a car by how it was authored
     // rather than by how it stands.
     const along = grid.props.find(
-      (prop) => prop.kind === 'parkedSedan' && (prop.yaw ?? 0) === 0,
+      // 0 and pi both lie the car along the street; only odd quarter turns
+      // transpose the box. The town's one remaining sedan is authored at pi.
+      (prop) => prop.kind === 'parkedSedan' && (prop.yaw ?? 0) % Math.PI === 0,
     );
     const across = grid.props.find(
       (prop) => prop.kind === 'parkedVan' && Math.abs(prop.yaw ?? 0) === Math.PI / 2,

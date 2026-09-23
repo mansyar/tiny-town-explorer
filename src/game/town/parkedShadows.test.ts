@@ -110,9 +110,9 @@ describe('parkedShadowQuads (FR7)', () => {
 });
 
 describe('mountParkedShadows (FR7)', () => {
-  it('merges all six blobs into one mesh of 12 triangles', () => {
+  it('merges every blob into one mesh of two triangles per car', () => {
     const mount = mountOrThrow();
-    // One draw call for the whole fleet: six quads, two triangles each.
+    // One draw call for the whole fleet: one quad per car, two triangles each.
     expect(mount.mesh).toBeInstanceOf(Mesh);
     expect(mount.mesh.geometry.getAttribute('position').count).toBe(cars.length * 4);
     expect(mount.mesh.geometry.getIndex()?.count).toBe(cars.length * 6);

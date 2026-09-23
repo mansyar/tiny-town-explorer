@@ -74,9 +74,12 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
 - Any-orientation play; ortho camera tracks the active car.
 
 ## Out of Scope (v1)
-- AI traffic or wandering cars — anything that *moves* on its own. Static
-  parked cars shipped in `parked-cars_20260922` (2026-09-22): six cars on the
-  town's kerbs, crashable rather than solid, so the truck bonks and carries on.
+- AI traffic or wandering cars — anything that *moves* on its own — shipped
+  in `light-wandering-traffic_20260923` (2026-09-23): two seeded civilian
+  wanderers drive the ring all session, silent and crashable like the parked
+  cars. Those static parked cars shipped in `parked-cars_20260922`
+  (2026-09-22): four cars on the town's roomiest kerbs (the traffic budget
+  lever), bonked rather than blocked, so the truck always carries on.
 - Any persistence or save system — sessions start fresh by design.
 - Any written language in-game, including settings screens.
 
@@ -95,6 +98,7 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
   `mission-framework-consolidation_20260922`, 2026-09-22.
 - Optional session sticker board, only if playtesting shows value against
   shared-tablet sibling conflicts.
-- ~~Static parked cars~~ — shipped in `parked-cars_20260922`, 2026-09-22. Next
-  on this line is light wandering traffic, which is the part that needs AI
-  rather than authored data, and is the natural reason a car would ever move.
+- ~~Static parked cars~~ — shipped in `parked-cars_20260922`, 2026-09-22.
+- ~~Light wandering traffic~~ — shipped in
+  `light-wandering-traffic_20260923`, 2026-09-23: two seeded civilian cars
+  wander the ring all session — the natural reason a car would ever move.

@@ -479,3 +479,45 @@ track had shipped with.
   The real figures are +12,820 and 12,796 respectively — the earlier one had
   multiplied the four-*model* sum by six — and the spec now records the measured
   numbers beside its (correct) prediction.
+
+### The wandering-traffic device pass — one sitting
+
+What two moving cars add, on an iPad (the v1 sitting still covers town,
+vehicles, panel and offline play):
+
+1. **Load it and just watch.** Two civilian cars should be driving the ring
+the whole time — turning at corners, holding their side of the street, never
+pausing, never parading nose-to-tail.
+2. **Drive head-on into one.** Your truck squishes, bonks and carries on to
+where you tapped; the wanderer drives on untouched. Gentle comedy, never a
+crash.
+3. **Watch two cross at the junction.** They squash past each other silently
+and both carry on — no honks, no engine noise from them (the engine note is
+the kid's alone).
+4. **Tap on one as it passes.** Your truck routes to that spot on the road as
+usual — the wanderer is never "selected" and never reacts.
+5. **Play all four missions through** with the traffic driving — wanderers
+must never block a hose, sit on litter, cover a puppy, or answer a mission.
+6. **Look at the shadows.** The wanderers' blobs fall to the same side as the
+houses' shadows and travel with their cars.
+7. **Go offline** and confirm the two civilian models still appear — they
+ride art the precache already carried (48 entries, 4,191.87 KiB).
+
+### What to report back (wandering traffic)
+
+- Whether the wanderers read as "the town is alive" rather than as obstacles.
+- Any bonk that felt scary rather than funny.
+- Any moment a wanderer seemed to block or cover mission art.
+- Whether the frame rate still feels unchanged on the floor device — the
+scene measures 175 draws / 51,192 triangles per frame, +4 draws / +62
+triangles over the parked-cars gate's 171 / 51,130 (the owner's documented
+deviation; `tech-stack.md` carries the budget note).
+
+### Verdicts (wandering traffic)
+
+All five passed on the iPad (2026-09-23): the town reads alive at play
+distance with the two cars driving the ring the whole sitting; bonks feel
+funny, never scary; all four missions complete with traffic driving and no
+mover ever covered or blocked mission art; the frame rate is unchanged
+within noise on the floor device; and the two civilian models appear offline
+— they ride art the precache already carried.
