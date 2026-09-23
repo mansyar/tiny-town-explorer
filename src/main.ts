@@ -76,6 +76,9 @@ import { mountParkedShadows } from './game/town/parkedShadows';
 import { createTownGrid } from './game/town/townGrid';
 import { mountTown } from './game/town/townRenderer';
 import type { Vec2 } from './game/town/townTypes';
+import { mountTrafficActors } from './game/traffic/trafficActors';
+import { mountTrafficShadows } from './game/traffic/trafficShadows';
+import { createTrafficSystem } from './game/traffic/trafficSystem';
 import {
   createVehicleActor,
   type VehicleActorOptions,
@@ -466,12 +469,32 @@ async function main(): Promise<void> {
   if (parkedShadows !== undefined) {
     town.group.add(parkedShadows.mesh);
   }
+
+  // Two of the town's own cars wander the ring on their own errands (FR1):
+  // silent, seeded and sealed - the system says update/poses/footprints and
+  // knows nothing of the camera, the engine note or the taps.
+  const traffic = createTrafficSystem({
+    grid,
+    // A fixed seed, so the town's wander replays exactly, launch after launch.
+    seed: 20260923,
+  });
+  const trafficActors = await mountTrafficActors(library, traffic.poses());
+  for (const object of trafficActors.objects) {
+    town.group.add(object);
+  }
+  const trafficShadows = mountTrafficShadows(grid, traffic);
+  if (trafficShadows !== undefined) {
+    town.group.add(trafficShadows.mesh);
+  }
   scene.add(town.group);
 
   // Hitboxes come from the same measured models the town just mounted, so the
-  // car cannot disagree with the art about where a wall is.
+  // car cannot disagree with the art about where a wall is. The wanderers are
+  // the one live feed: crashable like a cone (FR4), re-read every sweep.
+  const statics = collectObstacles(grid, town.houseFootprints);
   const vehicle = createVehicleMotor({
-    obstacles: collectObstacles(grid, town.houseFootprints),
+    obstacles: statics,
+    dynamicObstacles: () => traffic.footprints(),
   });
   motor = vehicle;
   vehicle.snapTo(spawn);
@@ -639,6 +662,10 @@ async function main(): Promise<void> {
    * rather than inlined so the loop and any verification drive the same code.
    */
   function advance(delta: number): void {
+    // The wanderers go first, so the kid's sweep meets where they now stand.
+    traffic.update(delta);
+    trafficActors.sync();
+    trafficShadows?.sync();
     motor?.update(delta);
     actor?.sync();
     ring.update(delta);
