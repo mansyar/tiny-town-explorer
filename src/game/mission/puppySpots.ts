@@ -41,8 +41,6 @@ export interface PuppyHouse {
   readonly position: Vec2;
 }
 
-
-
 /** How much room beyond a building's capped footprint a spot keeps. */
 export const SPOT_HOUSE_MARGIN = 0.04;
 
