@@ -283,3 +283,11 @@
   and offline play is intact — recorded in `docs/playtest.md`'s verdicts
   section (`cfa3e67`).
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `ac58439`
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions `147a653`
+
+Two Medium findings from ``conductor-review`` (2026-09-23), one root: the movers' relation to static obstacles was half-specified. The fix removes the dead ``TrafficSystemOptions.obstacles`` option (never passed in production, never tested; its documented "shared with the kid's own motor" contract was unmet) and documents the accepted graze: the sedan mover's swept reach (0.3388 from the centre line) edges 0.041 into the parked cars' strip (near edge 0.2982) on same-side passes — the 0.60 carriageway has no room for two lanes and parking, so the FR3 clearance contract (head-on 0.354, overtake, kerb slack) holds what geometry allows. Two Lows recorded as notes only (per-sweep array allocation in the collision feed; ``pickStarts`` stacking in 0–1-tile degenerate towns).
+
+**Done:** the dead `obstacles` option and its plumbing are gone (`147a653`, 2 files, +11/−7) and the graze is documented at the motor seam and in `tech-stack.md`. 766 tests / 61 files unchanged — the removal is API-only. Two Lows remain recorded as notes (per-sweep allocation in the collision feed; `pickStarts` stacking in 0–1-tile degenerate towns).
