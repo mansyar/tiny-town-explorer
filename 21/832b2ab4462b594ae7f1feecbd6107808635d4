@@ -1,3 +1,13 @@
 Task: Input parity regression (FR6)
 
 Changes: three pinning guards in inputParity.test.ts (no prop identity / ground-point tap / never a mission target) against the real inputRouter, trafficSystem and the closed MissionId list. Files: src/game/traffic/inputParity.test.ts. Why: FR6 is structural - movers are not town props - and these are the tests that keep a future wiring mistake (feeding footprints to the router or the missions) from ever becoming true.
+
+Phase 4 verification report (Traffic system and input parity)
+
+Scope since Phase 3 checkpoint e2ef6e5: src/game/traffic/trafficSystem.ts + trafficSystem.test.ts (Task 1, af1cfde); src/game/traffic/inputParity.test.ts (Task 2, 21832b2).
+
+Automated: Biome 135 files clean, tsc clean, CI=true pnpm test 751/751 (60 files). Coverage: trafficSystem.ts 100% stmts / 71.4% branch (residue = noUncheckedIndexedAccess fallbacks); game/traffic 97.11% stmts.
+
+Manual: hero-car regression presented (tap-to-move, bonk-and-resume, 4 vehicle swaps + one ability each, parked cars untouched) and confirmed by the owner. Traffic is deliberately invisible until Phases 5-6 mount the actors and wire the system.
+
+Caveats: one authoring slip in the FR6 guards (unsorted expected key array) fixed before green; no product gaps found.
