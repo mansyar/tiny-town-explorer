@@ -91,7 +91,7 @@
     color lands in `townLayout.GROUND_COLORS`.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (8084993)
 
-## Phase 3 – Corner shop GLB (manual-verify)
+## Phase 3 – Corner shop GLB (manual-verify) [checkpoint: 085425d]
 
 - [x] Task: Author and mount the corner shop (FR3) (085425d)
   - [x] Blender-author shopfront + striped awning to the City Kit (Suburban)
@@ -121,7 +121,7 @@
   the junction-corner landmark. Test fallout: house counts 15, the figure-eight
   block test now expects the shop as a house. Gates: `pnpm check` +
   `pnpm typecheck` clean, 63 files / 779 tests green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (085425d)
 
 ## Phase 4 – Pond splash and waddling ducks (mixed)
 
