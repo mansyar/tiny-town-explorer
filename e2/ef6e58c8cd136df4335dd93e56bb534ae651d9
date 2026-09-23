@@ -11,3 +11,22 @@ Why: FR4 one collision language is structural at the boundary that owns
 it: bump, squish, carry on - a misflagged feed must never strand a kid.
 Two red assertions were arrival-precision slips (the motor parks within
 ARRIVAL_RADIUS, not on the point) - fixed to the radius idiom.
+
+Phase 3 verification report (Lane discipline and dynamic collision feed)
+
+Scope since Phase 2 checkpoint (c0d59b0): src/game/traffic/trafficBrain.ts +
+trafficBrain.test.ts (Task 1, c8c546d); src/game/vehicle/vehicleMotor.ts +
+vehicleMotor.test.ts (Task 2, de452d4; Task 3, e2ef6e5). Tests present for
+every code file in scope.
+
+Automated: pnpm check (Biome 132 files) + pnpm typecheck clean;
+CI=true pnpm test -> 742 passed / 58 files. Coverage: trafficBrain.ts 94.7%
+stmts / 91.4% branch (guards 82,138,148); vehicleMotor.ts 100% stmts / 95.5%
+branch (pre-existing guards 223/237/290).
+
+Manual: driving-feel regression presented (pure-logic phase - lanes and the
+live feed mount visually in Phases 5-6); owner confirmed.
+
+Caveats: none. Red-first throughout; 2 red assertions were arrival-precision
+slips fixed to the ARRIVAL_RADIUS idiom; 1 genuine red (a misflagged solid
+feed entry stranded a car) fixed structurally via asCrashable().
