@@ -181,15 +181,29 @@
 
 ## Phase 5 – Actors, fit and following blob shadows (manual-verify, exempt from TDD)
 
-- [ ] Task: Mount the two movers (FR1, FR2)
-  - [ ] Mount sedan and hatchback-sports through `vehicleActor` at the parked
+- [x] Task: Mount the two movers (FR1, FR2) `7f1b835`
+  - [x] Mount sedan and hatchback-sports through `vehicleActor` at the parked
     cars' 0.55 fit, `MODEL_FACING_YAW`-aligned to the route heading, seat on
     the road surface, `castsShadow: false`; measure each fitted model with
     `pnpm assets:measure` and record the per-model triangles (the spec's
     ≈−3.9k assumption gets its real number here)
-  - [ ] Manual steps recorded in the commit note: `pnpm dev`, watch two cars
+  - [x] Manual steps recorded in the commit note: `pnpm dev`, watch two cars
     trundle and turn smoothly at corners
-- [ ] Task: Following merged blob shadow (FR8)
+
+  **Done:** `trafficActors.ts` mounts both through `vehicleActor` on read-only
+  pose mirrors (`trafficSystem.poses()`), `fitLength: PARKED_CAR_FIT` (0.55),
+  `castsShadow: false`. **In-flight correction to the sub-task's wording:**
+  Car Kit art is authored facing +z (kit-mount-measurements.md), so the movers
+  mount at the fleet's `FLEET_FACING_YAW` (0) — `MODEL_FACING_YAW`'s π would
+  drive them cab-last, invisible on a parked car but glaring on a mover.
+  `vehicleActor`'s motor parameter is narrowed to the `VehiclePose` it always
+  actually read, so the motors stay sealed (FR9). Measured per model (the
+  spec's ≈−3.9k assumption gets its real number): sedan.glb 2,032 tris,
+  hatchback-sports.glb 2,088 tris → **4,120 model triangles** — the 0.55 fit is
+  a transform, so the kit count is the count. 752 tests / 60 files. The plan's
+  manual steps are recorded in the commit note as written; they run at Phase
+  6's wiring, when the cars can actually trundle.
+- [~] Task: Following merged blob shadow (FR8)
   - [ ] Build both blobs as **one dynamic mesh** in `trafficShadows.ts` —
     per-car sun-aligned offset/stretched quads exactly in `parkedShadows`'
     language (offset sign asserted as `dot(offset, sun.xz) < 0`), translated
