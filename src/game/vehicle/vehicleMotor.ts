@@ -132,6 +132,13 @@ export interface VehicleMotorOptions {
   readonly heading?: number;
   /** Hitboxes to sweep against; empty (the default) is a world with no walls. */
   readonly obstacles?: readonly Obstacle[];
+  /**
+   * Live hitboxes for other cars, read fresh on every sweep. Movers move: a
+   * feed is the only honest answer to "where is everyone this frame". Ids
+   * must be stable per mover so the bump-once-then-pass rule can recognise
+   * them across frames.
+   */
+  readonly dynamicObstacles?: () => readonly Obstacle[];
   /** Radius of each capsule circle, defaulting to {@link CAR_RADIUS}. */
   readonly radius?: number;
   /** Driving pace in world units per second; defaults to {@link DRIVE_SPEED}. */
@@ -176,6 +183,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
   let bonks = 0;
 
   const obstacles = options.obstacles ?? [];
+  const dynamicObstacles = options.dynamicObstacles;
   const radius = options.radius ?? CAR_RADIUS;
   const speed = options.speed ?? DRIVE_SPEED;
   const turnRate = options.turnRate ?? TURN_RATE;
@@ -291,6 +299,14 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
   };
 
   /**
+   * Everything to sweep this frame: the town's hitboxes plus wherever the
+   * other cars stand right now. With no feed the static list is handed on
+   * unchanged, so a world without movers behaves exactly as it always has.
+   */
+  const liveObstacles = (): readonly Obstacle[] =>
+    dynamicObstacles === undefined ? obstacles : [...obstacles, ...dynamicObstacles()];
+
+  /**
    * First contact along this frame's motion for the whole capsule.
    *
    * The contact is reported with the car's own centre, not the struck circle's:
@@ -300,12 +316,15 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
     toX: number,
     toZ: number,
   ): { readonly impact: Impact; readonly centre: Vec2 } | undefined => {
+    // One read of the feed per sweep: the whole capsule must agree on where
+    // everybody stood this frame.
+    const world = liveObstacles();
     let best: { readonly impact: Impact; readonly centre: Vec2 } | undefined;
     for (const circle of capsuleCentres(position, heading, radius)) {
       const dx = circle.x - position.x;
       const dz = circle.z - position.z;
       const impact = sweepObstacles(
-        obstacles,
+        world,
         circle,
         { x: toX + dx, z: toZ + dz },
         radius,
@@ -353,7 +372,10 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
     // Sweep this frame's motion: at 1.6 u/s a single frame covers far enough to
     // pass clean through a prop, so contact must be found along the way rather
     // than at the destination.
-    const hit = obstacles.length === 0 ? undefined : sweepCapsule(nextX, nextZ);
+    const hit =
+      obstacles.length === 0 && dynamicObstacles === undefined
+        ? undefined
+        : sweepCapsule(nextX, nextZ);
     if (hit === undefined) {
       currentSpeed = speed;
       position.x = nextX;

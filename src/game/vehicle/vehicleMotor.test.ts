@@ -733,3 +733,88 @@ describe('the alignment tolerance', () => {
     expect(ALIGN_TOLERANCE).toBeLessThan(Math.PI / 4);
   });
 });
+
+describe('a live obstacle feed (FR5)', () => {
+  /** A mover: a crashable round footprint, like any other car in the town. */
+  const mover = (id: string, at: { x: number; z: number }): Obstacle => ({
+    id,
+    solid: false,
+    shape: { kind: 'circle', centre: at, radius: 0.15 },
+  });
+
+  it('hits a mover that steps into its path and drives past it afterwards', () => {
+    const feed: Obstacle[] = [];
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => feed,
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    // Clear road while nobody is crossing.
+    run(motor, 0.5);
+    expect(motor.bonkCount()).toBe(0);
+
+    // A mover crosses and stops in the lane, just ahead of the nose.
+    feed.push(mover('traffic-0', { x: 1.5, z: 0 }));
+    runUntil(motor, () => motor.isBouncing(), 3, 1 / 60);
+
+    expect(motor.bonkCount()).toBe(1);
+
+    // Crashable, like a cone: the bump cannot be allowed to cost the journey.
+    run(motor, 6);
+    expect(motor.isDriving()).toBe(false);
+    expect(motor.bonkCount()).toBe(1);
+  });
+
+  it('bumps a live mover once per route, and again on the next', () => {
+    const motor = createVehicleMotor({
+      heading: EAST,
+      dynamicObstacles: () => [mover('traffic-1', { x: 2, z: 0 })],
+    });
+
+    motor.setPath(directTo({ x: 3, z: 0 }));
+    run(motor, 5, 1 / 120);
+    expect(motor.bonkCount()).toBe(1);
+
+    motor.setPath(directTo({ x: 0, z: 0 }));
+    run(motor, 5, 1 / 120);
+    expect(motor.bonkCount()).toBe(2);
+  });
+
+  it('follows a mover as it walks — the feed is re-read every frame', () => {
+    // A car crossing the lane from the far side. It is in the way for only a
+    // few frames; a feed snapshotted at build time would sail right past it.
+    let walkerZ = -1.05;
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [mover('traffic-0', { x: 1.5, z: walkerZ })],
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    for (let frame = 0; frame < 120 && motor.bonkCount() === 0; frame++) {
+      walkerZ += 0.03;
+      motor.update(1 / 60);
+    }
+
+    expect(motor.bonkCount()).toBe(1);
+  });
+
+  it('with no feed at all, drives exactly as it does in an empty world', () => {
+    const plain = createVehicleMotor({ position: { x: 0, z: 0 }, heading: EAST });
+    const fed = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: EAST,
+      dynamicObstacles: () => [],
+    });
+    plain.setPath(directTo({ x: 2, z: 0.3 }));
+    fed.setPath(directTo({ x: 2, z: 0.3 }));
+
+    run(plain, 1.5);
+    run(fed, 1.5);
+
+    expect(fed.position).toEqual(plain.position);
+    expect(fed.heading()).toBe(plain.heading());
+  });
+});
