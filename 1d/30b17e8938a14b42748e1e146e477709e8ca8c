@@ -1,0 +1,3 @@
+Task: Full gates + measurements + docs (NFR2, NFR4, AC5)
+
+Changes: tech-stack.md traffic section with measured numbers and the owner-signed budget deviation; Vitest note updated to 766 tests / 61 files; product.md shipped line (out-of-scope bullet and roadmap); docs/playtest.md wandering-traffic device pass + report-back prompts. Files: conductor/tech-stack.md, conductor/product.md, docs/playtest.md. Why: NFR2/NFR4/AC5 demand the assembled scene be measured and recorded honestly - the numbers are over the pre-set line and the owner chose to carry that overage rather than pull the FR10 escape.
