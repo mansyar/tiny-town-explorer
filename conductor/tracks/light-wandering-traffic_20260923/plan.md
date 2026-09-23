@@ -161,15 +161,22 @@
   FR9: `footprints` + `update`, and nothing else. Each motor's sweep radius is
   its own fitted half-width, so capsule-vs-box sweeps honour
   `TRAFFIC_PASS_CLEARANCE` exactly.
-- [~] Task: Input parity regression (FR6)
-  - [ ] Write failing tests: movers publish no prop identity — the router's
+- [x] Task: Input parity regression (FR6) `21832b2`
+  - [x] Write failing tests: movers publish no prop identity — the router's
     0.45 snap never selects one; a tap on a mover's screen position resolves to
     the finger's ground point; movers never appear as mission targets in
     `answerMissions` or `missionFocus` inputs (red first — pinning tests
     against a future mistake)
-  - [ ] Implement nothing unless red proves a gap (movers are not town props,
+  - [x] Implement nothing unless red proves a gap (movers are not town props,
     so this should hold by construction — the tests are the guard)
-  - [ ] Refactor + coverage
+  - [x] Refactor + coverage
+
+  **Done:** 3 FR6 guard tests in `inputParity.test.ts` — no prop identity (the
+  0.45 tap-snap can never select one), a tap on a mover resolves to the
+  finger's ground point through the real router, and a mover id is never a
+  MissionId. One red on the first run was an authoring slip (the expected key
+  array was unsorted), not a gap: footprints already publish exactly
+  {id, shape, solid}. Nothing implemented, as anticipated. 751 tests / 60 files.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 – Actors, fit and following blob shadows (manual-verify, exempt from TDD)
