@@ -203,16 +203,25 @@
   a transform, so the kit count is the count. 752 tests / 60 files. The plan's
   manual steps are recorded in the commit note as written; they run at Phase
   6's wiring, when the cars can actually trundle.
-- [~] Task: Following merged blob shadow (FR8)
-  - [ ] Build both blobs as **one dynamic mesh** in `trafficShadows.ts` —
+- [x] Task: Following merged blob shadow (FR8) `04164c6`
+  - [x] Build both blobs as **one dynamic mesh** in `trafficShadows.ts` —
     per-car sun-aligned offset/stretched quads exactly in `parkedShadows`'
     language (offset sign asserted as `dot(offset, sun.xz) < 0`), translated
     with their car per frame, 1 draw call, absent from collision, taps and the
     shadow-map pass (13-style tests in `trafficShadows.test.ts`, same shape as
     `parkedShadows.test.ts`; note: blob translation is visual glue — the
     geometry contract is still tested)
-  - [ ] Manual verification recorded: blobs fall to the same side as the
+  - [x] Manual verification recorded: blobs fall to the same side as the
     houses' real shadows while the cars move
+
+  **Done:** `trafficShadows.ts` with pure `trafficShadowQuads` (live footprints
+  + per-kind sun offsets) and `mountTrafficShadows` — one merged
+  `BufferGeometry` whose vertices `sync()` rewrites every frame, one draw call.
+  14 geometry-contract tests in `parkedShadows.test.ts`'s shape. Two red tests
+  on the first run were float32 precision slips in the assertions (vertex
+  positions are float32; the containment margin sums in two orders), not
+  product gaps. 766 tests / 61 files. The manual verification is recorded in
+  the commit note as written; it runs at Phase 6's wiring.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 – Wiring, measurements, docs and device pass (mixed)
