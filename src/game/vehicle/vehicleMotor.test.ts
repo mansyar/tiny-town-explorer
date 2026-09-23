@@ -492,6 +492,38 @@ describe('driving a straight leg', () => {
   });
 });
 
+describe('per-car speed and turn rate (FR2)', () => {
+  it('trundles at the speed the caller gave it', () => {
+    // A mover's cruise: 0.9 against the hero's 1.6, so the kid always wins.
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: Math.PI / 2,
+      speed: 0.9,
+    });
+    motor.setPath(directTo({ x: 3, z: 0 }));
+
+    run(motor, 1);
+
+    expect(motor.position.x).toBeCloseTo(0.9, 6);
+    expect(motor.speed()).toBeCloseTo(0.9, 10);
+    expect(motor.isDriving()).toBe(true);
+  });
+
+  it('turns at the turn rate the caller gave it', () => {
+    const motor = createVehicleMotor({
+      position: { x: 0, z: 0 },
+      heading: 0,
+      turnRate: 2,
+    });
+    motor.setPath(directTo({ x: 2, z: 0 }));
+
+    motor.update(0.05);
+
+    expect(motor.position.x).toBeCloseTo(0, 10);
+    expect(motor.heading()).toBeCloseTo(2 * 0.05, 6);
+  });
+});
+
 describe('rotate-then-drive', () => {
   it('turns in place while the destination is off to the side', () => {
     // Facing south, asked to drive due east: a quarter turn first.

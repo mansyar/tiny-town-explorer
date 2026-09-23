@@ -134,6 +134,10 @@ export interface VehicleMotorOptions {
   readonly obstacles?: readonly Obstacle[];
   /** Radius of each capsule circle, defaulting to {@link CAR_RADIUS}. */
   readonly radius?: number;
+  /** Driving pace in world units per second; defaults to {@link DRIVE_SPEED}. */
+  readonly speed?: number;
+  /** Turn rate in radians per second; defaults to {@link TURN_RATE}. */
+  readonly turnRate?: number;
 }
 
 export interface VehicleMotor {
@@ -173,6 +177,8 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
 
   const obstacles = options.obstacles ?? [];
   const radius = options.radius ?? CAR_RADIUS;
+  const speed = options.speed ?? DRIVE_SPEED;
+  const turnRate = options.turnRate ?? TURN_RATE;
   /** Crashable obstacles already dealt with on this route, by id. */
   let passed = new Set<string>();
   /** Where the last bump happened, and which way the car came from. */
@@ -331,7 +337,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
       z: waypoint.z - position.z,
     });
     const error = shortestTurn(desired - heading);
-    const turned = clampMagnitude(error, TURN_RATE * elapsed);
+    const turned = clampMagnitude(error, turnRate * elapsed);
     heading += turned;
     if (Math.abs(error - turned) > ALIGN_TOLERANCE) {
       // Still pointing too far off: turn on the spot, wheels and all.
@@ -341,15 +347,15 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
 
     // Drive where the nose points, so the car can never crab sideways.
     const facing = facingOf(heading);
-    const nextX = position.x + facing.x * DRIVE_SPEED * elapsed;
-    const nextZ = position.z + facing.z * DRIVE_SPEED * elapsed;
+    const nextX = position.x + facing.x * speed * elapsed;
+    const nextZ = position.z + facing.z * speed * elapsed;
 
     // Sweep this frame's motion: at 1.6 u/s a single frame covers far enough to
     // pass clean through a prop, so contact must be found along the way rather
     // than at the destination.
     const hit = obstacles.length === 0 ? undefined : sweepCapsule(nextX, nextZ);
     if (hit === undefined) {
-      currentSpeed = DRIVE_SPEED;
+      currentSpeed = speed;
       position.x = nextX;
       position.z = nextZ;
       return;
