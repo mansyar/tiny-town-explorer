@@ -1,0 +1,18 @@
+Task: Remove the two tightest-kerb parked cars (FR10)
+
+Changes: townMap rows for sedan@(0,2) and hatchback@(0,3) removed (the two
+smallest measured wall gaps, 0.038 and 0.071); freed kerbs (1,2)/(1,3) are
+back in the park litter draw; the six-count test is replaced by the FR10
+four-car contract + a gap-matrix test; collision.test's along-street
+selector widened to yaw % pi == 0; count-bearing comments updated; FR10 and
+the plan corrected from "the two roomiest kerbs" to the lever's real
+direction (in-flight correction, workflow Task Correction 1).
+
+Files: src/game/town/townMap.ts, parkedCars.test.ts, parkedCarsPlacement.test.ts,
+parkedShadows.test.ts, townLayout.test.ts, src/game/collision/collision.test.ts,
+src/game/mission/parkLitter.test.ts,
+conductor/tracks/light-wandering-traffic_20260923/{spec,plan}.md
+
+Why: pay the movers' triangle bill up front (spec FR10/NFR2) and give the
+park mission back the kerbs the tightest cars occupied. 47,064 tris /
+163 draws measured after (-4,066 / -8 from 51,130 / 171).
