@@ -109,17 +109,23 @@
   index guards under `noUncheckedIndexedAccess`). Lane contract: bias 0.177 =
   widest fitted half-width 0.1618 + half of pass clearance 0.03; kerb slack
   0.04 pins the 0.0388 reach past the kerb band's inner edge.
-- [~] Task: Live obstacle supplier in the motor (FR5)
-  - [ ] Write failing tests: `createVehicleMotor` accepts
+- [x] Task: Live obstacle supplier in the motor (FR5) `de452d4`
+  - [x] Write failing tests: `createVehicleMotor` accepts
     `dynamicObstacles?: () => Obstacle[]`; a moving box entering the sweep is
     reported as a crashable impact that same frame; bump-once-then-pass
     (`passed` ids) applies to dynamic obstacles exactly as to props and resets
     per `setPath`; with no supplier the motor behaves byte-for-byte as today
     (red first)
-  - [ ] Implement the supplier option and fold its output into the existing
+  - [x] Implement the supplier option and fold its output into the existing
     sweep, keeping ids stable per mover (`traffic-0`, `traffic-1`)
-  - [ ] Refactor + coverage (`vehicleMotor.test.ts`, `collision.test.ts`)
-- [ ] Task: The one collision language, mover to mover (FR4)
+  - [x] Refactor + coverage (`vehicleMotor.test.ts`, `collision.test.ts`)
+
+  **Done:** 4 FR5 red tests (the feed was never swept — the
+  `obstacles.length === 0` fast path skipped it) then green in `de452d4`.
+  739 tests / 58 files; `vehicleMotor.ts` 100% stmts / 95.5% branch. One feed
+  read per sweep; no-supplier parity pinned by test; the walker test pins
+  re-read-every-frame against snapshot implementations.
+- [~] Task: The one collision language, mover to mover (FR4)
   - [ ] Write failing tests: kid→mover bonks, squishes and resumes with the
     route cursor advancing and the mover's route untouched; mover→mover at a
     junction squashes (both report impact) and both carry on; no dynamic
