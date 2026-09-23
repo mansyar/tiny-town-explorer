@@ -142,7 +142,7 @@
   `e2ef6e5`. 742 tests / 58 files.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `e2ef6e5`
 
-## Phase 4 – Traffic system and input parity (TDD)
+## Phase 4 – Traffic system and input parity (TDD) [checkpoint: 21832b2]
 
 - [x] Task: Self-contained `trafficSystem` (FR9) `af1cfde`
   - [x] Write failing tests for the module's contract:
@@ -177,7 +177,7 @@
   MissionId. One red on the first run was an authoring slip (the expected key
   array was unsorted), not a gap: footprints already publish exactly
   {id, shape, solid}. Nothing implemented, as anticipated. 751 tests / 60 files.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `21832b2`
 
 ## Phase 5 – Actors, fit and following blob shadows (manual-verify, exempt from TDD)
 
