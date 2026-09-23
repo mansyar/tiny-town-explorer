@@ -226,17 +226,31 @@
 
 ## Phase 6 – Wiring, measurements, docs and device pass (mixed)
 
-- [ ] Task: Scene wiring and hero isolation (FR7, FR9)
-  - [ ] Wire `trafficSystem` into `main.ts`: one `update` call in `advance()`,
+- [x] Task: Scene wiring and hero isolation (FR7, FR9) `ac58439`
+  - [x] Wire `trafficSystem` into `main.ts`: one `update` call in `advance()`,
     `footprints()` folded into the kid's motor supplier alongside
     `collectObstacles`, the blob mesh joining `town.group`; assert (by the
     Phase 4 surface) the camera target, `audio.setEngine`, `swapVehicle` and
     the bonk counter still read only the kid's motor; **movers stay silent** —
     no audio node is created for them
-  - [ ] Manual drive-through by the track owner: head-on bonk with a mover, a
+  - [x] Manual drive-through by the track owner: head-on bonk with a mover, a
     junction crossing of two movers, a tap onto a mover's position — all three
     resolve as gentle comedy (agent-driven taps cannot pass the router's
     newest-command filter, so this pass is the owner's)
+  **Done:** wired in `ac58439` — the system ticks first in `advance()`, its
+  footprints are the kid's one live feed, and the actors plus one blob mesh
+  join `town.group`; the hero's closures (camera, engine, bonk, swap) read
+  only the kid's motor, and the movers create no audio node. Owner
+  drive-through passed: head-on bonk, junction crossing and a tap onto a
+  mover all resolve as gentle comedy (screenshot evidence: movers nose-along
+  their streets, blobs on the houses' shadow side). **Budget deviation
+  (owner's call):** the assembled scene measures **175 draws / 51,192
+  triangles** against the line 171 / 51,130 — +4 draws / +62 triangles (two
+  actor-mounted movers cost a few more draws than their placement-mounted
+  twins, and the blobs are two meshes now). The plan pre-decided the FR10
+  escape; the owner chose to keep all six civilian cars and document the
+  overage instead (2026-09-23).
+
 - [ ] Task: Full gates + measurements + docs (NFR2, NFR4, AC5)
   - [ ] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
     >80% on every logic module touched
