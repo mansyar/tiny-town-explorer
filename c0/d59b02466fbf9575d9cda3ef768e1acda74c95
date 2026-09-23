@@ -1,0 +1,13 @@
+Task: Seeded endless route brain (FR2)
+
+Changes: src/game/traffic/trafficBrain.ts - createTrafficBrain({grid, random})
+with take(from): Path | undefined; snaps the start to the nearest road tile
+(bonk-safe), enumerates every other reachable road tile in row-major order
+(reachableLegs), draws exactly one die roll to pick, hands back road-centre
+waypoints and the destination tile centre.
+
+Files: src/game/traffic/trafficBrain.ts, trafficBrain.test.ts
+
+Why: FR2's endless seeded wander. Pure over pathfinder's API - no three.js,
+no wall clock; the frame-driven retarget seam lives in trafficSystem (Phase
+4). The one-RNG-draw-per-leg contract is pinned by test.
