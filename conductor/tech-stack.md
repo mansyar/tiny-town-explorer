@@ -93,6 +93,30 @@
   ratcheting down for the floor device until a playtest says otherwise, but the
   number is over budget and should not be presented as inside it.
 
+- **Light wandering traffic (added 2026-09-23):** two ambient civilian cars
+  (Car Kit sedan and hatchback-sports — the same two models the parked-cars
+  budget lever freed) drive the ring for the whole session on seeded endless
+  BFS routes at 0.8 and 1.0 units/s, holding opposite lanes (bias 0.177 =
+  widest fitted half-width 0.1618 + half the 0.03 pass clearance). Silent
+  (FR7), crashable like a cone (FR4), absent from the mission seam and the
+  tap router (FR6), mounted through `vehicleActor` at the parked cars' 0.55
+  fit with one merged following blob mesh. Measured on the running game at
+  the fresh-spawn view (the GL-counter method above): the assembled scene
+  (4 parked + 2 movers + blob meshes) is **175 draw calls and 51,192
+  triangles per frame**, against the parked-cars gate's 171 / 51,130.
+
+  **Budget note, stated plainly:** the scene is **+4 draw calls and +62
+  triangles over the previous shipped line**. The swap itself is neutral —
+  the same six civilian models and the same twelve blob triangles — but two
+  actor-mounted movers cost a few more draws than their placement-mounted
+  twins, and the moving blobs need their own mesh. The plan pre-decided the
+  FR10 escape (drop to two parked cars) for any overage; the owner chose on
+  2026-09-23 to keep all six civilian cars and carry this honest overage
+  instead, and the iPad device pass decides whether it matters. Precache
+  stays at **48 entries** and **4,191.87 KiB** (was 4,186.67 — +5.20 KiB of
+  bundle code, zero new asset files: the movers ride art the town already
+  precached).
+
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
   oscillators; CC0 samples decoded to AudioBuffers. First-tap unlock,
@@ -187,8 +211,9 @@ running through a town street. Full table:
   four Car Kit cars (sedan 180.2, hatchback-sports 205.2, van 183.6, suv 214.7
   KiB) are 783.6 of the 787.9 KiB rise, and all four are in the precache
   manifest, so the game still plays offline with the cars present.
-- Vitest 5 peer range vs Vite 8 — **verified**: 712 tests across 57 files
-  (parked-cars track; was 621 across 50 at the consolidation track, 516 across
-  43 at the park/puppy track, 361 across 28 before that).
+- Vitest 5 peer range vs Vite 8 — **verified**: 766 tests across 61 files
+  (light-wandering-traffic track; was 712 across 57 at the parked-cars track,
+  621 across 50 at the consolidation track, 516 across 43 at the park/puppy
+  track, 361 across 28 before that).
 - TypeScript 7 interop with Vite's transformer, `tsc --noEmit` gate — **verified**
   in both places; the native compiler runs the build's type-check step.
