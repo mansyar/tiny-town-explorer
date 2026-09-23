@@ -18,7 +18,7 @@
 > close the track (Phase 7) because the honest budget note (NFR2) is judged
 > against the fully-assembled scene at the junction's worst-case window.
 
-## Phase 1 – Mission spots derive from the map (TDD)
+## Phase 1 – Mission spots derive from the map (TDD) [checkpoint: 4a6de5b]
 
 - [x] Task: Generalize spot derivation (FR6) (9b7d17f)
   - [x] Write failing tests: deriving puppy spots, park slots and spawn points
@@ -44,7 +44,7 @@
     derivation already ran through `spec.spawnPoints` — pinned by the golden
     test. Coverage on touched logic: parkSlots 100%, townGrid 100% stmts /
     94.6% branch, puppySpots 97.6%.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (4a6de5b)
 
 ## Phase 2 – Figure-eight map authoring (TDD for invariants)
 
