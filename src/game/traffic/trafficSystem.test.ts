@@ -33,9 +33,13 @@ describe('a self-contained traffic system (FR9)', () => {
     for (const obstacle of footprints) {
       expect(obstacle.shape.kind).toBe('box');
     }
-    // The whole surface: it drives the town's ambience and publishes where
-    // its cars stand. It knows nothing of cameras, engines or taps.
-    expect(Object.keys(traffic).sort()).toEqual(['footprints', 'update']);
+    // The whole surface: it ticks the wanderers, shows where they are and
+    // publishes where they stand. It knows nothing of cameras, engines or
+    // taps — and nothing anyone holds can steer a mover.
+    expect(Object.keys(traffic).sort()).toEqual(['footprints', 'poses', 'update']);
+    for (const forbidden of ['cameraTarget', 'engineRate', 'setPath', 'snapTo', 'tap']) {
+      expect(forbidden in traffic).toBe(false);
+    }
   });
 
   it('never publishes a wall: both boxes are crashable (FR4)', () => {
@@ -96,5 +100,25 @@ describe('a self-contained traffic system (FR9)', () => {
     expect(
       Math.hypot((a?.[0] ?? 0) - (b?.[0] ?? 0), (a?.[1] ?? 0) - (b?.[1] ?? 0)),
     ).toBeGreaterThan(0.5);
+  });
+
+  it('poses mirror the footprints exactly, frame after frame (FR1)', () => {
+    const traffic = createTrafficSystem({ grid, seed: 7 });
+    for (let frame = 0; frame < 30; frame++) {
+      traffic.update(1 / 30);
+      const footprints = traffic.footprints();
+      traffic.poses().forEach((pose, index) => {
+        expect(footprints[index]?.id).toBe(pose.id);
+        expect(['parkedSedan', 'parkedHatchback']).toContain(pose.kind);
+        const box = footprints[index]?.shape;
+        if (box?.kind !== 'box') {
+          throw new Error('expected a box footprint');
+        }
+        // The pose is the same live point the footprint is published from.
+        expect(pose.position.x).toBe(box.centre.x);
+        expect(pose.position.z).toBe(box.centre.z);
+        expect(Number.isFinite(pose.heading())).toBe(true);
+      });
+    }
   });
 });

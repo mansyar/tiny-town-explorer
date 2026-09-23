@@ -8,10 +8,11 @@ import { createTrafficBrain, type TrafficBrain } from './trafficBrain';
  * Light wandering traffic: two ambient cars that make the town feel alive.
  *
  * The system owns both wanderers outright — their motors, their brains, their
- * lanes — and says exactly two things: `update` to tick them, `footprints` to
- * publish where they stand. No camera target, no engine voice, no tap handler
- * (product.md: the hero car is the only character the child drives). A mover
- * is not a mission; it is the town's natural reason for a car to ever move.
+ * lanes — and says only what the town needs: `update` to tick them, `poses` to
+ * show them, `footprints` to publish where they stand. No camera target, no
+ * engine voice, no tap handler (product.md: the hero car is the only character
+ * the child drives). A mover is not a mission; it is the town's natural reason
+ * for a car to ever move.
  *
  * Deterministic on purpose: `seed` decides the whole wander — starts, routes,
  * the lot — so one launch replays exactly like the next.
@@ -44,6 +45,25 @@ export interface TrafficSystemOptions {
   readonly obstacles?: readonly Obstacle[];
 }
 
+/**
+ * A read-only view of one wanderer's live pose, for whoever draws it (FR1).
+ *
+ * The motors stay sealed inside the system; this mirror is all the mounting
+ * ever sees, so nobody can steer a mover from outside.
+ */
+export interface TrafficPose {
+  /** Which mover; the same identity its footprint publishes. */
+  readonly id: string;
+  /** Which civilian model stands here — the kind decides the mounted art. */
+  readonly kind: MoverKind;
+  /** Live world position; follows the car as it drives. */
+  readonly position: { readonly x: number; readonly z: number };
+  /** Where the nose points, in the town's yaw convention. */
+  heading(): number;
+  /** Recoil progress 0→1 while a bonk springs back, otherwise nothing. */
+  bounceProgress(): number | undefined;
+}
+
 export interface TrafficSystem {
   /** Advance both wanderers one frame. */
   update(deltaSeconds: number): void;
@@ -52,6 +72,8 @@ export interface TrafficSystem {
    * in the town (FR4), for the kid's and each other's sweeps (FR5).
    */
   footprints(): readonly Obstacle[];
+  /** Read-only poses to mount models on (FR1) — mirrors, never the motors. */
+  poses(): readonly TrafficPose[];
 }
 
 interface Carriage {
@@ -59,6 +81,7 @@ interface Carriage {
   readonly motor: ReturnType<typeof createVehicleMotor>;
   readonly brain: TrafficBrain;
   readonly extents: ReturnType<typeof parkedCarHalfExtents>;
+  readonly pose: TrafficPose;
 }
 
 export function createTrafficSystem(options: TrafficSystemOptions): TrafficSystem {
@@ -71,6 +94,7 @@ export function createTrafficSystem(options: TrafficSystemOptions): TrafficSyste
   let carriages: Carriage[] = [];
 
   const footprints = (): readonly Obstacle[] => carriages.map(footprintOf);
+  const poses = (): readonly TrafficPose[] => carriages.map((carriage) => carriage.pose);
 
   carriages = MOVERS.map((spec, index) =>
     buildCarriage({
@@ -85,6 +109,7 @@ export function createTrafficSystem(options: TrafficSystemOptions): TrafficSyste
 
   return {
     footprints,
+    poses,
 
     update(deltaSeconds) {
       for (const carriage of carriages) {
@@ -117,7 +142,15 @@ function buildCarriage(options: {
     speed: options.spec.speed,
     dynamicObstacles: options.others,
   });
-  return { spec: options.spec, motor, brain, extents };
+  const pose: TrafficPose = {
+    id: options.spec.id,
+    kind: options.spec.kind,
+    // The motor's position is written in place, so the mirror follows for free.
+    position: motor.position,
+    heading: () => motor.heading(),
+    bounceProgress: () => motor.bounceProgress(),
+  };
+  return { spec: options.spec, motor, brain, extents, pose };
 }
 
 function drive(carriage: Carriage, deltaSeconds: number): void {

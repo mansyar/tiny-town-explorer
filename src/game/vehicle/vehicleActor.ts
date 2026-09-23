@@ -1,6 +1,5 @@
 import { Box3, Group, type Object3D, Vector3 } from 'three';
 import type { ModelLibrary } from '../assets/modelLibrary';
-import type { VehicleMotor } from './vehicleMotor';
 
 /**
  * The drivable car in the scene: a kit model that copies the motor's pose every
@@ -48,6 +47,22 @@ export const IMPACT_SPREAD = 0.15;
  * probes, not assumed: getting this wrong is invisible until you watch it move.
  */
 export const MODEL_FACING_YAW = Math.PI;
+
+/**
+ * The live pose a model copies every frame.
+ *
+ * A motor is one of these, and so is a read-only mirror of a motor that lives
+ * inside a sealed system — which is how the town's wanderers get drawn without
+ * anyone being handed their motion. The actor never read more than this.
+ */
+export interface VehiclePose {
+  /** Live world position, read in place on every frame. */
+  readonly position: { readonly x: number; readonly z: number };
+  /** Where the nose points, in the town's yaw convention. */
+  heading(): number;
+  /** Recoil progress 0→1 while a bonk springs back, otherwise nothing. */
+  bounceProgress(): number | undefined;
+}
 
 export interface VehicleActor {
   /** Scene node to add; the motor's pose is applied to this. */
@@ -103,7 +118,7 @@ export interface VehicleActorOptions {
 export async function createVehicleActor(
   library: ModelLibrary,
   url: string,
-  motor: VehicleMotor,
+  motor: VehiclePose,
   options: VehicleActorOptions = {},
 ): Promise<VehicleActor> {
   const { facingYaw = MODEL_FACING_YAW, fitLength } = options;
