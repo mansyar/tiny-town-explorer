@@ -144,17 +144,24 @@
 
 ## Phase 4 – Traffic system and input parity (TDD)
 
-- [ ] Task: Self-contained `trafficSystem` (FR9)
-  - [ ] Write failing tests for the module's contract:
+- [x] Task: Self-contained `trafficSystem` (FR9) `af1cfde`
+  - [x] Write failing tests for the module's contract:
     `createTrafficSystem({ grid, seed, obstacles })` owns its two motors and
     brains; `update(delta)` advances both; `footprints()` publishes both live
     boxes with stable ids; it exposes **nothing else** — no camera target, no
     engine rate, no tap handler (asserted as absent surface); a scripted
     session of N frames is deterministic (red first)
-  - [ ] Implement `trafficSystem.ts` composing `trafficBrain` + `vehicleMotor`
+  - [x] Implement `trafficSystem.ts` composing `trafficBrain` + `vehicleMotor`
     (this is the `setPath` comment's anticipated "second car")
-  - [ ] Refactor + coverage (≥80%)
-- [ ] Task: Input parity regression (FR6)
+  - [x] Refactor + coverage (≥80%)
+
+  **Done:** 6 FR9 red tests (module missing) then green in `af1cfde`. 748 tests /
+  59 files; `trafficSystem.ts` 100% statements (branch residue =
+  `noUncheckedIndexedAccess` fallbacks). The absent-surface keys assertion pins
+  FR9: `footprints` + `update`, and nothing else. Each motor's sweep radius is
+  its own fitted half-width, so capsule-vs-box sweeps honour
+  `TRAFFIC_PASS_CLEARANCE` exactly.
+- [~] Task: Input parity regression (FR6)
   - [ ] Write failing tests: movers publish no prop identity — the router's
     0.45 snap never selects one; a tap on a mover's screen position resolves to
     the finger's ground point; movers never appear as mission targets in
