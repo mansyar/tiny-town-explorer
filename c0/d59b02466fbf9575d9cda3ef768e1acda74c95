@@ -11,3 +11,18 @@ Files: src/game/traffic/trafficBrain.ts, trafficBrain.test.ts
 Why: FR2's endless seeded wander. Pure over pathfinder's API - no three.js,
 no wall clock; the frame-driven retarget seam lives in trafficSystem (Phase
 4). The one-RNG-draw-per-leg contract is pinned by test.
+
+Phase 2 verification report (Per-car motor options and the wandering brain)
+
+Scope since Phase 1 checkpoint be8a4c7: vehicleMotor.ts/.test.ts (Task 1,
+1283b09), src/game/traffic/trafficBrain.ts/.test.ts (Task 2, c0d59b0).
+
+Automated: pnpm check (Biome, 132 files) + pnpm typecheck clean; CI=true
+pnpm test 728/728 (58 files). Coverage: trafficBrain.ts 100% across the
+board; vehicleMotor.ts 100% stmts / 95.16% branch (bar was >=94%).
+
+Manual: regression pass presented (hero car tap-to-move, bonk-and-resume,
+4 vehicle swaps, one ability each - motor defaults byte-identical; no
+visible traffic until Phases 5-6 by deliberate sequencing). Owner confirmed.
+
+Caveats: none outstanding.
