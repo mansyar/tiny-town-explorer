@@ -1,0 +1,3 @@
+Task: Following merged blob shadow (FR8)
+
+Changes: trafficShadows.ts with pure trafficShadowQuads (live footprints + per-kind sun offsets) and mountTrafficShadows (one merged BufferGeometry, vertices rewritten in sync(), one draw call); 14 geometry-contract tests in trafficShadows.test.ts in parkedShadows.test.ts shape. Files: src/game/traffic/trafficShadows.ts, src/game/traffic/trafficShadows.test.ts. Why: FR8 - moving cars need the parked cars shadow language or the town reads as two lighting families; translation is visual glue but the geometry contract is pinned (sign convention, stretch, per-kind throw, footprint-under-blob, no prop identity, shadow-map opt-out). Two first-run reds were float32 assertion precision slips, fixed in the tests.
