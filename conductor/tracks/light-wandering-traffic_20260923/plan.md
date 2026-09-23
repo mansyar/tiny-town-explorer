@@ -54,7 +54,7 @@
   tests / 57 files green (712 baseline − 1 superseded six-count test + 4 new).
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `be8a4c7`
 
-## Phase 2 – Per-car motor options and the wandering brain (TDD)
+## Phase 2 – Per-car motor options and the wandering brain (TDD) [checkpoint: c0d59b0]
 
 - [x] Task: Per-instance speed and turn rate (FR2) `1283b09`
   - [x] Write failing tests: `createVehicleMotor` accepts `speed`/`turnRate` in
@@ -87,7 +87,7 @@
   **Found and fixed (refactor step):** Biome's complexity gate flagged `take()`
   at 22 > 15 — the leg enumeration moved out as `reachableLegs()`.
   728 tests / 58 files; `trafficBrain.ts` 100% statements/branch/funcs/lines.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `c0d59b0`
 
 ## Phase 3 – Lane discipline and dynamic collision feed (TDD)
 
