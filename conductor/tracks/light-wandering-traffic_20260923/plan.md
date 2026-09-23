@@ -224,7 +224,7 @@
   the commit note as written; it runs at Phase 6's wiring.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `04164c6`
 
-## Phase 6 – Wiring, measurements, docs and device pass (mixed)
+## Phase 6 – Wiring, measurements, docs and device pass (mixed) [checkpoint: ac58439]
 
 - [x] Task: Scene wiring and hero isolation (FR7, FR9) `ac58439`
   - [x] Wire `trafficSystem` into `main.ts`: one `update` call in `advance()`,
@@ -251,18 +251,35 @@
   escape; the owner chose to keep all six civilian cars and document the
   overage instead (2026-09-23).
 
-- [ ] Task: Full gates + measurements + docs (NFR2, NFR4, AC5)
-  - [ ] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
+- [x] Task: Full gates + measurements + docs (NFR2, NFR4, AC5) `1d30b17`
+  - [x] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
     >80% on every logic module touched
-  - [ ] Measure the assembled scene (4 parked + 2 movers + 1 blob mesh) with
+  - [x] Measure the assembled scene (4 parked + 2 movers + 1 blob mesh) with
     the GL-counter method; confirm precache entries/KiB unchanged (zero new
     bytes); record all of it in `tech-stack.md` with the honest budget note —
     **must not exceed 51,130 / 171**; if over, pull the FR10 escape and drop
     to two parked cars before declaring done
-  - [ ] `product.md` moves light wandering traffic to the shipped line;
+  - [x] `product.md` moves light wandering traffic to the shipped line;
     `docs/playtest.md` gains the traffic section
-- [ ] Task: Device pass (AC1–AC4, AC6, AC8)
-  - [ ] iPad sitting: town reads alive at play distance, bonks feel funny not
+  **Done:** full gates green (`pnpm check` 138 files, `tsc` clean, `CI=true
+  pnpm test` 766/766 across 61 files); coverage on every touched logic module
+  ≥80% (`trafficBrain` 94.7%, `trafficSystem` 98.1%, `trafficShadows` 97.7%;
+  `trafficActors` is visual glue). Measured the assembled scene with the
+  GL-counter at the fresh-spawn view: **175 draws / 51,192 triangles** — over
+  the line (171 / 51,130) by +4 draws / +62 triangles. The FR10 escape was
+  the plan's pre-decision; the owner chose to keep all six civilian cars and
+  carry the honest overage (documented in `tech-stack.md`). Precache: 48
+  entries, 4,191.87 KiB (was 4,186.67 — +5.20 KiB of bundle code, zero new
+  asset files). `product.md` and `docs/playtest.md` record the shipped line.
+
+- [x] Task: Device pass (AC1–AC4, AC6, AC8) `cfa3e67`
+  - [x] iPad sitting: town reads alive at play distance, bonks feel funny not
     scary, all four missions complete with traffic driving, fps unchanged
     within noise, works offline; verdicts recorded in `docs/playtest.md`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+  **Done:** the iPad sitting passed all five verdicts (2026-09-23) — the town
+  reads alive at play distance, bonks feel funny not scary, all four missions
+  complete with traffic driving, the frame rate is unchanged within noise,
+  and offline play is intact — recorded in `docs/playtest.md`'s verdicts
+  section (`cfa3e67`).
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `ac58439`
