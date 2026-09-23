@@ -48,19 +48,47 @@
 
 ## Phase 2 – Figure-eight map authoring (TDD for invariants)
 
-- [ ] Task: Author the figure-eight `TOWN_MAP` (FR1, FR2)
-  - [ ] Write failing tests for the map invariants on the new spec: the road
+- [x] Task: Author the figure-eight `TOWN_MAP` (FR1, FR2) (bf4a9f8)
+  - [x] Write failing tests for the map invariants on the new spec: the road
     network is one connected component reachable through the shared junction;
     every lot touches a street; the pond green is never a `P` tile; the two
     loops meet at exactly one shared junction tile; the second block holds four
     house lots, one shop lot and the pond green; derived spawns sit 2 + 2
     across the loops (red first — the new counts fail on the 6×6 data)
-  - [ ] Author the rows/lot/prop data in `townMap.ts` — second block loop
+  - [x] Author the rows/lot/prop data in `townMap.ts` — second block loop
     through one shared junction, shop lot at the junction corner, pond green in
     the loop's heart, four new houses with distinct Suburban models, prop
     offsets per the measure-first rule (`pnpm assets:measure` before mounting)
-  - [ ] Refactor + coverage (grid/layout suites; pathfinder tests extended to
+  - [x] Refactor + coverage (grid/layout suites; pathfinder tests extended to
     figure-eight crossing routes in both directions)
+  - **Done (bf4a9f8):** `figureEight.test.ts` 7 tests red first (5 failed on the
+    6×6 map exactly as designed), all green after; suite now 63 files / 779
+    tests. In-flight refinements: `parkLitter`'s outer-edge `touchesRingRoad`
+    heuristic generalized to `touchesStreet` (any road neighbour) because the
+    outer-edge rule broke at N=10; `trafficBrain`'s custom mini-maps given
+    10×10 rows so their world mapping matches the module grid (the helpers
+    were implicitly coupled to the old size). Fallout recomputed across 10
+    suites: missionSpots goldens at the new 4.5 grid centre (7 spots), counts
+    39/18/42/1, six ring elbows + the junction crossroad, four lot-facing
+    puppy kerb keys. Coverage: townMap/townTypes 100%, townGrid 100% stmts /
+    94.6% branch, parkLitter 97.6% stmts / 78.6% branch (the uncovered branch
+    is the defensive pool-exhaustion fallback).
+  - **Design note (locked, in-flight):** N=10 square. Rows (y0 north):
+    `['######PPPP','#PP#L#PPPP','#LL#L#PPPP','#LL#L#PPPP','#PP#L#PPPP'` hmm —
+    see `figureEight.test.ts` for the authoritative strings. Junction (5,5) =
+    old SE corner + new NW corner (4-road cross). New ring = perimeter of
+    (5..9)^2; interior (6..8)^2: shop lot (6,6) bare until Phase 3 mounts the
+    GLB, pond green (7,7) new tile kind ('W' char), 4 house lots (7,6),(8,6),
+    (6,7),(8,7) distinct Suburban kinds, garden lots (6,8),(7,8),(8,8) with
+    trees. Fields (NE 16 + SW 20 tiles) = 'P' meadow with trees (not lots, so
+    "every lot touches a street" holds; parkSlots stays on the 2 original P
+    tiles). Spawns 2+2: (3,2),(1,0) old; (7,5),(7,9) new. Hiding spots +3:
+    spot-shop (6,6)-0.3,-0.3; spot-pond (7,7) 0,+0.4; spot-orchard (7,8) 0,+0.3.
+    In-flight ripples: `parkLitter.touchesRingRoad` outer-edge heuristic breaks
+    at N=10 -> generalize to "touches any street"; missionSpots goldens recompute
+    (grid centre 2.5->4.5 shifts all world positions -2) + 7 spots; townGrid
+    parse counts, parkSlots per-tile, townMap shape test update. Pond ground
+    color lands in `townLayout.GROUND_COLORS`.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 – Corner shop GLB (manual-verify)
