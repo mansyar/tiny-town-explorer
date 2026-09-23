@@ -71,17 +71,22 @@
   of 0.1) then green in `1283b09`; the untouched 36-test suite is the
   default-behaviour proof. 717 tests / 57 files; `vehicleMotor.ts` 100%
   stmts / 95% branch (above the ≥94% bar).
-- [~] Task: Seeded endless route brain (FR2)
-  - [ ] Write failing tests for `trafficBrain`: from a start tile it targets a
+- [x] Task: Seeded endless route brain (FR2) `c0d59b0`
+  - [x] Write failing tests for `trafficBrain`: from a start tile it targets a
     random *other* road tile via `roadRoute`, hands over waypoints, and picks a
     fresh destination the moment one is reached — never stationary across a
     scripted session; same seed ⇒ identical target sequence; different seeds
     diverge; the injected RNG is the only randomness (10+ tests, red first)
-  - [ ] Implement `trafficBrain.ts` as pure logic over `pathfinder`'s API — no
+  - [x] Implement `trafficBrain.ts` as pure logic over `pathfinder`'s API — no
     three.js, no wall clock, frame-driven `update(delta)` like every other
     logic module
-  - [ ] Refactor + coverage (≥80%, ideally 100% statements on
+  - [x] Refactor + coverage (≥80%, ideally 100% statements on
     `trafficBrain.ts`)
+
+  **Done:** 11 red tests (module missing) then green in `c0d59b0`.
+  **Found and fixed (refactor step):** Biome's complexity gate flagged `take()`
+  at 22 > 15 — the leg enumeration moved out as `reachableLegs()`.
+  728 tests / 58 files; `trafficBrain.ts` 100% statements/branch/funcs/lines.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 – Lane discipline and dynamic collision feed (TDD)
