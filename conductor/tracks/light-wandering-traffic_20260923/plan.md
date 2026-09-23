@@ -91,18 +91,25 @@
 
 ## Phase 3 – Lane discipline and dynamic collision feed (TDD)
 
-- [ ] Task: Fixed lateral bias and the pass-clearance contract (FR3)
-  - [ ] Write failing tests: each car holds its authored lateral bias (opposite
+- [x] Task: Fixed lateral bias and the pass-clearance contract (FR3) `c8c546d`
+  - [x] Write failing tests: each car holds its authored lateral bias (opposite
     pair); sampling every straight road tile, a head-on pass and an overtake
     between the two fitted footprints never overlap — the bias derived from the
     widest fitted model (sedan half-width 0.162 at 0.55 fit) plus a named
     clearance constant; on curves the bias follows the tangent so a car never
     clips a kerb top by more than a measured slack (red first)
-  - [ ] Implement bias application in the brain's waypoint handoff (offset
+  - [x] Implement bias application in the brain's waypoint handoff (offset
     perpendicular to the leg), with `TRAFFIC_LATERAL_BIAS` and
     `TRAFFIC_PASS_CLEARANCE` as named, measured constants
-  - [ ] Refactor + coverage
-- [ ] Task: Live obstacle supplier in the motor (FR5)
+  - [x] Refactor + coverage
+
+  **Done:** 7 FR3 red tests (constants undefined, no lane points) plus 3 FR2
+  contracts evolved from road centres to lane points; green in `c8c546d`.
+  735 tests / 58 files; `trafficBrain.ts` 94.7% stmts / 91.4% branch (residue =
+  index guards under `noUncheckedIndexedAccess`). Lane contract: bias 0.177 =
+  widest fitted half-width 0.1618 + half of pass clearance 0.03; kerb slack
+  0.04 pins the 0.0388 reach past the kerb band's inner edge.
+- [~] Task: Live obstacle supplier in the motor (FR5)
   - [ ] Write failing tests: `createVehicleMotor` accepts
     `dynamicObstacles?: () => Obstacle[]`; a moving box entering the sweep is
     reported as a crashable impact that same frame; bump-once-then-pass
