@@ -1,0 +1,13 @@
+Task: The one collision language, mover to mover (FR4)
+
+Changes: liveObstacles() forces feed entries crashable via asCrashable() -
+the feed cannot change the collision language; FR4 scenarios as tests
+(kid->mover bonk/resume with the mover route untouched; mover<->mover
+junction squish, both report impact and both carry on).
+
+Files: src/game/vehicle/vehicleMotor.ts, vehicleMotor.test.ts
+
+Why: FR4 one collision language is structural at the boundary that owns
+it: bump, squish, carry on - a misflagged feed must never strand a kid.
+Two red assertions were arrival-precision slips (the motor parks within
+ARRIVAL_RADIUS, not on the point) - fixed to the radius idiom.
