@@ -360,7 +360,7 @@ export interface HouseFootprint {
   readonly halfZ: number;
 }
 
-/** The eight City Kit (Suburban) models the town's houses are drawn from. */
+/** The City Kit (Suburban) house models plus the authored corner shop (FR3). */
 export type BuildingKind =
   | 'type-a'
   | 'type-b'
@@ -369,7 +369,8 @@ export type BuildingKind =
   | 'type-f'
   | 'type-h'
   | 'type-q'
-  | 'type-r';
+  | 'type-r'
+  | 'shop';
 
 /**
  * Kit-space horizontal extents of each house model, measured from the committed
@@ -388,6 +389,9 @@ export const BUILDING_EXTENTS: Readonly<
   'type-h': { width: 1.3, depth: 0.92 },
   'type-q': { width: 1.24, depth: 0.89 },
   'type-r': { width: 1.03, depth: 1.02 },
+  // Measured from the authored GLB (`blender-corner-shop.py` prints extents;
+  // `pnpm assets:measure` confirms 1.56 x 0.90 x 1.38, min y = 0).
+  shop: { width: 1.56, depth: 1.38 },
 };
 
 /**

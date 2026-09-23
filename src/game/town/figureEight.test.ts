@@ -90,17 +90,18 @@ describe('the figure-eight', () => {
     expect(grid.tileAt({ x: 7, y: 7 })).not.toBe('park');
   });
 
-  it('fills the second block with four house lots, the shop lot and the pond green', () => {
+  it('fills the second block with four houses, the corner shop and the pond green', () => {
     const inBlock = (tile: TileCoord): boolean =>
       tile.x >= 6 && tile.x <= 8 && tile.y >= 6 && tile.y <= 8;
     const houses = grid.houses.filter((house) => inBlock(house.tile));
-    expect(houses).toHaveLength(4);
+    expect(houses.filter((house) => house.model !== 'shop')).toHaveLength(4);
 
-    // The shop's lot sits at the junction corner and stays a lot: Phase 3
-    // mounts the GLB, and until then nothing pretends to be a building there.
+    // The corner shop stands at the junction corner as house-15 (FR3): the
+    // second district's landmark, but a house like any house to every mission.
     const shopLot: TileCoord = { x: 6, y: 6 };
     expect(grid.tileAt(shopLot)).toBe('lot');
-    expect(houses.some((house) => house.tile.x === 6 && house.tile.y === 6)).toBe(false);
+    const shop = houses.find((house) => house.tile.x === 6 && house.tile.y === 6);
+    expect(shop?.model).toBe('shop');
     expect(Math.abs(shopLot.x - JUNCTION.x)).toBe(1);
     expect(Math.abs(shopLot.y - JUNCTION.y)).toBe(1);
   });

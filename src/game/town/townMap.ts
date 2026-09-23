@@ -23,7 +23,7 @@ const KERB = PARKED_CAR_KERB_OFFSET;
  * y3  #  L  L  #  L  #  P  P  P  P
  * y4  #  L  L  #  L  #  P  P  P  P
  * y5  #  #  #  #  #  #  #  #  #  #     (5,5) junction: four arms
- * y6  P  P  P  P  P  #  S  L  L  #     S shop lot at the junction corner
+ * y6  P  P  P  P  P  #  S  L  L  #     S corner shop (house-15) at the junction corner
  * y7  P  P  P  P  P  #  L  W  L  #     W pond green in the loop's heart
  * y8  P  P  P  P  P  #  L  L  L  #
  * y9  P  P  P  P  P  #  #  #  #  #
@@ -75,6 +75,10 @@ export const TOWN_MAP: TownMapSpec = {
     { id: 'house-12', tile: { x: 8, y: 6 }, facing: 'east', model: 'type-q' },
     { id: 'house-13', tile: { x: 6, y: 7 }, facing: 'west', model: 'type-h' },
     { id: 'house-14', tile: { x: 8, y: 7 }, facing: 'east', model: 'type-f' },
+    // The corner shop (FR3): the second district's landmark, on the lot at the
+    // junction's corner with its awning turned toward the crossing. It is a
+    // house like any house - fires, orders and owner doors take it as one.
+    { id: 'house-15', tile: { x: 6, y: 6 }, facing: 'north', model: 'shop' },
   ],
   // Offsets nudge props to the kerb of the street they belong to.
   //

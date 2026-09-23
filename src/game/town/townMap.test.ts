@@ -24,7 +24,7 @@ import { BUILDING_EXTENTS, isParkedCarKind } from './townTypes';
 const grid = createTownGrid(TOWN_MAP);
 
 describe('the authored map', () => {
-  it('names a real house model on every lot, using all eight kit types', () => {
+  it('names a real house model on every lot, using every kit type', () => {
     // The ten lots draw on eight models deliberately (two types repeat), which
     // is what keeps the town from reading as one house stamped ten times.
     for (const house of grid.houses) {

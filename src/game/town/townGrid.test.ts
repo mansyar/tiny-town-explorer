@@ -85,8 +85,8 @@ describe('createTownGrid — authored map parsing', () => {
   it('builds house lots with world positions from the authored specs', () => {
     const grid = createTownGrid(TOWN_MAP);
 
-    expect(grid.houses).toHaveLength(14);
-    expect(new Set(grid.houses.map((house) => house.id)).size).toBe(14);
+    expect(grid.houses).toHaveLength(15);
+    expect(new Set(grid.houses.map((house) => house.id)).size).toBe(15);
 
     const first = grid.houses[0];
     expect(first).toBeDefined();

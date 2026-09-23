@@ -21,6 +21,7 @@ import buildingTypeF from '../../assets/kits/city-kit-suburban/building-type-f.g
 import buildingTypeH from '../../assets/kits/city-kit-suburban/building-type-h.glb?url';
 import buildingTypeQ from '../../assets/kits/city-kit-suburban/building-type-q.glb?url';
 import buildingTypeR from '../../assets/kits/city-kit-suburban/building-type-r.glb?url';
+import cornerShop from '../../assets/kits/city-kit-suburban/corner-shop.glb?url';
 import planter from '../../assets/kits/city-kit-suburban/planter.glb?url';
 import treeLarge from '../../assets/kits/city-kit-suburban/tree-large.glb?url';
 import treeSmall from '../../assets/kits/city-kit-suburban/tree-small.glb?url';
@@ -76,6 +77,8 @@ export const BUILDING_MODELS: Readonly<Record<BuildingKind, string>> = {
   'type-h': buildingTypeH,
   'type-q': buildingTypeQ,
   'type-r': buildingTypeR,
+  /** The second district's landmark: a Blender-authored shopfront (FR3). */
+  shop: cornerShop,
 };
 
 /** Park and verge greenery: suburban street trees plus a toy pine. */

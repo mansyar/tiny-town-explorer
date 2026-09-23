@@ -147,7 +147,7 @@ describe('planTown — roads', () => {
 
 describe('planTown — houses and props', () => {
   it('mounts one model per authored house, at its lot, facing its road', () => {
-    expect(grid.houses).toHaveLength(14);
+    expect(grid.houses).toHaveLength(15);
     for (const house of grid.houses) {
       const placement = models(house.id);
       expect(placement, house.id).toBeDefined();
