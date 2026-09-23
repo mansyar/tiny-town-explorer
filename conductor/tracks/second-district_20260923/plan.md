@@ -20,19 +20,30 @@
 
 ## Phase 1 – Mission spots derive from the map (TDD)
 
-- [~] Task: Generalize spot derivation (FR6)
-  - [ ] Write failing tests: deriving puppy spots, park slots and spawn points
+- [x] Task: Generalize spot derivation (FR6) (9b7d17f)
+  - [x] Write failing tests: deriving puppy spots, park slots and spawn points
     from today's `TOWN_MAP` reproduces **exactly** the currently authored four
     puppy spots, the two park slots' tiles and the four spawn points (golden
     equivalence on the shipped map); derivation is pure and map-driven — no
     tile coordinates remain in the derivation modules; `parkSlots` reads `P`
     tiles only and ignores any other green kind (red first — the derivation
     modules don't exist)
-  - [ ] Implement derivation in the pure layer reading `TOWN_MAP`/grid metadata
+  - [x] Implement derivation in the pure layer reading `TOWN_MAP`/grid metadata
     (lots → puppy spots and owner doors, `P` tiles → park slots, road tiles →
     spawn points); delete the hardcoded tile lists
-  - [ ] Refactor + coverage (`puppySpots*`, `parkSlots*`, spawn suites green;
+  - [x] Refactor + coverage (`puppySpots*`, `parkSlots*`, spawn suites green;
     >80% on every touched logic module)
+  - **Done:** 772 tests green (62 files), red-first on the two map-follows
+    tests. In-flight refinement recorded per workflow.md: the spot data moved
+    into `townMap.ts` (new `HidingSpotSpec` / `ParkSlotSpec` map fields) rather
+    than being re-derived structurally — the approved golden clause ("reproduces
+    exactly the currently authored four spots") is only satisfiable with
+    authored data, and `puppySpots.ts`'s own contract requires each spot to
+    read as a place. The derivation modules hold zero tile coordinates now;
+    `fixedParkItems` filters to `P` tiles only (the pond-green guard). Spawn
+    derivation already ran through `spec.spawnPoints` — pinned by the golden
+    test. Coverage on touched logic: parkSlots 100%, townGrid 100% stmts /
+    94.6% branch, puppySpots 97.6%.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 – Figure-eight map authoring (TDD for invariants)
