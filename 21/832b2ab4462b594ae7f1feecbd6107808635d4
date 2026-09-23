@@ -1,0 +1,3 @@
+Task: Input parity regression (FR6)
+
+Changes: three pinning guards in inputParity.test.ts (no prop identity / ground-point tap / never a mission target) against the real inputRouter, trafficSystem and the closed MissionId list. Files: src/game/traffic/inputParity.test.ts. Why: FR6 is structural - movers are not town props - and these are the tests that keep a future wiring mistake (feeding footprints to the router or the missions) from ever becoming true.
