@@ -1,0 +1,5 @@
+Task: Apply review suggestions (Review Fixes)
+
+Changes: removed the dead TrafficSystemOptions.obstacles option and its statics plumbing from trafficSystem.ts (Medium #1); documented the 0.041 parked-car graze in tech-stack.md and at the motor seam (Medium #2). Files: src/game/traffic/trafficSystem.ts, conductor/tech-stack.md.
+
+Why: the movers' relation to static obstacles was half-specified - a documented-but-unmet option is worse than none. The coherent pair is removal plus an honest note; wiring the option would turn every same-side parked-car pass into a squish.
