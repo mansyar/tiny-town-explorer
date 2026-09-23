@@ -259,6 +259,37 @@ describe('clearance contracts (FR4)', () => {
   });
 });
 
+describe('the four roomiest kerbs (FR10)', () => {
+  /** Gap between a car's outer edge and the wall it stands against. */
+  function wallGap(prop: TownProp): number {
+    const tile = kerbTile(prop);
+    const house = grid.houses.find(
+      (candidate) => candidate.tile.x === tile.x && candidate.tile.y === tile.y,
+    );
+    if (house === undefined) throw new Error(`${prop.id} faces no house`);
+    const wall = houseWallDistance(house.model, grid.tileSize);
+    const offset = kerbOffset(prop);
+    const outward = Math.max(Math.abs(offset.x), Math.abs(offset.z));
+    const halfWidth = isParkedCarKind(prop.kind)
+      ? parkedCarHalfExtents(prop.kind).halfWidth
+      : 0;
+    return wall - (outward + halfWidth);
+  }
+
+  it('keeps exactly the four largest gaps of the six kerbs the town could host', () => {
+    // Measured when six cars shipped: house-1's kerb 0.038 and house-3's 0.071
+    // are the two that go (lever one: four cars on the four *roomiest* kerbs),
+    // and the survivors stand at these gaps. A model or map change resurfaces
+    // here rather than quietly re-parking a car against a tighter wall.
+    const gaps = parked.map((prop) => wallGap(prop)).sort((left, right) => left - right);
+    expect(gaps).toHaveLength(4);
+    expect(gaps[0]).toBeCloseTo(0.0739, 3);
+    expect(gaps[1]).toBeCloseTo(0.0814, 3);
+    expect(gaps[2]).toBeCloseTo(0.1194, 3);
+    expect(gaps[3]).toBeCloseTo(0.1467, 3);
+  });
+});
+
 describe('the fit the placement assumes', () => {
   it('binds on the widest model, so one half-width covers every parked car', () => {
     const widest = Math.max(

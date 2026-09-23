@@ -185,7 +185,7 @@ describe('planTown — houses and props', () => {
   });
 
   it('keeps parked cars out of the shadow-map pass (FR7)', () => {
-    // The blob shadow exists because six more casters means re-rendering the
+    // The blob shadow exists because four more casters means re-rendering the
     // town per frame into a 1024 map. The library forces castShadow on every
     // mesh it prepares, so if a placement cannot say "not me", every car casts
     // a real shadow *as well as* its blob and the cost is paid twice.

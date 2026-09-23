@@ -32,10 +32,6 @@ function kerbOffset(prop: (typeof parked)[number]): { x: number; z: number } {
 }
 
 describe('parked cars in the authored town', () => {
-  it('parks six cars (FR1)', () => {
-    expect(parked).toHaveLength(6);
-  });
-
   it('draws them from four distinct Car Kit models (FR1)', () => {
     expect(new Set(parked.map((prop) => prop.kind)).size).toBe(4);
   });
@@ -72,7 +68,7 @@ describe('parked cars in the authored town', () => {
     }
   });
 
-  it('parks two of the six cars facing the other way, so the street is not a parade', () => {
+  it('parks cars facing more than one way, so the street is not a parade', () => {
     const yaws = parked.map((prop) => prop.yaw ?? 0);
     expect(new Set(yaws).size).toBeGreaterThan(1);
   });
@@ -96,6 +92,31 @@ describe('parked cars in the authored town', () => {
       (candidate) => !isParkedCarKind(candidate.kind),
     )) {
       expect(prop.snappable, `${prop.id} is still a tap target`).toBe(true);
+    }
+  });
+});
+
+describe('the budget lever: four cars on the four roomiest kerbs (FR10)', () => {
+  it('parks four cars, not six', () => {
+    // Lever one from `tech-stack.md`: "four cars on the four roomiest kerbs",
+    // spending the parked-cars overage before the wandering traffic earns it
+    // back. The count is the whole contract; the ranking lives in
+    // `parkedCarsPlacement.test.ts`.
+    expect(parked).toHaveLength(4);
+  });
+
+  it('frees the two tightest kerbs — house-1 and house-3 — back to the town', () => {
+    // The measured gaps (wall − kerb offset − half width) put these two west
+    // kerbs at 0.038 and 0.071, the smallest of the six the parked-cars track
+    // shipped, so these are the two that go.
+    for (const tile of [
+      { x: 0, y: 2 },
+      { x: 0, y: 3 },
+    ]) {
+      expect(
+        parked.some((prop) => prop.tile.x === tile.x && prop.tile.y === tile.y),
+        `a parked car still stands on ${tile.x},${tile.y}`,
+      ).toBe(false);
     }
   });
 });

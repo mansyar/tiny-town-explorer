@@ -70,8 +70,9 @@ export const TOWN_MAP: TownMapSpec = {
     // tile, clear of the tree, the litter slots and spot-dumpster's corner.
     { kind: 'dumpster', tile: { x: 2, y: 1 }, offset: { x: 0.3, y: 0.3 } },
 
-    // Six parked cars (FR1), authored on the *street* tile and offset toward
-    // the kerb they sit against, with a yaw that lies them along that street.
+    // Four parked cars (FR1, FR10), authored on the *street* tile and offset
+    // toward the kerb they sit against, with a yaw that lies them along that
+    // street.
     //
     // Each one is on a kerb whose house wall measures at least 0.652 from the
     // street's centre line (`1.00 - fitted depth / 2`), because that is the
@@ -81,16 +82,13 @@ export const TOWN_MAP: TownMapSpec = {
     // 0.576) — and the roomiest kerb of all (0.748) is the puppy's hiding
     // place, so neither is used here.
     //
-    // Four of the eight ring-road lots keep their kerbs clear for the park
-    // mission's litter draw: (1,2), (1,3), (4,1) and (4,4) are taken here, so a
-    // seeded draw still has (1,4), (2,4), (4,2) and (4,3) to choose three from.
-    { kind: 'parkedSedan', tile: { x: 0, y: 2 }, offset: { x: KERB, y: 0 }, yaw: 0 },
-    {
-      kind: 'parkedHatchback',
-      tile: { x: 0, y: 3 },
-      offset: { x: KERB, y: 0 },
-      yaw: Math.PI,
-    },
+    // Six cars shipped in the parked-cars track; the light-wandering-traffic
+    // track spends lever one from `tech-stack.md` — "four cars on the four
+    // roomiest kerbs" — so the two tightest went (house-1's kerb at a 0.038
+    // gap, house-3's at 0.071) and these four stand at the largest gaps (0.074
+    // to 0.147). Their freed kerbs rejoined the park mission's litter draw,
+    // which now gets (1,2), (1,3), (2,4), (4,2), (4,3) and (4,4) to choose
+    // three from — only (4,1) is still taken here.
     {
       kind: 'parkedVan',
       tile: { x: 4, y: 0 },

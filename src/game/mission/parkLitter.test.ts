@@ -128,9 +128,20 @@ describe('spawnParkLitter', () => {
       }
     });
 
+    it('gives the two freed kerbs back to the draw (FR10)', () => {
+      // The budget lever dropped the two tightest-kerb cars — the sedan by
+      // house-1 and the hatchback by house-3 — so those lots' kerbs rejoin the
+      // pool the seed draws from, taking it back up from four lots.
+      const keys = kerbsideLotCandidates(town).map((tile) => `${tile.x},${tile.y}`);
+      expect(keys).toContain('1,2');
+      expect(keys).toContain('1,3');
+      expect(keys.length).toBeGreaterThanOrEqual(5);
+    });
+
     it('still varies with the seed, so the draw is still a draw', () => {
-      // The cars took three of the eight candidate kerbs and the puppy's spot
-      // took a fourth, leaving four lots for three pieces. If that had left
+      // The cars take one of the eight candidate kerbs and the puppy's spot a
+      // second, leaving six lots for three pieces (the budget lever gave the
+      // two tightest kerbs back). If that had left
       // three, every seed would produce the same round and nothing would say so.
       const layouts = new Set<string>();
       for (let seed = 0; seed < 20; seed++) {
