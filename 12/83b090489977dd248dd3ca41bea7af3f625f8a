@@ -1,0 +1,11 @@
+Task: Per-instance speed and turn rate (FR2)
+
+Changes: VehicleMotorOptions.speed? and .turnRate? (documented, defaulting
+to DRIVE_SPEED / TURN_RATE); createVehicleMotor captures both once and
+driveToward consumes the captures at its three constant use sites.
+
+Files: src/game/vehicle/vehicleMotor.ts, vehicleMotor.test.ts
+
+Why: the traffic seam for per-car pace (spec Design Decisions "Speed": the
+kid must always win a race). Default behaviour is byte-identical - the 36
+pre-existing motor tests pass untouched.
