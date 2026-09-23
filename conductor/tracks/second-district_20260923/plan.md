@@ -46,7 +46,7 @@
     94.6% branch, puppySpots 97.6%.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (4a6de5b)
 
-## Phase 2 – Figure-eight map authoring (TDD for invariants)
+## Phase 2 – Figure-eight map authoring (TDD for invariants) [checkpoint: 8084993]
 
 - [x] Task: Author the figure-eight `TOWN_MAP` (FR1, FR2) (bf4a9f8)
   - [x] Write failing tests for the map invariants on the new spec: the road
@@ -89,7 +89,7 @@
     (grid centre 2.5->4.5 shifts all world positions -2) + 7 spots; townGrid
     parse counts, parkSlots per-tile, townMap shape test update. Pond ground
     color lands in `townLayout.GROUND_COLORS`.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (8084993)
 
 ## Phase 3 – Corner shop GLB (manual-verify)
 
