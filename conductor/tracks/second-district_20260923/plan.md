@@ -20,7 +20,7 @@
 
 ## Phase 1 – Mission spots derive from the map (TDD)
 
-- [ ] Task: Generalize spot derivation (FR6)
+- [~] Task: Generalize spot derivation (FR6)
   - [ ] Write failing tests: deriving puppy spots, park slots and spawn points
     from today's `TOWN_MAP` reproduces **exactly** the currently authored four
     puppy spots, the two park slots' tiles and the four spawn points (golden
