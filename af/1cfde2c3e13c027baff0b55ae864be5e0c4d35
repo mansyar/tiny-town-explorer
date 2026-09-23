@@ -1,0 +1,14 @@
+Task: Self-contained `trafficSystem` (FR9)
+
+Changes: createTrafficSystem composing createTrafficBrain + per-car
+createVehicleMotor (radius = fitted half-width, speed 0.8/1.0, opposite
+sides); footprints() publishes heading-aware crashable boxes under stable
+ids traffic-0/traffic-1; endless retarget the moment isDriving() drops;
+seeded starts + per-car RNG streams (mulberry32).
+
+Files: src/game/traffic/trafficSystem.ts, trafficSystem.test.ts
+
+Why: FR9 isolation is the absent-surface key assertion - the town ambience
+can never grow a second hero controller. The per-car sweep radius is what
+makes head-on passes honour the FR3 clearance contract at sweep level, not
+just box level.
