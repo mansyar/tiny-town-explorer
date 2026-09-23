@@ -179,7 +179,7 @@
   {id, shape, solid}. Nothing implemented, as anticipated. 751 tests / 60 files.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `21832b2`
 
-## Phase 5 – Actors, fit and following blob shadows (manual-verify, exempt from TDD)
+## Phase 5 – Actors, fit and following blob shadows (manual-verify, exempt from TDD) [checkpoint: 04164c6]
 
 - [x] Task: Mount the two movers (FR1, FR2) `7f1b835`
   - [x] Mount sedan and hatchback-sports through `vehicleActor` at the parked
@@ -222,7 +222,7 @@
   positions are float32; the containment margin sums in two orders), not
   product gaps. 766 tests / 61 files. The manual verification is recorded in
   the commit note as written; it runs at Phase 6's wiring.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `04164c6`
 
 ## Phase 6 – Wiring, measurements, docs and device pass (mixed)
 
