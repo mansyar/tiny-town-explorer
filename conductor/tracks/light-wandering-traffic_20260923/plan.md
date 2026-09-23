@@ -125,7 +125,7 @@
   739 tests / 58 files; `vehicleMotor.ts` 100% stmts / 95.5% branch. One feed
   read per sweep; no-supplier parity pinned by test; the walker test pins
   re-read-every-frame against snapshot implementations.
-- [~] Task: The one collision language, mover to mover (FR4)
+- [x] Task: The one collision language, mover to mover (FR4) `e2ef6e5`
   - [ ] Write failing tests: kid→mover bonks, squishes and resumes with the
     route cursor advancing and the mover's route untouched; mover→mover at a
     junction squashes (both report impact) and both carry on; no dynamic
