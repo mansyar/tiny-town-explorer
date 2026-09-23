@@ -1,0 +1,13 @@
+Task: Live obstacle supplier in the motor (FR5)
+
+Changes: VehicleMotorOptions.dynamicObstacles (() => readonly Obstacle[]);
+liveObstacles() folds the feed into the sweep once per sweep; the
+driveToward fast path widens to "no statics AND no feed"; nothing else in
+the motor changes - collide()'s crashable/solid split and the per-setPath
+`passed` reset apply to live ids as to props.
+
+Files: src/game/vehicle/vehicleMotor.ts, vehicleMotor.test.ts
+
+Why: FR5's feed is the honest answer to "where is everyone this frame" -
+the walker test pins re-read-every-frame against snapshot implementations.
+No-supplier parity keeps every existing route byte-identical.
