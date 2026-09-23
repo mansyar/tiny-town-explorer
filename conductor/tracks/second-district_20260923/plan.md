@@ -93,17 +93,34 @@
 
 ## Phase 3 – Corner shop GLB (manual-verify)
 
-- [ ] Task: Author and mount the corner shop (FR3)
-  - [ ] Blender-author shopfront + striped awning to the City Kit (Suburban)
+- [x] Task: Author and mount the corner shop (FR3) (085425d)
+  - [x] Blender-author shopfront + striped awning to the City Kit (Suburban)
     measured contract; UV-map onto the kit's colormap swatches; measure with
     `scripts/blender-analyze-kit.py` + `pnpm assets:measure`; record the
     measurements (kit-mount-measurements pattern)
-  - [ ] Mount like a house (fit cap, published building footprint) and verify
+  - [x] Mount like a house (fit cap, published building footprint) and verify
     by the golden derivation: a fire can spawn on it, an ice-cream order can
     originate there, it can be the puppy's owner door — no special cases
     anywhere; silhouette reads at 48px
-  - [ ] Manual steps + measurements recorded in the commit note; the GLB joins
+  - [x] Manual steps + measurements recorded in the commit note; the GLB joins
     the precache with the build
+
+  **Done (085425d):** deterministic recipe `scripts/blender-corner-shop.py`
+  (copied from the ice-cream-truck canonical; 17 contracted `shop_*` nodes;
+  front authored +Y and turned 180 about Z so the GLB faces glTF +z like the
+  kit, mounting at `yawForDirection` like any house). Gate 1.1 measurement
+  table in the recipe docstring; measured extents 1.560 x 1.380 x 0.900,
+  min z 0.000, 29.2 KiB raw / 0.04 MiB packed — under the spec's 40-80 KiB
+  guess, so the honest note carries the real number; fit 0.551 puts the
+  awning-side wall at ~0.62 from the street centre line (family band
+  0.574-0.748). Palette = the kit's own atlas texels (family green/coral
+  columns + neutral cells). Three render iterations; the user accepted the
+  woven-stripe awning at Layer 3 (2026-09-24). Packed at
+  `src/assets/kits/city-kit-suburban/corner-shop.glb`; `BuildingKind 'shop'`
+  with the measured `BUILDING_EXTENTS` row; house-15 at (6,6) facing north as
+  the junction-corner landmark. Test fallout: house counts 15, the figure-eight
+  block test now expects the shop as a house. Gates: `pnpm check` +
+  `pnpm typecheck` clean, 63 files / 779 tests green.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 – Pond splash and waddling ducks (mixed)
