@@ -77,7 +77,7 @@
     `missionRegistry` 100% stmts / branch / funcs.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 3 – Truthful marker adapter (TDD)
+## Phase 3 – Truthful marker adapter (TDD) [checkpoint: 356407b]
 
 - [x] Task: `MarkerAdapter.showIn` optional; drop `FIRE_FLAME.showIn` (FR3) (73f23a0)
   - [x] Write failing tests (red): an adapter with no `showIn` is never visible
