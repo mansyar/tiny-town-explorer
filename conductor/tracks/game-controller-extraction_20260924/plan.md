@@ -15,13 +15,19 @@
 > to the final `{ advance, tapAt, honk, noteActivity }`. Every intermediate
 > state compiles, runs and passes; the temporary handle is named and removed,
 > not left to rot.
+>
+> `main.ts` carries no unit-test twin at any checkpoint: it is workflow-exempt
+> UI glue (Guiding Principle 3) and it needs DOM and WebGL to even load. The
+> behaviour of anything that changes there is pinned where it becomes
+> reachable — `game.test.ts` from Phase 2 on — plus the manual verification
+> steps each phase records.
 
 ## Phase 1 - Litter field disposal contract (TDD)
 
-- [ ] Task: `LitterField.dispose()` and the replacement call (FR7, AC4)
-  - [ ] Write failing tests in `parkLitterFx.test.ts`: `dispose()` releases every geometry and material the field allocated; a disposed field is never updated by `update()`; `startPark()`'s replacement path calls `dispose()` on the outgoing field before the `scene.remove` (red first)
-  - [ ] Implement `dispose()` on `LitterField` and call it from `startPark()` before the `scene.remove`, mirroring `ModelLibrary.dispose()`'s ownership convention
-  - [ ] Refactor + coverage (the primitives stay workflow-exempt visual code; the disposal contract itself covered at 100%)
+- [x] Task: `LitterField.dispose()` and the replacement call (FR7, AC4) `ea3cfb8`
+  - [x] Write failing tests in `parkLitterFx.test.ts`: `dispose()` releases every geometry and material the field allocated; a disposed field is never updated by `update()`; `startPark()`'s replacement path calls `dispose()` on the outgoing field before the `scene.remove` (red first)
+  - [x] Implement `dispose()` on `LitterField` and call it from `startPark()` on the outgoing field, right after the `scene.remove`, mirroring `ModelLibrary.dispose()`'s ownership convention
+  - [x] Refactor + coverage (the primitives stay workflow-exempt visual code; the disposal contract itself covered at 100%)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2 - The controller seam: ports and world ownership (TDD)
