@@ -28,14 +28,12 @@
   - [x] Write failing tests in `parkLitterFx.test.ts`: `dispose()` releases every geometry and material the field allocated; a disposed field is never updated by `update()`; `startPark()`'s replacement path calls `dispose()` on the outgoing field before the `scene.remove` (red first)
   - [x] Implement `dispose()` on `LitterField` and call it from `startPark()` on the outgoing field, right after the `scene.remove`, mirroring `ModelLibrary.dispose()`'s ownership convention
   - [x] Refactor + coverage (the primitives stay workflow-exempt visual code; the disposal contract itself covered at 100%)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `e443688`
 
-## Phase 2 - The controller seam: ports and world ownership (TDD)
-
-- [~] Task: Narrow port interfaces and `createGame()` over the world (FR1, FR2, FR3, FR4)
-  - [ ] Write failing tests in `game.test.ts`: `createGame()` returns a usable game without awaiting anything; `advance(delta)` is safe to call before mounting resolves and holds the pre-mount `motor`/`actor`/`traffic`/`pond` guards; the `scene` port is used for `add`/`remove` and nothing else; each of `GameAudio`, `GameHud`, `GameScene`, `GameCamera` declares only the members the controller calls (AC2) (red first — `src/game/game.ts` does not exist)
-  - [ ] Declare the four port interfaces and `createGame()` in `src/game/game.ts`, and move the world construction and the async mounting inside it — model library, town mount, vehicle motor and actors, traffic system and actors, pond watcher and ducks, parked/traffic shadows, and every mission subsystem and feedback object
-  - [ ] Refactor + coverage (>80% statements and branches on `game.ts`)
+- [x] Task: Narrow port interfaces and `createGame()` over the world (FR1, FR2, FR3, FR4) `623e5ce`
+  - [x] Write failing tests in `game.test.ts`: `createGame()` returns a usable game without awaiting anything; `advance(delta)` is safe to call before mounting resolves and holds the pre-mount `motor`/`actor`/`traffic`/`pond` guards; the `scene` port is used for `add`/`remove` and nothing else; each of `GameAudio`, `GameHud`, `GameScene`, `GameCamera` declares only the members the controller calls (AC2) (red first — `src/game/game.ts` does not exist)
+  - [x] Declare the four port interfaces and `createGame()` in `src/game/game.ts`, and move the world construction and the async mounting inside it — model library, town mount, vehicle motor and actors, traffic system and actors, pond watcher and ducks, parked/traffic shadows, and every mission subsystem and feedback object
+  - [x] Refactor + coverage (>80% statements and branches on `game.ts`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 - The session rules move in (TDD)
