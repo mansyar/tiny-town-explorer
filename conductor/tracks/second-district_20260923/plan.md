@@ -123,7 +123,7 @@
   `pnpm typecheck` clean, 63 files / 779 tests green.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (085425d)
 
-## Phase 4 – Pond splash and waddling ducks (mixed)
+## Phase 4 – Pond splash and waddling ducks (mixed) [checkpoint: 142e333]
 
 - [x] Task: Passable surface + once-per-entry splash (FR4) (TDD) (5726d5e)
   - [x] Write failing tests: pond tiles are never solid (`isScoopable`'s
@@ -172,11 +172,11 @@
   simultaneous visual (FR10). Gates: `pnpm check` + `pnpm typecheck` clean,
   64 files / 785 tests green (sploosh red-first; ducks/wiring visual —
   manual-verify).
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (142e333)
 
 ## Phase 5 – Shadow frustum follows the car (manual-verify)
 
-- [ ] Task: Car-following, texel-snapped shadow camera (FR7)
+- [~] Task: Car-following, texel-snapped shadow camera (FR7)
   - [ ] Rebuild the sun's shadow camera to track the active car snapped to
     texel increments (no shimmer while driving); both loops cast full shadows
     at play distance; nothing clips at the old ±5-unit bounds (if the snap
