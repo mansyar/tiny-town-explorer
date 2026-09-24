@@ -200,17 +200,31 @@
 
 ## Phase 6 – Town life: six parked, three movers, spawns (mixed)
 
-- [~] Task: Town-wide kerb reservation + 3-per-ring placements (FR8, FR9) (TDD)
-  - [ ] Write failing tests: three parked cars per ring on each ring's three
+- [x] Task: Town-wide kerb reservation + 3-per-ring placements (FR8, FR9) (TDD) (9e1a159)
+  - [x] Write failing tests: three parked cars per ring on each ring's three
     roomiest **measured** kerbs (straight segments only; the old 0.038 / 0.071
     wall-gap kerbs stay excluded); no parked car overlaps any of the 2 + 2
     spawn capsules; the town-wide reservation guarantees no mission item is
     placed inside a parked car on either ring across many seeds (red first —
     the reservation is single-ring-shaped today)
-  - [ ] Implement the reservation extension and the placement data; the
+  - [x] Implement the reservation extension and the placement data; the
     placement suite re-measures wall gaps for the new lots
-  - [ ] Refactor + coverage (`parkedCars*`, `kerbReservation`, `kerbInvariant`
+  - [x] Refactor + coverage (`parkedCars*`, `kerbReservation`, `kerbInvariant`
     green; >80% on touched logic)
+  **Done (9e1a159):** six cars, three per ring — suv (3,2), sedan (3,4),
+  hatchback (4,5) on the old loop; hatchback (7,5), sedan (5,7), van (9,6) on
+  the second loop. The placement suite now re-derives the ranking from each
+  house's **facing** kerb (the measured wall), room = wall minus the widest
+  fitted car, with mission-declared kerbs excluded (the reservation owns
+  them) — which is why house-4's roomiest kerb stays the puppy's. Red-first:
+  3 tests (six-car lineup, historic-tightest guard, 40-seed reservation
+  sweep). In-flight refinement: the reservation needed **no extension** —
+  the 40-seed sweep proved `takenKerbKeys` is already town-wide, so the
+  change was lineup data + the derived ranking only. Stale fixtures
+  re-derived (parkedCars lever count, collision transposed-box pair,
+  vehicleMotor lane fixture). Gates: `pnpm check` + `pnpm typecheck` clean,
+  64 files / 790 tests green; coverage townMap 100%, parkSlots 100%,
+  parkLitter 97.6%.
 - [ ] Task: Third wanderer + three-mover lane re-pin (FR8) (TDD)
   - [ ] Write failing tests: three movers run seeded endless routes spanning
     both rings through the junction; the lane-clearance contract re-pinned on
