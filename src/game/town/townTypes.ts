@@ -1,5 +1,5 @@
 /** Tile kinds in the authored town map. */
-export type TileKind = 'road' | 'lot' | 'park';
+export type TileKind = 'road' | 'lot' | 'park' | 'pond';
 
 /** Compass direction, used for house facings and road connections. */
 export type Direction = 'north' | 'east' | 'south' | 'west';
@@ -108,6 +108,35 @@ export interface PropSpec {
 }
 
 /**
+ * An authored puppy hiding place (FR6).
+ *
+ * Lives in the map beside the houses and props it reads as a place among, so a
+ * new town authors its own hiding places and the mission layer never hardcodes
+ * a tile. The nudge puts the pup behind something: a spot on a lot sits at the
+ * kerb of the street its house faces, outside the capped house footprint and
+ * within a car's reach of the road.
+ */
+export interface HidingSpotSpec {
+  readonly id: string;
+  readonly tile: TileCoord;
+  /** Nudge within the tile, in tile units (y maps to world z). */
+  readonly offset: TileOffset;
+}
+
+/**
+ * The park mission's authored litter layout for one `P` tile (FR6).
+ *
+ * Keyed to the tile it decorates rather than to an index, so the layout is
+ * checked against the map — and a green that is not the park (the pond is its
+ * own tile kind) can never receive litter.
+ */
+export interface ParkSlotSpec {
+  readonly tile: TileCoord;
+  /** Fixed readable slots within the tile, in tile units (y maps to world z). */
+  readonly slots: readonly TileOffset[];
+}
+
+/**
  * The whole hand-authored town: one row string per grid row (north row
  * first) using {@link TILE_CHARACTERS}.
  */
@@ -117,12 +146,15 @@ export interface TownMapSpec {
   readonly rows: readonly string[];
   readonly houses: readonly HouseSpec[];
   readonly props: readonly PropSpec[];
+  readonly hidingSpots: readonly HidingSpotSpec[];
+  readonly parkSlots: readonly ParkSlotSpec[];
   readonly spawnPoints: readonly TileCoord[];
 }
 
 /**
  * Resolves one character of an authored row string: `#` road, `L` (or `.`)
- * house lot, `P` park. Anything else is an authoring error.
+ * house lot, `P` park or meadow, `W` pond green. Anything else is an
+ * authoring error.
  *
  * A switch rather than a lookup object because the map characters are data,
  * not identifiers that the naming convention should police.
@@ -136,6 +168,8 @@ export function tileKindForCharacter(character: string): TileKind | undefined {
       return 'lot';
     case 'P':
       return 'park';
+    case 'W':
+      return 'pond';
     default:
       return undefined;
   }
@@ -326,7 +360,7 @@ export interface HouseFootprint {
   readonly halfZ: number;
 }
 
-/** The eight City Kit (Suburban) models the town's houses are drawn from. */
+/** The City Kit (Suburban) house models plus the authored corner shop (FR3). */
 export type BuildingKind =
   | 'type-a'
   | 'type-b'
@@ -335,7 +369,8 @@ export type BuildingKind =
   | 'type-f'
   | 'type-h'
   | 'type-q'
-  | 'type-r';
+  | 'type-r'
+  | 'shop';
 
 /**
  * Kit-space horizontal extents of each house model, measured from the committed
@@ -354,6 +389,9 @@ export const BUILDING_EXTENTS: Readonly<
   'type-h': { width: 1.3, depth: 0.92 },
   'type-q': { width: 1.24, depth: 0.89 },
   'type-r': { width: 1.03, depth: 1.02 },
+  // Measured from the authored GLB (`blender-corner-shop.py` prints extents;
+  // `pnpm assets:measure` confirms 1.56 x 0.90 x 1.38, min y = 0).
+  shop: { width: 1.56, depth: 1.38 },
 };
 
 /**

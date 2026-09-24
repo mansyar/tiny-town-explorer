@@ -13,6 +13,8 @@ const RING_WITH_MIDDLE: TownMapSpec = {
   rows: ['#######', '#.....#', '#.....#', '#######', '#.....#', '#.....#', '#######'],
   houses: [],
   props: [],
+  hidingSpots: [],
+  parkSlots: [],
   spawnPoints: [{ x: 0, y: 3 }],
 };
 
@@ -22,6 +24,8 @@ const SPLIT: TownMapSpec = {
   rows: ['##.##', '#...#', '#...#', '#...#', '##.##'],
   houses: [],
   props: [],
+  hidingSpots: [],
+  parkSlots: [],
   spawnPoints: [{ x: 0, y: 2 }],
 };
 
@@ -31,6 +35,8 @@ const NO_ROADS: TownMapSpec = {
   rows: ['.....', '.....', '.....', '.....', '.....'],
   houses: [],
   props: [],
+  hidingSpots: [],
+  parkSlots: [],
   spawnPoints: [{ x: 2, y: 2 }],
 };
 

@@ -79,19 +79,24 @@ describe('planTown — roads', () => {
 
   it('uses the kit bend for every ring corner, rotated to its own elbow', () => {
     // The authored bend covers the west and south edges, so yaw 0 is the (5,0)
-    // corner; yaw counts counterclockwise, so the rest follow a quarter turn apart:
-    // (0,0) connects east and south; (5,0) south and west; (5,5) west and north;
-    // (0,5) north and east.
+    // corner; yaw counts counterclockwise, so the rest follow a quarter turn
+    // apart: (0,0) connects east and south; (5,0) south and west; (0,5) north
+    // and east. The second loop contributes three more elbows at (9,5), (9,9)
+    // and (5,9); (5,5) is no longer an elbow at all - it is the crossing.
     const corners = [
       { tile: 'road-0-0', yaw: Math.PI / 2 },
       { tile: 'road-5-0', yaw: 0 },
-      { tile: 'road-5-5', yaw: (Math.PI / 2) * 3 },
       { tile: 'road-0-5', yaw: Math.PI },
+      { tile: 'road-9-5', yaw: 0 },
+      { tile: 'road-9-9', yaw: (Math.PI / 2) * 3 },
+      { tile: 'road-5-9', yaw: Math.PI },
     ] as const;
     for (const { tile, yaw } of corners) {
       expect(models(tile)?.url, tile).toBe(ROAD_MODELS.bend);
       expect(models(tile)?.yaw, tile).toBeCloseTo(yaw);
     }
+    // The shared junction tile is the town's one true crossroads (FR1).
+    expect(models('road-5-5')?.url).toBe(ROAD_MODELS.crossroad);
   });
 
   it('uses the kit three-way tile for both tees, one of them turned about', () => {
@@ -142,7 +147,7 @@ describe('planTown — roads', () => {
 
 describe('planTown — houses and props', () => {
   it('mounts one model per authored house, at its lot, facing its road', () => {
-    expect(grid.houses).toHaveLength(10);
+    expect(grid.houses).toHaveLength(15);
     for (const house of grid.houses) {
       const placement = models(house.id);
       expect(placement, house.id).toBeDefined();

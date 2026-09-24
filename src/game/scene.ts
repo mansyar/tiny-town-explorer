@@ -1,12 +1,22 @@
-import { Color, DirectionalLight, Fog, Group, HemisphereLight, Mesh, Scene } from 'three';
+import {
+  Color,
+  DirectionalLight,
+  Fog,
+  Group,
+  HemisphereLight,
+  Mesh,
+  Scene,
+  Vector3,
+} from 'three';
 
 /** Sky color shared by the scene background, page theme, and manifest. */
 export const SKY_COLOR = 0x87ceeb;
 
 /**
- * Half-width of the sun's shadow frustum, in world units. It spans the whole
- * 6x6 town plus a margin for the camera's neighbours, which is what keeps a
- * single 1024 shadow map sharp enough on the performance-floor device.
+ * Half-width of the sun's shadow frustum, in world units. It spans the
+ * camera's play window plus room for just-off-screen casters — sharp on the
+ * performance-floor device because the frustum travels with the car (FR7)
+ * instead of covering the whole town at once.
  */
 const SUN_SHADOW_EXTENT = 8;
 
@@ -38,9 +48,55 @@ export function sunGroundOffset(height: number): {
   };
 }
 
+/**
+ * One shadow-map cell on the ground, in world units: the frustum's width
+ * divided across its 1024-texel map.
+ */
+export const SUN_SHADOW_TEXEL = (2 * SUN_SHADOW_EXTENT) / 1024;
+
+// The shadow map's own grid runs along the shadow camera's axes rather than
+// the town's, so the focus is rounded onto that lattice — which is what keeps
+// the shadows nailed down while the car drives (FR7).
+const SNAP_LIGHT = new Vector3(
+  SUN_POSITION.x,
+  SUN_POSITION.y,
+  SUN_POSITION.z,
+).normalize();
+const SNAP_RIGHT = new Vector3(0, 1, 0).cross(SNAP_LIGHT).normalize();
+const SNAP_UP = SNAP_LIGHT.clone().cross(SNAP_RIGHT).normalize();
+// The map lattice meets the ground in a sheared parallelogram: this is the
+// determinant that turns a map-plane rounding into a ground-plane step.
+const SNAP_GROUND_DET = SNAP_RIGHT.x * SNAP_UP.z - SNAP_RIGHT.z * SNAP_UP.x;
+
+/**
+ * Snaps a ground focus to the shadow map's texel lattice (FR7): idempotent,
+ * and blind to sub-cell travel. A creeping car must never slide the map
+ * between cells — that sliding is the shimmer. The rounding step is solved
+ * back in the ground plane, so the focus stays a real ground point and the
+ * lattice survives every round trip exactly.
+ */
+export function sunShadowSnap(focus: { x: number; z: number }): {
+  readonly x: number;
+  readonly z: number;
+} {
+  const u = focus.x * SNAP_RIGHT.x + focus.z * SNAP_RIGHT.z;
+  const v = focus.x * SNAP_UP.x + focus.z * SNAP_UP.z;
+  const du = Math.round(u / SUN_SHADOW_TEXEL) * SUN_SHADOW_TEXEL - u;
+  const dv = Math.round(v / SUN_SHADOW_TEXEL) * SUN_SHADOW_TEXEL - v;
+  const stepX = (SNAP_UP.z * du - SNAP_RIGHT.z * dv) / SNAP_GROUND_DET;
+  const stepZ = (-SNAP_UP.x * du + SNAP_RIGHT.x * dv) / SNAP_GROUND_DET;
+  return { x: focus.x + stepX, z: focus.z + stepZ };
+}
+
 /** The empty stage (sky, fog, daylight) that the town is added to. */
 export interface GameScene {
   readonly scene: Scene;
+  /**
+   * Aims the sun's shadow frustum at the car, snapped to the shadow map's
+   * texels so the shadows never shimmer (FR7). Both loops keep full shadows
+   * because the frustum travels with the car instead of spanning the town.
+   */
+  followSun(focus: { readonly x: number; readonly z: number }): void;
   /** Frees every geometry/material in the graph and empties it. */
   dispose(): void;
 }
@@ -58,10 +114,22 @@ export function createScene(): GameScene {
   // are set just beyond the camera-to-town distance so the near lots stay
   // crisp; the camera rig retunes these for its own framing.
   scene.fog = new Fog(SKY_COLOR, 16, 40);
-  scene.add(createLights());
+  const { group: lights, sun } = createLights();
+  scene.add(lights);
 
   return {
     scene,
+
+    followSun(focus): void {
+      const snapped = sunShadowSnap(focus);
+      sun.position.set(
+        snapped.x + SUN_POSITION.x,
+        SUN_POSITION.y,
+        snapped.z + SUN_POSITION.z,
+      );
+      sun.target.position.set(snapped.x, 0, snapped.z);
+      sun.target.updateMatrixWorld();
+    },
     dispose(): void {
       scene.traverse((object) => {
         if (!(object instanceof Mesh)) {
@@ -81,7 +149,10 @@ export function createScene(): GameScene {
 }
 
 /** Soft daylight: sky/ground bounce plus one warm sun for readable volume. */
-function createLights(): Group {
+function createLights(): {
+  readonly group: Group;
+  readonly sun: DirectionalLight;
+} {
   const lights = new Group();
   lights.name = 'lights';
 
@@ -108,5 +179,5 @@ function createLights(): Group {
   sun.shadow.camera.updateProjectionMatrix();
 
   lights.add(ambient, sun, sun.target);
-  return lights;
+  return { group: lights, sun };
 }

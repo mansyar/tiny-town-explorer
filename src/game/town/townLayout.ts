@@ -25,10 +25,11 @@ import {
  * way it faces, how big a house may be on its lot) is made here.
  */
 
-/** Lawns and park grass. Green lots with cream houses are the product palette. */
+/** Lawns, park grass and pond green. Green lots with cream houses are the product palette. */
 const GROUND_COLORS = {
   lot: 0x8ed08e,
   park: 0xa9e0a9,
+  pond: 0x87c9c3,
 } as const;
 
 /** Four rotations of a quarter turn, in radians; index 0 is north as authored. */
@@ -224,7 +225,12 @@ export function planTown(grid: TownGrid): TownPlan {
         name: `ground-${x}-${y}`,
         position: centre,
         size: grid.tileSize,
-        color: kind === 'park' ? GROUND_COLORS.park : GROUND_COLORS.lot,
+        color:
+          kind === 'park'
+            ? GROUND_COLORS.park
+            : kind === 'pond'
+              ? GROUND_COLORS.pond
+              : GROUND_COLORS.lot,
       });
 
       const shape = grid.roadShape(tile);

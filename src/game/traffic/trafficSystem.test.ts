@@ -14,7 +14,7 @@ function centreOf(obstacle: Obstacle): [number, number] {
     : [Number.NaN, Number.NaN];
 }
 
-/** One framed session, recording where the two boxes stood each frame. */
+/** One framed session, recording where the wanderers' boxes stood each frame. */
 function wander(traffic: TrafficSystem, frames: number): [number, number][][] {
   const trace: [number, number][][] = [];
   for (let frame = 0; frame < frames; frame++) {
@@ -25,11 +25,15 @@ function wander(traffic: TrafficSystem, frames: number): [number, number][][] {
 }
 
 describe('a self-contained traffic system (FR9)', () => {
-  it('publishes two live boxes under stable ids, and nothing else', () => {
+  it('publishes three live boxes under stable ids, and nothing else', () => {
     const traffic = createTrafficSystem({ grid, seed: 7 });
     const footprints = traffic.footprints();
 
-    expect(footprints.map((obstacle) => obstacle.id)).toEqual(['traffic-0', 'traffic-1']);
+    expect(footprints.map((obstacle) => obstacle.id)).toEqual([
+      'traffic-0',
+      'traffic-1',
+      'traffic-2',
+    ]);
     for (const obstacle of footprints) {
       expect(obstacle.shape.kind).toBe('box');
     }
@@ -42,23 +46,24 @@ describe('a self-contained traffic system (FR9)', () => {
     }
   });
 
-  it('never publishes a wall: both boxes are crashable (FR4)', () => {
+  it('never publishes a wall: every box is crashable (FR4, FR8)', () => {
+    // With three wanderers two can share a lane; when they meet they squash
+    // past as the mover-to-mover comedy — crashable, never solid.
     const traffic = createTrafficSystem({ grid, seed: 7 });
     for (const obstacle of traffic.footprints()) {
       expect(obstacle.solid).toBe(false);
     }
   });
 
-  it('advances both wanderers, one small step per frame', () => {
+  it('advances every wanderer, one small step per frame', () => {
     const traffic = createTrafficSystem({ grid, seed: 7 });
-    const [start0, start1] = traffic.footprints().map(centreOf);
+    const starts = traffic.footprints().map(centreOf);
     const trace = wander(traffic, 30 * 10);
-    const [end0, end1] = trace[trace.length - 1] ?? [];
+    const ends = trace[trace.length - 1] ?? [];
 
-    for (const [start, end] of [
-      [start0, end0],
-      [start1, end1],
-    ]) {
+    for (const [start, end] of starts.map(
+      (point, index) => [point, ends[index]] as const,
+    )) {
       // Both moved...
       expect(
         Math.hypot(
@@ -69,7 +74,7 @@ describe('a self-contained traffic system (FR9)', () => {
     }
     // ...and neither ever teleported: one update is one frame of driving.
     for (const frame of trace) {
-      for (let car = 0; car < 2; car++) {
+      for (let car = 0; car < 3; car++) {
         const [wasX, wasZ] = frame[car] ?? [Number.NaN, Number.NaN];
         expect(Number.isFinite(wasX)).toBe(true);
         expect(Number.isFinite(wasZ)).toBe(true);
@@ -86,7 +91,7 @@ describe('a self-contained traffic system (FR9)', () => {
     expect(eight).not.toEqual(seven);
   });
 
-  it('keeps both wanderers on the road', () => {
+  it('keeps every wanderer on the road', () => {
     const trace = wander(createTrafficSystem({ grid, seed: 7 }), 30 * 20);
     for (const frame of trace) {
       for (const [x, z] of frame) {
@@ -95,11 +100,17 @@ describe('a self-contained traffic system (FR9)', () => {
     }
   });
 
-  it('starts its two cars apart, never stacked', () => {
-    const [a, b] = createTrafficSystem({ grid, seed: 7 }).footprints().map(centreOf);
-    expect(
-      Math.hypot((a?.[0] ?? 0) - (b?.[0] ?? 0), (a?.[1] ?? 0) - (b?.[1] ?? 0)),
-    ).toBeGreaterThan(0.5);
+  it('starts its cars apart, never stacked', () => {
+    const centres = createTrafficSystem({ grid, seed: 7 }).footprints().map(centreOf);
+    for (let i = 0; i < centres.length; i += 1) {
+      for (let j = i + 1; j < centres.length; j += 1) {
+        const a = centres[i];
+        const b = centres[j];
+        expect(
+          Math.hypot((a?.[0] ?? 0) - (b?.[0] ?? 0), (a?.[1] ?? 0) - (b?.[1] ?? 0)),
+        ).toBeGreaterThan(0.5);
+      }
+    }
   });
 
   it('poses mirror the footprints exactly, frame after frame (FR1)', () => {
@@ -109,7 +120,7 @@ describe('a self-contained traffic system (FR9)', () => {
       const footprints = traffic.footprints();
       traffic.poses().forEach((pose, index) => {
         expect(footprints[index]?.id).toBe(pose.id);
-        expect(['parkedSedan', 'parkedHatchback']).toContain(pose.kind);
+        expect(['parkedSedan', 'parkedHatchback', 'parkedVan']).toContain(pose.kind);
         const box = footprints[index]?.shape;
         if (box?.kind !== 'box') {
           throw new Error('expected a box footprint');

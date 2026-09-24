@@ -158,7 +158,8 @@ describe('parked cars as box obstacles (FR5)', () => {
       (prop) => prop.kind === 'parkedSedan' && (prop.yaw ?? 0) % Math.PI === 0,
     );
     const across = grid.props.find(
-      (prop) => prop.kind === 'parkedVan' && Math.abs(prop.yaw ?? 0) === Math.PI / 2,
+      (prop) =>
+        prop.kind === 'parkedHatchback' && Math.abs(prop.yaw ?? 0) === Math.PI / 2,
     );
     const alongBox = town.find((obstacle) => obstacle.id === along?.id)?.shape;
     const acrossBox = town.find((obstacle) => obstacle.id === across?.id)?.shape;
@@ -173,7 +174,10 @@ describe('parked cars as box obstacles (FR5)', () => {
     expect(alongBox.halfZ).toBeCloseTo(halfLength, 6);
     expect(alongBox.halfX).toBeCloseTo(parkedCarHalfExtents('parkedSedan').halfWidth, 6);
     expect(acrossBox.halfX).toBeCloseTo(halfLength, 6);
-    expect(acrossBox.halfZ).toBeCloseTo(parkedCarHalfExtents('parkedVan').halfWidth, 6);
+    expect(acrossBox.halfZ).toBeCloseTo(
+      parkedCarHalfExtents('parkedHatchback').halfWidth,
+      6,
+    );
   });
 
   it('never makes a parked car solid, so a pup hiding beside one stays reachable', () => {

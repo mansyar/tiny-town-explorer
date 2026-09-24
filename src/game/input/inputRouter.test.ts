@@ -26,6 +26,8 @@ const TEST_MAP: TownMapSpec = {
     { kind: 'cone', tile: { x: 2, y: 2 }, offset: { x: -0.3, y: 0 } },
     { kind: 'tree', tile: { x: 2, y: 3 } },
   ],
+  hidingSpots: [],
+  parkSlots: [],
   spawnPoints: [{ x: 2, y: 2 }],
 };
 
@@ -293,6 +295,8 @@ const PARKED_MAP: TownMapSpec = {
     { kind: 'parkedSedan', tile: { x: 2, y: 2 }, offset: { x: 0, y: 0.4 }, yaw: 0 },
     { kind: 'cone', tile: { x: 2, y: 3 }, offset: { x: 0, y: -0.1 } },
   ],
+  hidingSpots: [],
+  parkSlots: [],
   spawnPoints: [{ x: 2, y: 2 }],
 };
 

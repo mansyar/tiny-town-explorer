@@ -521,3 +521,30 @@ funny, never scary; all four missions complete with traffic driving and no
 mover ever covered or blocked mission art; the frame rate is unchanged
 within noise on the floor device; and the two civilian models appear offline
 — they ride art the precache already carried.
+
+## Second district: figure-eight town (track `second-district_20260923`)
+
+Manual sweep (user-confirmed 2026-09-24, desktop):
+
+- Figure-eight town: routes across the junction both directions, no dead ends.
+- Corner shop at the junction corner reads "shop" at play distance and 48px, rests on the ground, and fire/ice-cream/puppy treat it as any house.
+- Pond: one sploosh + droplet poof per entry (the poof carries it when muted), silence while wet, ducks waddle untouched; routes through the water complete with zero bonks.
+- Shadows follow the car texel-still, full at the junction and both far edges.
+- Six parked cars (three per ring) on measured kerbs; litter and puppy spots never land inside a car; three wanderers squash past as comedy.
+
+Measured (GL-counter, spawn to junction): spawn 237 draws / 56,232 tris; junction 270 / 47,745. Precache 49 entries / 4,236.32 KiB.
+
+### iPad device pass (AC10)
+
+One sitting on the iPad 9th-gen floor device (2026-09-24) — all verdicts pass:
+
+- First load and frame rate hold up against the pre-track build.
+- Drive-time feel across the junction reads calm, not tedious: the longer
+  voyages land as intended.
+- The shop reads at play distance and at 48px, zero text, and rests on the
+  ground.
+- The pond delights: one sploosh + poof per entry, silence while wet, the
+  ducks waddle and ignore taps.
+- Street life holds: six parked cars on measured kerbs, three wanderers
+  squashing past as comedy, and neither litter nor puppy ever inside a car.
+- Offline reload works from the precache (49 entries).

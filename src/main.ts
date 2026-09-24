@@ -5,6 +5,7 @@ import { SOUND_MODELS } from './game/audio/audioRegistry';
 import { createCameraRig } from './game/camera';
 import { collectObstacles } from './game/collision/collision';
 import { createAbilityFx } from './game/feedback/abilityFx';
+import { createPondWatcher } from './game/feedback/pondSplash';
 import { createTargetRing } from './game/feedback/targetRing';
 import { createHoldGate } from './game/hud/holdGate';
 import {
@@ -73,6 +74,7 @@ import { findPath } from './game/path/pathfinder';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
 import { mountParkedShadows } from './game/town/parkedShadows';
+import { createPondDucks } from './game/town/pondDucks';
 import { createTownGrid } from './game/town/townGrid';
 import { mountTown } from './game/town/townRenderer';
 import type { Vec2 } from './game/town/townTypes';
@@ -120,7 +122,7 @@ async function main(): Promise<void> {
   }
 
   const renderer = createRenderer(container);
-  const { scene } = createScene();
+  const { scene, followSun } = createScene();
   const grid = createTownGrid();
 
   // The car starts on the street and the camera opens on it, so the sky is on
@@ -453,6 +455,15 @@ async function main(): Promise<void> {
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
   let motor: VehicleMotor | undefined;
   let actor: Awaited<ReturnType<typeof createVehicleActor>> | undefined;
+  // The wanderers and their actors mount across the same async window (the
+  // town's GLBs are still loading), so the loop meets them as undefined too.
+  let traffic: ReturnType<typeof createTrafficSystem> | undefined;
+  let trafficActors: Awaited<ReturnType<typeof mountTrafficActors>> | undefined;
+  let trafficShadows: ReturnType<typeof mountTrafficShadows> | undefined;
+  // The pond's watcher and ducks mount across the same async window, so the
+  // loop meets them as undefined too.
+  let pondWatcher: ReturnType<typeof createPondWatcher> | undefined;
+  let pondDucks: ReturnType<typeof createPondDucks> | undefined;
 
   let bonks = 0;
   let hud: VehicleHud | undefined;
@@ -470,19 +481,25 @@ async function main(): Promise<void> {
     town.group.add(parkedShadows.mesh);
   }
 
-  // Two of the town's own cars wander the ring on their own errands (FR1):
+  // The pond's ducks waddle at the water's edge (FR5) — scenery in the town's
+  // own graph — and the watcher arms the splash the car raises (FR4).
+  pondWatcher = createPondWatcher(grid);
+  pondDucks = createPondDucks(grid);
+  town.group.add(pondDucks.group);
+
+  // Three of the town's own cars wander the rings on their own errands (FR8):
   // silent, seeded and sealed - the system says update/poses/footprints and
   // knows nothing of the camera, the engine note or the taps.
-  const traffic = createTrafficSystem({
+  traffic = createTrafficSystem({
     grid,
     // A fixed seed, so the town's wander replays exactly, launch after launch.
     seed: 20260923,
   });
-  const trafficActors = await mountTrafficActors(library, traffic.poses());
+  trafficActors = await mountTrafficActors(library, traffic.poses());
   for (const object of trafficActors.objects) {
     town.group.add(object);
   }
-  const trafficShadows = mountTrafficShadows(grid, traffic);
+  trafficShadows = mountTrafficShadows(grid, traffic);
   if (trafficShadows !== undefined) {
     town.group.add(trafficShadows.mesh);
   }
@@ -494,7 +511,7 @@ async function main(): Promise<void> {
   const statics = collectObstacles(grid, town.houseFootprints);
   const vehicle = createVehicleMotor({
     obstacles: statics,
-    dynamicObstacles: () => traffic.footprints(),
+    dynamicObstacles: () => traffic?.footprints() ?? [],
   });
   motor = vehicle;
   vehicle.snapTo(spawn);
@@ -663,13 +680,14 @@ async function main(): Promise<void> {
    */
   function advance(delta: number): void {
     // The wanderers go first, so the kid's sweep meets where they now stand.
-    traffic.update(delta);
-    trafficActors.sync();
+    traffic?.update(delta);
+    trafficActors?.sync();
     trafficShadows?.sync();
     motor?.update(delta);
     actor?.sync();
     ring.update(delta);
     fx.update(delta);
+    pondDucks?.update(delta);
     fire.update(delta);
     orderMarker.update(delta);
     helperTrace.update(delta);
@@ -693,17 +711,35 @@ async function main(): Promise<void> {
       hud.setAbilityBusy(abilityBusy);
     }
     // The camera eases after the car, which is the only thing that moves.
-    if (motor !== undefined) {
-      rig.setTarget(motor.position);
-      // The engine note rides the speed: silent parked, chugging under way.
-      audio.setEngine(motor.isDriving() ? fleet.engineRate(motor.speed()) : 0);
-      if (motor.bonkCount() > bonks) {
-        bonks = motor.bonkCount();
-        audio.play('bonk');
-      }
-      tickMissions(delta, motor.position);
-    }
+    tickVehicle(delta);
     rig.update(delta);
+  }
+
+  /**
+   * The car's frame: the engine note rides its speed, its bonks chime, the
+   * missions read its position, and the pond raises one splash per entry
+   * (FR4) — its droplet poof (FR10) the visual counterpart the sploosh
+   * always shares, so muted play still reads the water.
+   */
+  function tickVehicle(delta: number): void {
+    if (motor === undefined) {
+      return;
+    }
+    rig.setTarget(motor.position);
+    // The sun's shadows ride with the car (FR7): the map stays texel-still
+    // while the town slides beneath it.
+    followSun(motor.position);
+    // The engine note rides the speed: silent parked, chugging under way.
+    audio.setEngine(motor.isDriving() ? fleet.engineRate(motor.speed()) : 0);
+    if (motor.bonkCount() > bonks) {
+      bonks = motor.bonkCount();
+      audio.play('bonk');
+    }
+    tickMissions(delta, motor.position);
+    if (pondWatcher?.note(motor.position)) {
+      fx.burst('poof', motor.position, motor.heading());
+      audio.sploosh();
+    }
   }
 
   /** Where the fire is burning, if one is. */

@@ -41,25 +41,6 @@ export interface PuppyHouse {
   readonly position: Vec2;
 }
 
-interface SpotDef {
-  readonly id: string;
-  readonly tile: TileCoord;
-  /** Nudge within the tile, in tile fractions (y maps to world z). */
-  readonly offset: { readonly x: number; readonly y: number };
-}
-
-const SPOT_DEFS: readonly SpotDef[] = [
-  // Park hides: open grass with the tree and the dumpster between the pup and
-  // the camera, so "hidden" is honest here.
-  { id: 'spot-trees', tile: { x: 1, y: 1 }, offset: { x: -0.3, y: -0.3 } },
-  { id: 'spot-dumpster', tile: { x: 2, y: 1 }, offset: { x: 0.3, y: -0.3 } },
-  // Lot spots: the kerb of the street each house faces. `house-4` faces east
-  // onto the cross street; `house-5` faces south onto the ring road. Both sit
-  // outside the house's capped footprint and within a car's reach of the road.
-  { id: 'spot-garden', tile: { x: 2, y: 3 }, offset: { x: 0.48, y: 0.25 } },
-  { id: 'spot-verge', tile: { x: 1, y: 4 }, offset: { x: 0.2, y: 0.48 } },
-];
-
 /** How much room beyond a building's capped footprint a spot keeps. */
 export const SPOT_HOUSE_MARGIN = 0.04;
 
@@ -153,7 +134,7 @@ export function createPuppySpots(options: PuppySpotsOptions): PuppySpots {
   const { grid } = options;
   const random = options.random ?? Math.random;
 
-  const spots: readonly PuppySpot[] = SPOT_DEFS.map((def) => {
+  const spots: readonly PuppySpot[] = grid.hidingSpots.map((def) => {
     const centre = grid.tileToWorld(def.tile);
     return {
       id: def.id,
@@ -173,7 +154,7 @@ export function createPuppySpots(options: PuppySpotsOptions): PuppySpots {
 
     drawSpot(): PuppySpot {
       // The filter drops at most the one spot that just ran, so candidates is
-      // never empty while SPOT_DEFS is authored non-empty.
+      // never empty while the map authors at least one hiding spot.
       const candidates = spots.filter((spot) => spot.id !== lastSpotId);
       const index = Math.min(
         candidates.length - 1,

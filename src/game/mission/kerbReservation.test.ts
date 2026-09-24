@@ -54,7 +54,7 @@ describe('the kerb band', () => {
     // A corner slot of the park is in two bands at once: 0.65 from the north
     // ring road's centre line and 0.70 from the west ring road's. Both kerbs
     // would collide with it, so both are reported, nearest first.
-    const edges = kerbEdgesOfPoint(grid, { x: -1.8, z: -1.85 });
+    const edges = kerbEdgesOfPoint(grid, { x: -3.8, z: -3.85 });
 
     expect(edges).toHaveLength(2);
     expect(edges[0]).toEqual({ road: { x: 1, y: 0 }, toward: 'south' });
@@ -89,10 +89,11 @@ describe('the missions’ declared kerbs', () => {
     );
   });
 
-  it('claims no lot-facing kerb except the puppy’s two', () => {
+  it('claims no lot-facing kerb except the puppy’s lot spots', () => {
     // Over-declaring is not harmless: every declared lot kerb is one fewer lot
     // the litter draw may send the kid down, and the draw's variety is the whole
-    // point of it. Only the puppy's two spots face a lot.
+    // point of it. Only the puppy's lot-side spots face a lot - its two park
+    // hides stand in no band at all.
     const lotFacing = declaredKerbs(grid).filter((kerb) => {
       const step = DIRECTION_STEPS[kerb.edge.toward];
       const facing = {
@@ -106,6 +107,8 @@ describe('the missions’ declared kerbs', () => {
       [
         kerbKey({ road: { x: 1, y: 5 }, toward: 'north' }),
         kerbKey({ road: { x: 3, y: 3 }, toward: 'west' }),
+        kerbKey({ road: { x: 5, y: 8 }, toward: 'east' }),
+        kerbKey({ road: { x: 9, y: 8 }, toward: 'west' }),
       ].sort(),
     );
   });

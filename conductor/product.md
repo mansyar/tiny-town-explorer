@@ -101,4 +101,9 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
 - ~~Static parked cars~~ — shipped in `parked-cars_20260922`, 2026-09-22.
 - ~~Light wandering traffic~~ — shipped in
   `light-wandering-traffic_20260923`, 2026-09-23: two seeded civilian cars
+- ~~Second district~~ — shipped in `second-district_20260923`, 2026-09-24: the
+  figure-eight town (two loops meeting at one shared junction), the corner
+  shop landmark, the pond with waddling ducks, six parked cars on measured
+  kerbs and three seeded wanderers. Longer voyages by design — no speed
+  tuning.
   wander the ring all session — the natural reason a car would ever move.

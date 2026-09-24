@@ -8,7 +8,13 @@ import {
   MeshLambertMaterial,
 } from 'three';
 import { describe, expect, it, vi } from 'vitest';
-import { createScene, SKY_COLOR } from './scene';
+import {
+  createScene,
+  SKY_COLOR,
+  SUN_POSITION,
+  SUN_SHADOW_TEXEL,
+  sunShadowSnap,
+} from './scene';
 
 describe('createScene', () => {
   it('paints the sky background and matching fog', () => {
@@ -84,5 +90,45 @@ describe('createScene', () => {
       expect(spy).toHaveBeenCalledTimes(1);
     }
     expect(scene.children).toHaveLength(0);
+  });
+});
+
+describe('the sun shadow follow (FR7)', () => {
+  it('snaps its focus to shadow texels, idempotently', () => {
+    const once = sunShadowSnap({ x: 1.2345, z: -0.6789 });
+    const twice = sunShadowSnap(once);
+    expect(twice.x).toBeCloseTo(once.x, 10);
+    expect(twice.z).toBeCloseTo(once.z, 10);
+    // The snapped focus stays within about a cell of the car: the ground
+    // lattice is a sheared parallelogram (diagonal under two texels).
+    expect(Math.hypot(once.x - 1.2345, once.z - -0.6789)).toBeLessThan(
+      SUN_SHADOW_TEXEL * 2,
+    );
+  });
+
+  it('holds the shadow map still while the car creeps inside one cell', () => {
+    const focus = sunShadowSnap({ x: 1, z: 1 });
+    const nudged = sunShadowSnap({
+      x: focus.x + SUN_SHADOW_TEXEL * 0.4,
+      z: focus.z,
+    });
+    // Sub-texel travel must not move the map at all — that is the shimmer.
+    expect(nudged.x).toBeCloseTo(focus.x, 10);
+    expect(nudged.z).toBeCloseTo(focus.z, 10);
+  });
+
+  it('aims the sun and its target at the car’s snapped focus', () => {
+    const { followSun, scene, dispose } = createScene();
+    followSun({ x: 2.4, z: -1.7 });
+    const sun = scene.getObjectByName('sunLight');
+    expect(sun).toBeInstanceOf(DirectionalLight);
+    if (sun instanceof DirectionalLight) {
+      const focus = sunShadowSnap({ x: 2.4, z: -1.7 });
+      expect(sun.target.position.x).toBeCloseTo(focus.x, 10);
+      expect(sun.target.position.z).toBeCloseTo(focus.z, 10);
+      expect(sun.position.x - focus.x).toBeCloseTo(SUN_POSITION.x, 10);
+      expect(sun.position.z - focus.z).toBeCloseTo(SUN_POSITION.z, 10);
+    }
+    dispose();
   });
 });

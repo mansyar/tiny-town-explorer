@@ -121,6 +121,33 @@
   bundle code, zero new asset files: the movers ride art the town already
   precached).
 
+- **Second district (added 2026-09-24):** the town grows from the 6×6 ring into
+  a figure-eight — two block loops meeting at one shared junction — with a
+  Blender-authored corner shop at the junction corner (17 contracted `shop_*`
+  nodes, 42.11 kB packed with the kit palette embedded), a pond green with
+  three primitive ducks, four new houses and three garden lots, six parked
+  cars (three per ring) and a third wanderer (the van). Measured on the
+  running game with the GL-counter method (shadow-inclusive), windows sampled
+  along a spawn→junction drive:
+
+  | Window | Draw calls | Triangles/frame |
+  | --- | --- | --- |
+  | Fresh spawn (the old town's dense corner) | 237 | 56,232 |
+  | Transit peak (tap FX alive) | 275 | 50,795 (avg) |
+  | Junction, settled | 270 | 47,745 (avg) |
+
+  **Budget note, stated plainly:** the worst window measured is the fresh
+  spawn at **56,232 triangles per frame against the spec's ~50k heuristic —
+  about 6.2k over**, carried honestly like the 51,192 line before it. The
+  ortho camera's fixed window keeps expansion nearly per-frame-neutral (the
+  junction window sits at 47.7k, *inside* the heuristic); what pushes the
+  spawn window over is the old town's house cluster plus six cars and three
+  movers in one frame. Levers if a playtest ever demands them: fewer parked
+  cars, lower-detail karts for the movers, or a gentler spawn view. The
+  shadow pass now frustum-follows the car (FR7, texel-snapped), so it costs
+  the same on the bigger town. Precache grows to **49 entries / 4,236.32
+  KiB** (+1 GLB, +44.45 KiB; zero new audio — the sploosh is synthesized).
+
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
   oscillators; CC0 samples decoded to AudioBuffers. First-tap unlock,

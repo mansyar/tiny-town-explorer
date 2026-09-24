@@ -25,7 +25,7 @@ interface MoverSpec {
   readonly id: string;
   /** Which civilian model's fitted box this mover occupies. */
   readonly kind: MoverKind;
-  /** Which side of the street to hold; the pair takes opposite sides (FR3). */
+  /** Which side of the street to hold; the roster alternates sides (FR3). */
   readonly side: 1 | -1;
   /** Cruise pace in world units per second — slower than the kid's 1.6. */
   readonly speed: number;
@@ -34,6 +34,11 @@ interface MoverSpec {
 const MOVERS: readonly MoverSpec[] = [
   { id: 'traffic-0', kind: 'parkedSedan', side: 1, speed: 0.8 },
   { id: 'traffic-1', kind: 'parkedHatchback', side: -1, speed: 1.0 },
+  // The third (FR8): the van, already precached, sharing a lane with its
+  // opposite — where the mover-to-mover squash language takes over. Opposite
+  // lanes pass clean under FR3's contract; same-lane meets are comedy, never
+  // walls.
+  { id: 'traffic-2', kind: 'parkedVan', side: 1, speed: 0.9 },
 ];
 
 export interface TrafficSystemOptions {
@@ -63,10 +68,10 @@ export interface TrafficPose {
 }
 
 export interface TrafficSystem {
-  /** Advance both wanderers one frame. */
+  /** Advance every wanderer one frame. */
   update(deltaSeconds: number): void;
   /**
-   * Both live boxes under their stable ids — crashable like every other car
+   * Every live box under its stable ids — crashable like every other car
    * in the town (FR4), for the kid's and each other's sweeps (FR5).
    */
   footprints(): readonly Obstacle[];
@@ -85,8 +90,7 @@ interface Carriage {
 export function createTrafficSystem(options: TrafficSystemOptions): TrafficSystem {
   const { grid, seed } = options;
   const tiles = roadTiles(grid);
-  const [first, second] = pickStarts(seeded(seed), tiles.length);
-  const starts: readonly [number, number] = [first, second];
+  const starts = pickStarts(seeded(seed), tiles.length, MOVERS.length);
 
   let carriages: Carriage[] = [];
 
@@ -201,11 +205,16 @@ function roadTiles(grid: TownGrid): readonly TileCoord[] {
   return tiles;
 }
 
-/** Two draws, two distinct tiles — the pair never starts stacked. */
-function pickStarts(random: () => number, count: number): [number, number] {
-  const first = Math.floor(random() * count);
-  const second = Math.floor(random() * Math.max(count - 1, 1));
-  return [first, second >= first ? second + 1 : second];
+/** N draws, N distinct tiles — the roster never starts stacked. */
+function pickStarts(random: () => number, count: number, picks: number): number[] {
+  const tiles = Array.from({ length: count }, (_, index) => index);
+  const starts: number[] = [];
+  for (let draw = 0; draw < Math.min(picks, count); draw += 1) {
+    const chosen = Math.floor(random() * tiles.length);
+    starts.push(tiles[chosen] ?? 0);
+    tiles.splice(chosen, 1);
+  }
+  return starts;
 }
 
 /** A tiny seeded die (mulberry32) — the whole town's randomness rests here. */
