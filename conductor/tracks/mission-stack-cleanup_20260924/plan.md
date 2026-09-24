@@ -14,7 +14,7 @@
 > because "zero behavior change" (NFR1) is judged against the fully-assembled
 > mission stack.
 
-## Phase 1 – Fire-mission rename (mechanical) [checkpoint: ]
+## Phase 1 – Fire-mission rename (mechanical) [checkpoint: 403b1fa]
 
 - [x] Task: Rename `missionManager.ts` → `fireMission.ts` and its misnamed exports (FR1) (8205c2e)
   - [x] Audit the module's exports and rename truthfully: `MissionState` →
