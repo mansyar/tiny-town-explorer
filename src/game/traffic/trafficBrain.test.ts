@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { KERB_BAND_INNER } from '../mission/kerbReservation';
 import { nearestRoadTile, type Path, roadRoute } from '../path/pathfinder';
 import { createTownGrid, type TownGrid } from '../town/townGrid';
 import { TOWN_MAP } from '../town/townMap';
@@ -13,9 +12,7 @@ import {
 } from '../town/townTypes';
 import {
   createTrafficBrain,
-  TRAFFIC_KERB_SLACK,
   TRAFFIC_LATERAL_BIAS,
-  TRAFFIC_PASS_CLEARANCE,
   type TrafficBrain,
 } from './trafficBrain';
 
@@ -108,12 +105,6 @@ function boxAt(point: Vec2, alongX: boolean, halfLength: number, halfWidth: numb
     halfX: alongX ? halfLength : halfWidth,
     halfZ: alongX ? halfWidth : halfLength,
   };
-}
-
-function boxesOverlap(a: Box, b: Box): boolean {
-  return (
-    Math.abs(a.x - b.x) < a.halfX + b.halfX && Math.abs(a.z - b.z) < a.halfZ + b.halfZ
-  );
 }
 
 /** The separation between two boxes along their wider gap (negative = overlap). */
@@ -398,7 +389,17 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
     }
   });
 
-  it('keeps a head-on pass clear of touch on every straight', () => {
+  /**
+   * The approved squash figures (spec FR2; tech-stack's lane-narrowing note):
+   * a straight pass between the authored pair (sedan × hatchback) overlaps by
+   * ≈0.015, the widest pair by no more than ≈0.052 — accepted comedy. Pinned
+   * as measured literals so the lanes can never drift wider (into the parked
+   * strip) or looser (into a mystery gap); never re-derived from the bias.
+   */
+  const AuthoredPairSquash = 0.015;
+  const WidestPairSquash = 0.052;
+
+  it('squashes past head-on within the accepted band on every straight', () => {
     const sedan = parkedCarHalfExtents('parkedSedan');
     const hatchback = parkedCarHalfExtents('parkedHatchback');
     const straights = straightsOf(grid);
@@ -418,12 +419,11 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
         hatchback.halfLength,
         hatchback.halfWidth,
       );
-      expect(boxesOverlap(one, other)).toBe(false);
-      expect(gapAcross(one, other)).toBeGreaterThanOrEqual(TRAFFIC_PASS_CLEARANCE);
+      expect(-gapAcross(one, other)).toBeCloseTo(AuthoredPairSquash, 3);
     }
   });
 
-  it('lets a same-direction overtake pass alongside without overlap', () => {
+  it('squashes past a same-direction overtake within the same band', () => {
     const sedan = parkedCarHalfExtents('parkedSedan');
     const hatchback = parkedCarHalfExtents('parkedHatchback');
 
@@ -441,25 +441,28 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
         hatchback.halfLength,
         hatchback.halfWidth,
       );
-      for (const stagger of [0, 0.275, 0.55]) {
+      for (const stagger of [0, 0.25, 0.5]) {
         const passing: Box = {
           ...one,
           x: one.x + (alongX ? stagger : 0),
           z: one.z + (alongX ? 0 : stagger),
         };
-        expect(boxesOverlap(passing, other)).toBe(false);
-        expect(gapAcross(passing, other)).toBeGreaterThanOrEqual(TRAFFIC_PASS_CLEARANCE);
+        // While the pair is longitudinally engaged the gap is exactly the
+        // band — the same pin as head-on, never a looser mystery gap (FR2).
+        expect(-gapAcross(passing, other)).toBeCloseTo(AuthoredPairSquash, 3);
       }
     }
   });
 
-  it('derives the bias from the widest fitted model plus the pass clearance', () => {
+  it('derives the bias from the parked strip near edge, rounded down', () => {
     const widest = widestParkedHalfWidth();
-    expect(widest).toBeCloseTo(0.162);
-    expect(TRAFFIC_LATERAL_BIAS).toBeCloseTo(widest + TRAFFIC_PASS_CLEARANCE / 2);
-    expect(2 * TRAFFIC_LATERAL_BIAS).toBeGreaterThanOrEqual(
-      2 * widest + TRAFFIC_PASS_CLEARANCE,
-    );
+    const nearEdge = PARKED_CAR_KERB_OFFSET - widest;
+    const maxBias = nearEdge - widest;
+    // Rounded DOWN (0.136470... -> 0.136) so rounding can never reintroduce
+    // the clip; the widest pair then squashes at most 0.0516 (FR2's band).
+    expect(TRAFFIC_LATERAL_BIAS).toBe(Math.floor(maxBias * 1000) / 1000);
+    expect(TRAFFIC_LATERAL_BIAS + widest).toBeLessThanOrEqual(nearEdge + 0.0005);
+    expect(2 * widest - 2 * TRAFFIC_LATERAL_BIAS).toBeLessThanOrEqual(WidestPairSquash);
   });
 
   it('on curves the bias follows the tangent, with no corner jog', () => {
@@ -497,12 +500,6 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
       TRAFFIC_LATERAL_BIAS,
     );
   });
-
-  it('never clips a kerb top by more than the measured slack', () => {
-    const reach = TRAFFIC_LATERAL_BIAS + widestParkedHalfWidth();
-    expect(reach - KERB_BAND_INNER).toBeLessThanOrEqual(TRAFFIC_KERB_SLACK);
-    expect(TRAFFIC_KERB_SLACK).toBeCloseTo(0.04);
-  });
 });
 
 /**
@@ -514,7 +511,7 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
  */
 describe('the parking-strip clearance contract (AC1)', () => {
   /** Float tolerance for the measured contract, never a licence to clip. */
-  const CLEARANCE_EPSILON = 0.0005;
+  const ClearanceEpsilon = 0.0005;
 
   /** Where the parked-cars strip begins, measured from a street's centre line. */
   function parkedNearEdge(): number {
@@ -534,7 +531,7 @@ describe('the parking-strip clearance contract (AC1)', () => {
     for (const { tile, normal } of straights) {
       for (const side of [1, -1] as const) {
         const reach = acrossFrom(lanePoint(tile, normal, side), tile, normal) + widest;
-        expect(reach).toBeLessThanOrEqual(parkedNearEdge() + CLEARANCE_EPSILON);
+        expect(reach).toBeLessThanOrEqual(parkedNearEdge() + ClearanceEpsilon);
       }
     }
   });
@@ -568,7 +565,7 @@ describe('the parking-strip clearance contract (AC1)', () => {
             z: centre.z + side * TRAFFIC_LATERAL_BIAS * normal.z,
           };
           const box = boxAt(at, alongX, mover.halfLength, mover.halfWidth);
-          expect(gapAcross(box, parked)).toBeGreaterThanOrEqual(-CLEARANCE_EPSILON);
+          expect(gapAcross(box, parked)).toBeGreaterThanOrEqual(-ClearanceEpsilon);
         }
       }
     }
@@ -590,10 +587,10 @@ describe('the parking-strip clearance contract (AC1)', () => {
           const to = grid.worldToTile(toPoint);
           const normal = legNormal(from, to);
           expect(acrossFrom(fromPoint, from, normal) + widest).toBeLessThanOrEqual(
-            parkedNearEdge() + CLEARANCE_EPSILON,
+            parkedNearEdge() + ClearanceEpsilon,
           );
           expect(acrossFrom(toPoint, to, normal) + widest).toBeLessThanOrEqual(
-            parkedNearEdge() + CLEARANCE_EPSILON,
+            parkedNearEdge() + ClearanceEpsilon,
           );
         }
       }
