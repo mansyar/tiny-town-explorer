@@ -29,8 +29,12 @@ export interface MarkerTapRule<S extends string, O extends string> {
  * dead.
  */
 export interface MarkerAdapter<S extends string, O extends string> {
-  /** FSM states where the marker is present (level-based, idempotent). */
-  readonly showIn: readonly S[];
+  /**
+   * FSM states where the marker is present (level-based, idempotent). Absent
+   * means the marker drives no visibility of its own — its owner shows it
+   * (the flame is `fireFx`'s) — and {@link markerVisible} reports none.
+   */
+  readonly showIn?: readonly S[];
   /**
    * FSM states where an arm may be live (ring, hose, delivery). Declared only
    * by a marker whose arm the wiring actually asks this layer about through
@@ -42,12 +46,12 @@ export interface MarkerAdapter<S extends string, O extends string> {
   readonly taps: readonly MarkerTapRule<S, O>[];
 }
 
-/** Whether the marker shows for this state. */
+/** Whether the marker shows for this state. Absent `showIn` drives no visibility. */
 export function markerVisible<S extends string, O extends string>(
   adapter: MarkerAdapter<S, O>,
   state: S,
 ): boolean {
-  return adapter.showIn.includes(state);
+  return adapter.showIn?.includes(state) === true;
 }
 
 /** Whether the marker is armed: in an arming state *and* the wire agrees. */

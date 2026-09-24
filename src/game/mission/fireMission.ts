@@ -59,16 +59,16 @@ export function fireAwaitsKid(state: FireMissionState): boolean {
 }
 
 /**
- * The fire target (flame) adapter for the shared marker layer (FR2): shows
- * while the fire has bursts left (spawned/driving/active) and answers a tap on
- * the burning house only before the kid has driven over — the hose is a
- * button, not a tap, once active.
+ * The fire target (flame) adapter for the shared marker layer (FR2). It
+ * drives no visibility of its own — `fireFx` shows and hides the flame while
+ * bursts are left (FR3) — and answers a tap on the burning house only before
+ * the kid has driven over: the hose is a button, not a tap, once active.
  *
- * No arm state is declared: the hose arms by *proximity* (`isHoseReady`), so
- * an arm state here would name a rule nothing reads (see `MarkerAdapter`).
+ * No `showIn` and no arm state are declared: the flame is `fireFx`'s, and the
+ * hose arms by *proximity* (`isHoseReady`), so an arm state here would name a
+ * rule nothing reads (see `MarkerAdapter`).
  */
 export const FIRE_FLAME: MarkerAdapter<FireMissionState, 'ignore' | 'respond'> = {
-  showIn: ['spawned', 'driving', 'active'],
   taps: [{ inState: 'spawned', needsTarget: true, outcome: 'respond' }],
 };
 
