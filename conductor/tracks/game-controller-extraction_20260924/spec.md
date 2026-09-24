@@ -25,9 +25,13 @@ field allocates GPU resources every round and never releases them.
   as data, and `missionRegistry` owns tick/tap ordering. What is missing is the
   layer *above* it: the orchestrator that owns session state and drives the
   framework, which today lives inline in `main.ts` behind the glue exemption.
-- The characterization method this track uses is the one
-  `mission-framework-consolidation_20260922` proved: pin current behaviour with
-  a harness first, then move code under it.
+- The freeze proof is red-first contract tests, not a browser characterization
+  harness. The rules this track moves live inside the unexported closure of
+  `async function main()`, so nothing can execute them before a seam exists and
+  a harness that is literally "green before extraction begins" is not
+  mechanically reachable. Writing the contract tests first and moving under
+  them is ordinary extraction TDD: it keeps `CI=true pnpm test` as the single
+  gate and adds no dependency.
 - Historical records stay as written (the `mission-stack-cleanup` precedent):
   `docs/playtest.md` and `conductor/archive/*` are not rewritten.
 
@@ -115,11 +119,13 @@ field allocates GPU resources every round and never releases them.
   coverage on `game.ts`. `main.ts` remains exempt as glue. This deliberately
   retires the blanket "main.ts is exempt DOM glue" claim.
 
-- **NFR3 - Characterization first.** A harness is written and captured against
-  today's `main.ts` *before* anything moves: `advance(delta)` driven frame by
-  frame with scripted taps and ability presses, snapshotting every observable
-  side effect — audio calls, HUD calls, scene adds and removes, and mission
-  state transitions. It must be green before extraction begins and green after.
+- **NFR3 - Contract tests written before the move.** For each extraction slice
+  the cases that define the new module's contract are derived line-by-line from
+  today's `main.ts` behaviour and written against `createGame()`'s API *before*
+  any of that slice's code moves — red because the module does not yet expose
+  the behaviour, green when the move lands. The red/green pair is one task and
+  one commit, per `workflow.md`'s task lifecycle. The five frozen suites plus a
+  manual `?calmGap=2` walkthrough close what unit tests cannot reach.
 
 - **NFR4 - No stack change.** No dependency or tooling changes;
   `tech-stack.md` is untouched except for prose naming a moved identifier.
@@ -139,10 +145,10 @@ field allocates GPU resources every round and never releases them.
 - **AC2** `src/game/game.ts` exists with `createGame()` and grouped narrow
   ports; each port interface declares only the members the controller calls.
 
-- **AC3** The characterization harness is committed in a state captured before
-  the move, and passes unchanged after it — covering `absorb`, `swapVehicle`,
-  the ability path, `tickHelperHand`, the puppy door run and the pre-mount boot
-  window.
+- **AC3** `game.test.ts` covers `absorb`, `swapVehicle`, the ability path,
+  `tickHelperHand`, the puppy door run and the pre-mount boot window, with every
+  case derived from pre-move `main.ts` behaviour and passing against
+  `createGame()`.
 
 - **AC4** `LitterField` exposes `dispose()`; `startPark()` calls it on the
   outgoing field; a test pins that replacing a field releases the previous
