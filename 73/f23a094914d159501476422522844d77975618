@@ -36,3 +36,24 @@ src/game/mission/fireMission.ts
 Gates: pnpm check clean; tsc --noEmit clean; 64 files / 787 tests pass
 (784 + 3 new). Coverage: missionMarkers 100% stmts/branch/funcs;
 fireMission 97.22% stmts / 100% branch.
+
+Phase 3 Verification Report — track 'mission-stack-cleanup_20260924'
+
+Automated: CI=true pnpm test (pwsh: $env:CI='true'; pnpm test)
+Result: 64 files / 787 tests, all passing (missionMarkers.test.ts 21 tests).
+
+Scope check (prev checkpoint 3fdc726 -> 73f23a0, code files):
+src/game/mission/fireMission.ts (fireMission.test.ts exists),
+src/game/mission/missionMarkers.ts (missionMarkers.test.ts exists).
+
+Manual verification performed by the user (pnpm dev walkthrough):
+1. Fire mission to completion: flame + smoke linger through the 2.5s
+   confetti/sun/cheer celebration — no early extinguish (fireFx ownership
+   unchanged; only the adapter contract now says so).
+2. Order cone, litter field, and paw markers still show in their states.
+
+User confirmation: "Yes, meets expectations" (2026-09-24).
+
+Note: this phase includes the one user-sanctioned frozen-suite amendment
+(two FIRE_FLAME visibility assertions in missionMarkers.test.ts), recorded
+in full in the task-summary note on this same commit.
