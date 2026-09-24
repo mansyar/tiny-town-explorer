@@ -138,8 +138,10 @@
   "wheels kiss the kerb strip, never the kerb top") are **retired** — with
   `TRAFFIC_PASS_CLEARANCE` (0.03) — superseded by one contract: *no mover
   footprint point reaches past 0.29824 from the centre line toward parking*
-  (pinned in `trafficBrain.test.ts`'s AC1 suite at every driven pose, corners
-  included). Mover↔mover straight passes now interpenetrate by a measured
+  (pinned in `trafficBrain.test.ts`'s AC1 suite — every straight and every
+  authored seat, plus the waypoint poses of seeded corner drives; at the bend
+  itself a rotating footprint can pass ~0.02 wider, where no seat stands).
+  Mover↔mover straight passes now interpenetrate by a measured
   band — **0.0152** between the authored sedan↔hatchback pair, **0.05153**
   widest-vs-widest (pinned as the literals `AuthoredPairSquash` 0.015 /
   `WidestPairSquash` 0.052; well inside the ≈0.1 line where squash stops
