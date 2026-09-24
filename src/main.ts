@@ -1113,6 +1113,7 @@ async function main(): Promise<void> {
     parkPickup.reset();
     if (litterField !== undefined) {
       scene.remove(litterField.object);
+      litterField.dispose();
     }
     litterField = createLitterField(litter);
     scene.add(litterField.object);
