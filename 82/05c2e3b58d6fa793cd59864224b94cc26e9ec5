@@ -1,0 +1,34 @@
+Task: Rename missionManager.ts -> fireMission.ts and its misnamed exports (FR1)
+
+Summary: Pure mechanical rename of the fire-mission module and its misnamed
+exports. Zero behavior change; the frozen suites are the gate.
+- missionManager.ts -> fireMission.ts, missionManager.test.ts -> fireMission.test.ts
+- createMissionManager -> createFireMission, MissionState -> FireMissionState,
+  MissionSnapshot -> FireMissionSnapshot, MissionManager -> FireMission,
+  MissionManagerOptions -> FireMissionOptions
+- All imports updated in main.ts and 8 mission modules/test files;
+  firePacer.ts comment wording updated.
+
+In-flight refinement (recorded per workflow.md): MissionSnapshot was audited and
+renamed to FireMissionSnapshot rather than extracting a shared type — it embeds
+the fire state plus fireHouseId/burstsLeft (fire-owned), and its only non-test
+consumer isTownBusy() takes the fire mission's snapshot explicitly as its `fire`
+parameter, so no generic shape exists to extract.
+
+Biome safe fixes (mechanically forced by the rename): import reordering where
+'./fireMission' now sorts earlier, and line wraps where longer names exceeded
+the print width — 11 files, every one already touched by the rename. Frozen
+suites (missionStateMatrix, missionAbortParity, missionMarkers) changed only in
+import order/wrap and type names — no behavioral edits (NFR1 diff-reviewable).
+
+Files: src/game/mission/fireMission.ts (+ .test.ts, renamed), src/main.ts,
+missionBusy.ts (+ test), missionFocus.ts, missionCelebration.ts (+ test),
+missionFsm.test.ts, firePacer.ts, missionMarkers.test.ts,
+missionStateMatrix.test.ts, missionAbortParity.test.ts.
+
+Why: naming debt carried since the framework consolidation — the module IS the
+fire mission, not a manager.
+
+Gates: pnpm check clean, tsc --noEmit clean, 64 files / 790 tests pass.
+Coverage: fireMission 97.22% stmts / 100% branch; missionBusy, missionFocus,
+missionCelebration, firePacer 100%.
