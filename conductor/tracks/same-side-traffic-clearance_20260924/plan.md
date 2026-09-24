@@ -93,7 +93,7 @@
   790/790 ✓; `trafficBrain.ts` coverage 94.54/91.42/100.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 – Ledger honesty and the desktop pass (mixed) [checkpoint: ____]
+## Phase 2 – Ledger honesty and the desktop pass (mixed) [checkpoint: abf9974]
 
 - [x] Task: Record the measured outcome in `tech-stack.md` (NFR4, AC5) `abf9974`
   - [x] Replace the estimate figures with the Phase 1 measurements; the
@@ -108,14 +108,30 @@
   clip 0.0405 gone, accepted band 0.0152 / 0.05153, `TRAFFIC_KERB_SLACK` and
   `TRAFFIC_PASS_CLEARANCE` recorded retired). Docs-only (GP3 exemption);
   verified by reading the rendered entry.
-- [~] Task: Desktop browser verification pass (AC4, manual-verify)
-  - [ ] `pnpm dev` → open the town; watch a mover thread the tightest kerb past
+- [x] Task: Desktop browser verification pass (AC4, manual-verify)
+  - [x] `pnpm dev` → open the town; watch a mover thread the tightest kerb past
     the parked cars — **no clip**; watch the pair pass head-on — **reads as
     squash comedy, not collision**; run one mission and confirm taps, pacing and
     celebrations unaffected; reload offline — unchanged
-  - [ ] No code change expected; the steps and outcome land in the task summary
+  - [x] No code change expected; the steps and outcome land in the task summary
     (git note) and the phase verification report
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
-  - [ ] Quality gates: `pnpm check && pnpm typecheck && CI=true pnpm test` green;
+
+  **Done:** AC4 pass run 2026-09-24 on the dev server at localhost:5177 (the
+  5173–5176 ports held stale older-build servers — the pass ran on the fixed
+  build). All four confirmed by the user: same-side pass clean at the parking
+  strip (the 0.041 clip gone), head-on reads as squash comedy, mission
+  taps/pacing/celebrations unaffected, offline reload unchanged. Verdict lands
+  in the task note and the Phase 2 verification report on `abf9974`.
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `abf9974`
+  - [x] Quality gates: `pnpm check && pnpm typecheck && CI=true pnpm test` green;
     >80% coverage on touched logic; public constants documented; tech-stack
     documented
+
+  **Done:** gates all green 2026-09-24 (biome clean, tsc clean, 790/790 across
+  64 files); coverage on touched logic well over 80% (`trafficBrain.ts`
+  94.54 stmts / 91.42 branch / 100 funcs); public constants documented
+  (`TRAFFIC_LATERAL_BIAS` derivation); tech-stack recorded (`abf9974`). Phase 2
+  scope (490a42d..HEAD): `conductor/tech-stack.md` + this plan — docs/plan only,
+  no code files (trivially paired). Manual verification = the AC4 desktop pass
+  (Task 5 — all four confirmed). User confirmed the checkpoint ("Yes — Phase 2
+  confirmed"); the verification report and task note are appended to `abf9974`.
