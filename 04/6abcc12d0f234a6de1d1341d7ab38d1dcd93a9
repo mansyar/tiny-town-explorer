@@ -26,3 +26,26 @@ via the town-wide missionFocus resolver). Delete the path per simplicity.
 Gates: rg 'spawnOne|trySpawn' src/ empty; pnpm check clean; tsc --noEmit
 clean; 64 files / 784 tests pass (exactly the 6 orphaned tests removed).
 Coverage: missionRegistry 100% stmts / branch / funcs.
+
+Phase 2 Verification Report — Mission-Stack Naming & Seam Cleanup
+(Phase 2 – Delete the registry seam (mechanical))
+
+Automated tests (announced command: CI=true pnpm test, pwsh form
+$env:CI='true'; pnpm test): 64 files / 784 tests pass (790 − the 6 orphaned
+spawn/focus tests). Also clean: pnpm check (Biome), pnpm typecheck
+(tsc --noEmit). Coverage: missionRegistry 100% stmts / branch / funcs.
+Seam sweep: rg 'spawnOne|trySpawn' src/ returns nothing.
+
+Phase scope (git diff --name-only 403b1fa HEAD): src/game/mission/missionRegistry.ts,
+src/game/mission/missionRegistry.test.ts, track plan.md. Test-file check:
+every changed code file has its test file (missionRegistry.test.ts).
+
+Manual verification steps (frontend):
+1. pnpm dev
+2. Open the URL Vite prints (http://localhost:5173)
+3. Confirm all four missions spawn and play exactly as before (deleted seam
+   was never on the live path); let a mission wait, stay idle ~10s, and
+   confirm the helper hand traces to the mission's marker and pokes once
+   (the surviving town-wide focus path).
+
+User confirmation: "Yes, meets expectations" (2026-09-24).
