@@ -114,16 +114,34 @@
 
 ## Phase 4 – Behavior-freeze proof & docs (manual-verify)
 
-- [ ] Task: Four-mission walkthrough at `?calmGap=2` (AC6) — manual
+- [x] Task: Four-mission walkthrough at `?calmGap=2` (AC6) — manual
   verification steps recorded per workflow.md
-  - [ ] Play all four missions through on the dev server; every beat identical
+  - [x] Play all four missions through on the dev server; every beat identical
     to the consolidation-track walkthrough: markers only in their states,
     confetti + sun + cheer, exactly one sparkle per completion (never in free
     play), helper hand demos exactly once per idle stretch
-- [ ] Task: Freeze review, docs sweep, final gates (AC4, AC5, AC7)
-  - [ ] Diff-review the frozen suites: only import-path/type-name renames (NFR1)
-  - [ ] Live docs/comments carry the new names; `docs/playtest.md` and
+  - **Done:** Walkthrough performed at `?calmGap=2` and user-confirmed
+    2026-09-24: all four missions played through with beats identical to the
+    consolidation-track walkthrough — markers only in their states, the fire's
+    smoke lingering through the 2.5s celebration (Phase 3's regression guard),
+    confetti + sun + cheer with exactly one sparkle per completion and none in
+    free play, helper hand demoing exactly one tap per idle stretch.
+- [x] Task: Freeze review, docs sweep, final gates (AC4, AC5, AC7)
+  - [x] Diff-review the frozen suites: only import-path/type-name renames (NFR1)
+  - [x] Live docs/comments carry the new names; `docs/playtest.md` and
     `conductor/archive/*` byte-identical (NFR4) — verified via
     `git diff --name-only`
-  - [ ] Final `pnpm check && pnpm typecheck && CI=true pnpm test`
+  - [x] Final `pnpm check && pnpm typecheck && CI=true pnpm test`
+  - **Done:** Freeze review (`git diff -U0 main...HEAD` over the five frozen
+    suites): only forced import-path/type/function renames plus
+    biome-forced wraps, the 3 *additive* FR3 tests, and exactly the two
+    user-sanctioned `FIRE_FLAME` amendments — no other frozen assertion
+    moved; `missionFocus.test.ts` unchanged entirely (AC-4/NFR1). Docs
+    sweep: `docs/playtest.md`, `conductor/archive/*`, `README.md` and
+    `conductor/tech-stack.md` byte-identical to `main`; the single remaining
+    `missionManager` mention is the historical v1 AC4 row in `docs/playtest.md`
+    and stays as written (AC-7/NFR4). Final gates: `pnpm check` (145 files)
+    and `tsc --noEmit` clean; `CI=true pnpm test` = 64 files / 787 tests pass
+    (AC-5) — this run also serves as the checkpoint protocol's test run, as
+    no code has changed since.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
