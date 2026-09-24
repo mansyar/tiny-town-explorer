@@ -1,0 +1,9 @@
+Task: Green - narrow the lanes, amend the pass contract (FR1, FR2, FR3)
+
+Summary: TRAFFIC_LATERAL_BIAS 0.177 -> 0.136 in trafficBrain.ts, derivation rewritten to the strip-clearance formula (0.46 - 2 x 0.16176 = 0.136470... floored to 0.136). TRAFFIC_PASS_CLEARANCE and TRAFFIC_KERB_SLACK retired (orphaned by the contract move - grep confirmed no consumers outside their own rewritten tests). FR3 contracts amended: head-on and overtake pin the accepted squash band as measured literals (AuthoredPairSquash 0.015, WidestPairSquash 0.052 caps); derivation test pins bias = floor(strip near edge - widest, 3dp). Old kerb-kiss test retired. trafficSystem.ts motor comment rewritten to the fixed state.
+
+Measured outcomes: swept reach 0.33876 -> 0.29776 (margin 0.00047 inside the parked strip near edge 0.29824). Per-seat clips eliminated (worst was sedan 0.0405). Squash band: authored pair 0.0152 (pinned 0.015 +/- 0.0005), widest pair 0.05153 (<= 0.052 cap) - inside the spec's ~0.1 reads-as-interpenetration line. Curve sweep: mid-corner rotating box reaches ~0.021 past the strip line at the bend itself, but no seat stands on bend tiles and mover longitudinal reach (~0.51) never meets a seat inner bound (0.725) - stop condition not triggered. Red phase caught a tautology (squashGap derived its expectation from the bias under test); fixed by pinning measured literals.
+
+Files: src/game/traffic/trafficBrain.ts, src/game/traffic/trafficBrain.test.ts, src/game/traffic/trafficSystem.ts
+
+Why: AC1 + AC2 - a same-side pass clips a parked car by 0.041 (the tech-stack known cosmetic); narrowing the lanes trades a slight accepted head-on squash (comedy, movers are non-blocking) for clean parking clearance. Gates: biome clean, tsc clean, 790/790 tests; trafficBrain.ts coverage 94.54 stmts / 91.42 branch / 100 funcs.
