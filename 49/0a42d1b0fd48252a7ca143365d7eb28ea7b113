@@ -7,3 +7,9 @@ Measured outcomes: swept reach 0.33876 -> 0.29776 (margin 0.00047 inside the par
 Files: src/game/traffic/trafficBrain.ts, src/game/traffic/trafficBrain.test.ts, src/game/traffic/trafficSystem.ts
 
 Why: AC1 + AC2 - a same-side pass clips a parked car by 0.041 (the tech-stack known cosmetic); narrowing the lanes trades a slight accepted head-on squash (comedy, movers are non-blocking) for clean parking clearance. Gates: biome clean, tsc clean, 790/790 tests; trafficBrain.ts coverage 94.54 stmts / 91.42 branch / 100 funcs.
+
+Verification report (Phase 1 checkpoint, 2026-09-24)
+
+Scope 2852a3b..HEAD: conductor/tech-stack.md, conductor/tracks.md, track plan.md, src/game/traffic/trafficBrain.ts + trafficBrain.test.ts, trafficSystem.ts - every code file paired with its test file. Checkpoint run: CI=true pnpm test -> 790/790 (64 files). Gates earlier in the task: biome clean, tsc --noEmit clean, coverage trafficBrain.ts 94.54 stmts / 91.42 branch / 100 funcs (>80% policy).
+
+Manual verification plan presented and user confirmed ('Yes - Phase 1 confirmed'): same-side pass clean past the parked strip (0.041 clip gone), head-on pair reads as squash comedy (0.0152 authored / 0.05153 widest band), no kerb rides or corner clips, mission taps/pacing unaffected. Mobile (iPad 9th-gen floor): N/A this phase - no DOM/UI/UX or art/feel change; the AC4 desktop pass is Phase 2's dedicated task.
