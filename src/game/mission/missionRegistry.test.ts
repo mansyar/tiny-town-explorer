@@ -84,73 +84,11 @@ describe('the mission registry contract', () => {
     expect(handled).toEqual(['fire', 'iceCream', 'park']);
   });
 
-  it('resolves exactly one focus destination', () => {
-    const registry = createMissionRegistry([
-      { id: 'fire', focus: () => ({ awaiting: false, destination: { x: 1, z: 1 } }) },
-      { id: 'iceCream', focus: () => ({ awaiting: true, destination: { x: 2, z: 2 } }) },
-      { id: 'park', focus: () => ({ awaiting: true, destination: { x: 3, z: 3 } }) },
-    ]);
-
-    const focus = registry.focus({ x: 0, z: 0 });
-    // First awaiting mission wins; one destination, never a merge.
-    expect(focus).toEqual({ awaiting: true, destination: { x: 2, z: 2 } });
-  });
-
-  it('falls back to the car when no mission is awaiting', () => {
-    const car = { x: -4, z: 7 };
-    const registry = createMissionRegistry([
-      { id: 'fire', focus: () => ({ awaiting: false, destination: { x: 1, z: 1 } }) },
-      { id: 'iceCream', ...silentMission() },
-    ]);
-
-    expect(registry.focus(car)).toEqual({ awaiting: false, destination: car });
-  });
-
-  it('passes the car position into each focus contribution', () => {
-    const seen: Array<{ x: number; z: number }> = [];
-    const car = { x: 2, z: -5 };
-    const registry = createMissionRegistry([
-      {
-        id: 'fire',
-        focus: (at) => {
-          seen.push(at);
-          return { awaiting: false, destination: at };
-        },
-      },
-      {
-        id: 'iceCream',
-        focus: (at) => {
-          seen.push(at);
-          return { awaiting: false, destination: at };
-        },
-      },
-    ]);
-
-    registry.focus(car);
-    expect(seen).toEqual([car, car]);
-  });
-
-  it('lets a town-wide resolver answer focus, marker and all, over the per-entry pass', () => {
-    const asked: string[] = [];
+  it('lets a town-wide resolver answer focus, marker and all', () => {
     const registry = createMissionRegistry(
-      [
-        {
-          id: 'fire',
-          focus: () => {
-            asked.push('fire');
-            return { awaiting: true, destination: { x: 1, z: 1 } };
-          },
-        },
-        {
-          id: 'iceCream',
-          focus: () => {
-            asked.push('iceCream');
-            return { awaiting: true, destination: { x: 2, z: 2 } };
-          },
-        },
-      ],
+      [{ id: 'fire' }, { id: 'iceCream' }],
       // FR12: `missionFocus` is *the* resolver — one four-mission answer,
-      // including the HUD siren target, rather than the first awaiting entry.
+      // including the HUD siren target.
       () => ({ awaiting: true, destination: { x: 9, z: 9 }, target: 'siren' }),
     );
 
@@ -159,7 +97,6 @@ describe('the mission registry contract', () => {
       destination: { x: 9, z: 9 },
       target: 'siren',
     });
-    expect(asked).toEqual([]);
   });
 
   it('reports the town busy unless every mission is idle', () => {
@@ -178,47 +115,6 @@ describe('the mission registry contract', () => {
     expect(busy.isBusy()).toBe(true);
   });
 
-  it('runs at most one mission spawn per busy-gated pass', () => {
-    const spawned: string[] = [];
-    const accept = (id: string) => () => {
-      spawned.push(id);
-      return true;
-    };
-    const registry = createMissionRegistry([
-      { id: 'fire', trySpawn: accept('fire') },
-      { id: 'iceCream', trySpawn: accept('iceCream') },
-      { id: 'park', trySpawn: accept('park') },
-    ]);
-
-    const started = registry.spawnOne();
-    expect(started).toBe(true);
-    expect(spawned).toEqual(['fire']);
-  });
-
-  it('tries the next mission when the first refuses to spawn', () => {
-    const spawned: string[] = [];
-    const accept = (id: string) => () => {
-      spawned.push(id);
-      return true;
-    };
-    const registry = createMissionRegistry([
-      { id: 'fire', trySpawn: () => false },
-      { id: 'iceCream', trySpawn: accept('iceCream') },
-      { id: 'park', trySpawn: accept('park') },
-    ]);
-
-    expect(registry.spawnOne()).toBe(true);
-    expect(spawned).toEqual(['iceCream']);
-  });
-
-  it('reports no spawn when every mission refuses', () => {
-    const registry = createMissionRegistry([
-      { id: 'fire', trySpawn: () => false },
-      { id: 'iceCream', trySpawn: () => false },
-    ]);
-    expect(registry.spawnOne()).toBe(false);
-  });
-
   it('accepts an empty registry without throwing', async () => {
     const registry = createMissionRegistry([]);
     expect(() => registry.tick(1)).not.toThrow();
@@ -228,6 +124,5 @@ describe('the mission registry contract', () => {
       destination: { x: 0, z: 0 },
     });
     expect(registry.isBusy()).toBe(false);
-    expect(registry.spawnOne()).toBe(false);
   });
 });

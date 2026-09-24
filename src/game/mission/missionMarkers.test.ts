@@ -10,8 +10,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { FIRE_FLAME, type FireMissionState } from './fireMission';
 import { type IceCreamState, ORDER_CONE } from './iceCreamMission';
-import { FIRE_FLAME, type MissionState } from './missionManager';
 import {
   type MarkerAdapter,
   markerArmed,
@@ -22,7 +22,7 @@ import {
 import { PARK_FIELD, type ParkState } from './parkMission';
 import { PUPPY_HEART, PUPPY_PAW, type PuppyState } from './puppyMission';
 
-type DriveState = MissionState | IceCreamState;
+type DriveState = FireMissionState | IceCreamState;
 
 const DRIVE_STATES: DriveState[] = ['idle', 'spawned', 'driving', 'active', 'complete'];
 const PARK_STATES: ParkState[] = [
@@ -74,18 +74,40 @@ describe('shared marker contract', () => {
   });
 });
 
-describe('fire flame adapter matches the characterization matrix', () => {
-  const visible: Record<MissionState, boolean> = {
-    idle: false,
-    spawned: true,
-    driving: true,
-    active: true,
-    complete: false,
-  };
+describe('showIn is optional (FR3)', () => {
+  it('an adapter with no showIn drives no visibility, but its taps still work', () => {
+    const silent: MarkerAdapter<'idle' | 'armed', 'ignore' | 'claim'> = {
+      taps: [{ inState: 'armed', needsTarget: true, outcome: 'claim' }],
+    };
+    for (const state of ['idle', 'armed'] as const) {
+      expect(markerVisible(silent, state), `silent in ${state}`).toBe(false);
+    }
+    expect(markerTap(silent, { state: 'armed', onTarget: true })).toBe('claim');
+    expect(markerTap(silent, { state: 'armed', onTarget: false })).toBe('ignore');
+    expect(markerTap(silent, { state: 'idle', onTarget: true })).toBe('ignore');
+  });
 
-  it('shows in spawned/driving/active, hides otherwise', () => {
+  it('FIRE_FLAME carries no showIn at all — fireFx owns the flame', () => {
+    expect('showIn' in FIRE_FLAME).toBe(false);
+  });
+
+  it('every visibility-driving adapter still declares its showIn states', () => {
+    expect(ORDER_CONE.showIn).toEqual(['spawned', 'driving', 'active']);
+    expect(PARK_FIELD.showIn).toEqual(['spawned', 'responding', 'collecting']);
+    expect(PUPPY_PAW.showIn).toEqual(['searching']);
+    expect(PUPPY_HEART.showIn).toEqual(['carrying']);
+  });
+});
+
+describe('fire flame adapter matches the characterization matrix', () => {
+  it('drives no visibility — fireFx owns the flame (FR3)', () => {
+    // `main.ts` shows and hides the flame through `fireFx`, never through this
+    // layer: wiring `markerVisible(FIRE_FLAME, ...)` into the flame would run
+    // `extinguish()` during the celebration and cut the lingering smoke 2.5s
+    // early — a visible change that was rejected earlier. The adapter keeps
+    // its tap claims and drives no visibility of its own.
     for (const state of DRIVE_STATES) {
-      expect(markerVisible(FIRE_FLAME, state), `flame in ${state}`).toBe(visible[state]);
+      expect(markerVisible(FIRE_FLAME, state), `flame in ${state}`).toBe(false);
     }
   });
 
@@ -223,9 +245,10 @@ describe('arm states are declared only where they are consulted (FR2)', () => {
 });
 
 describe('cross-adapter isolation (AC3)', () => {
-  it('while a fire is spawned, only the flame is present', () => {
+  it('while a fire is spawned, no other marker is present', () => {
+    // (the flame itself is present — `fireFx` shows it, this layer does not)
     const fireState: DriveState = 'spawned';
-    expect(markerVisible(FIRE_FLAME, fireState)).toBe(true);
+    expect(markerVisible(FIRE_FLAME, fireState)).toBe(false);
     expect(markerVisible(ORDER_CONE, 'idle')).toBe(false);
     expect(markerVisible(PARK_FIELD, 'idle')).toBe(false);
     expect(markerVisible(PUPPY_PAW, 'idle')).toBe(false);

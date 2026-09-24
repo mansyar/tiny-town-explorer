@@ -28,14 +28,14 @@
  */
 
 import type { Vec2 } from '../town/townTypes';
+import { type FireMissionState, fireAwaitsKid } from './fireMission';
 import type { IceCreamState } from './iceCreamMission';
-import { fireAwaitsKid, type MissionState } from './missionManager';
 import { orderAwaitsKid } from './orderFlow';
 import { type ParkState, parkAwaitsKid } from './parkMission';
 import type { PuppyState } from './puppyMission';
 
 export interface MissionFocusInput {
-  readonly fireState: MissionState;
+  readonly fireState: FireMissionState;
   /** Where the fire is; absent when its lot cannot be resolved. */
   readonly fireAt?: Vec2;
   readonly orderState: IceCreamState;

@@ -16,9 +16,12 @@
  * tests can park in any combination of states.
  */
 
+import type { FireMissionSnapshot } from './fireMission';
 import type { IceCreamSnapshot } from './iceCreamMission';
-import type { MissionSnapshot } from './missionManager';
 
-export function isTownBusy(fire: MissionSnapshot, iceCream: IceCreamSnapshot): boolean {
+export function isTownBusy(
+  fire: FireMissionSnapshot,
+  iceCream: IceCreamSnapshot,
+): boolean {
   return fire.state !== 'idle' || iceCream.state !== 'idle';
 }

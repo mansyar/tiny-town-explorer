@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { createFireMission } from './fireMission';
 import { createIceCreamMission } from './iceCreamMission';
 import { isTownBusy } from './missionBusy';
-import { createMissionManager } from './missionManager';
 
 /** A fire mission parked in `driving`: spawned, responded, far away. */
 function drivingFire() {
-  const fire = createMissionManager();
+  const fire = createFireMission();
   fire.spawn('house-1');
   fire.respond();
   fire.update(1 / 60, 99);
@@ -23,13 +23,13 @@ function drivingIceCream() {
 
 describe('the shared busy gate', () => {
   it('calls a quiet town free: both pacers may count down', () => {
-    const fire = createMissionManager();
+    const fire = createFireMission();
     const iceCream = createIceCreamMission();
     expect(isTownBusy(fire.snapshot(), iceCream.snapshot())).toBe(false);
   });
 
   it('goes busy the moment a fire spawns, through every state until it lingers out', () => {
-    const fire = createMissionManager();
+    const fire = createFireMission();
     const iceCream = createIceCreamMission();
 
     fire.spawn('house-1');
@@ -46,7 +46,7 @@ describe('the shared busy gate', () => {
   });
 
   it('goes busy the moment an order opens, even before the truck moves', () => {
-    const fire = createMissionManager();
+    const fire = createFireMission();
     const iceCream = createIceCreamMission();
 
     iceCream.spawn('house-2');

@@ -18,8 +18,8 @@
  * audio (never sound-only).
  */
 import type { Vec2 } from '../town/townTypes';
+import { COMPLETE_LINGER_SECONDS as FIRE_LINGER } from './fireMission';
 import { COMPLETE_LINGER_SECONDS as ORDER_LINGER } from './iceCreamMission';
-import { COMPLETE_LINGER_SECONDS as FIRE_LINGER } from './missionManager';
 import type { MissionId } from './missionRegistry';
 import { COMPLETE_LINGER_SECONDS as PARK_LINGER } from './parkMission';
 import { COMPLETE_LINGER_SECONDS as PUPPY_LINGER } from './puppyMission';
