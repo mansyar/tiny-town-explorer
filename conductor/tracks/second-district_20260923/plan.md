@@ -147,15 +147,31 @@
   transcoded CC0 clip — the plan delegated the call and zero new assets is the
   honest cost; the droplet poof reuses `fx.burst('poof')`. Gates: `pnpm check`
   + `pnpm typecheck` clean, 64 files / 783 tests green.
-- [ ] Task: Ducks and the sploosh (FR5, FR10) (manual-verify)
-  - [ ] Build 2–3 primitive ducks in the puppy's pattern (measured, ~200–300
+- [x] Task: Ducks and the sploosh (FR5, FR10) (manual-verify) (142e333)
+  - [x] Build 2–3 primitive ducks in the puppy's pattern (measured, ~200–300
     triangle band, shared materials — zero new art files) with squash-and-
     stretch waddle-in-place; droplet poof in the `abilityFx` burst-pool language
-  - [ ] Sploosh one-shot in the established audio pipeline (CC0 clip transcoded
+  - [x] Sploosh one-shot in the established audio pipeline (CC0 clip transcoded
     per the recipe + `src/assets/audio/README.md` row, or synthesized — this
     plan's call), always paired with the visual poof so muted play reads it
-  - [ ] Manual steps recorded: drive in → sploosh + poof + carry on; ducks
+  - [x] Manual steps recorded: drive in → sploosh + poof + carry on; ducks
     untouched by taps and traffic; muted play communicates the splash
+
+  **Done (142e333):** sploosh synthesized as `splooshSchedule` (red-first,
+  2 tests — falling 440→175 Hz drop over 0.46 s, like the jingle's tested
+  schedule) + `audioEngine.sploosh()` in sine; no CC0 clip, zero new assets
+  and no `src/assets/audio/README.md` row (the plan delegated the call —
+  recorded in Task 1's Done note). `src/game/town/pondDucks.ts`: three
+  chunky primitives ducks in the puppy's pattern (~214 tris each, three
+  shared kit-family materials, deterministic edge-of-pond poses found from
+  the map's 'pond' tile — empty group on a town without one), squash-and-
+  stretch waddle-in-place via `update(delta)`. main.ts wiring: the pond
+  watcher and ducks join the `let … | undefined` async-window house pattern;
+  `tickVehicle` extracted so `advance` stays under the complexity cap. The
+  droplet poof reuses `fx.burst('poof')` — the sploosh always shares its
+  simultaneous visual (FR10). Gates: `pnpm check` + `pnpm typecheck` clean,
+  64 files / 785 tests green (sploosh red-first; ducks/wiring visual —
+  manual-verify).
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5 – Shadow frustum follows the car (manual-verify)
