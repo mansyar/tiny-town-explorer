@@ -125,15 +125,28 @@
 
 ## Phase 4 – Pond splash and waddling ducks (mixed)
 
-- [ ] Task: Passable surface + once-per-entry splash (FR4) (TDD)
-  - [ ] Write failing tests: pond tiles are never solid (`isScoopable`'s
+- [x] Task: Passable surface + once-per-entry splash (FR4) (TDD) (5726d5e)
+  - [x] Write failing tests: pond tiles are never solid (`isScoopable`'s
     "only buildings block" invariant holds with pond green beside every spot);
     entering the pond raises exactly one splash until the car leaves and
     re-enters; a route through the pond completes with no leg abandoned (red
     first)
-  - [ ] Implement the passable-surface flag + entry trigger at the
+  - [x] Implement the passable-surface flag + entry trigger at the
     collision/motor seam — minimum code to pass
-  - [ ] Refactor + coverage
+  - [x] Refactor + coverage
+
+  **Done (5726d5e):** red-first `src/game/feedback/pondSplash.test.ts` (4
+  tests: exactly one splash per entry — silent while wet, rearmed on leaving;
+  nothing outside the pond; the water stays scoopable and house-clear for all
+  seven spots; a motor route onto the water completes with zero bonks). Pure
+  trigger module `src/game/feedback/pondSplash.ts`
+  (`PondWatcher.note(point)` on `tileAt(worldToTile(point)) === 'pond'`). The
+  water was already passable ground (only buildings are solid) — FR4 is the
+  trigger, not a collision. In-flight refinement: the sploosh is **synthesized**
+  as a scheduling function (Task 2, red-first like the jingle) rather than a
+  transcoded CC0 clip — the plan delegated the call and zero new assets is the
+  honest cost; the droplet poof reuses `fx.burst('poof')`. Gates: `pnpm check`
+  + `pnpm typecheck` clean, 64 files / 783 tests green.
 - [ ] Task: Ducks and the sploosh (FR5, FR10) (manual-verify)
   - [ ] Build 2–3 primitive ducks in the puppy's pattern (measured, ~200–300
     triangle band, shared materials — zero new art files) with squash-and-
