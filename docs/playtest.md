@@ -536,4 +536,15 @@ Measured (GL-counter, spawn to junction): spawn 237 draws / 56,232 tris; junctio
 
 ### iPad device pass (AC10)
 
-_Pending this track's device sitting: first-load and frame rate vs. pre-track, drive feel across the junction, shop legibility, pond delight, offline._
+One sitting on the iPad 9th-gen floor device (2026-09-24) — all verdicts pass:
+
+- First load and frame rate hold up against the pre-track build.
+- Drive-time feel across the junction reads calm, not tedious: the longer
+  voyages land as intended.
+- The shop reads at play distance and at 48px, zero text, and rests on the
+  ground.
+- The pond delights: one sploosh + poof per entry, silence while wet, the
+  ducks waddle and ignore taps.
+- Street life holds: six parked cars on measured kerbs, three wanderers
+  squashing past as comedy, and neither litter nor puppy ever inside a car.
+- Offline reload works from the precache (49 entries).
