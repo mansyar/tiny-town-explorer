@@ -49,7 +49,7 @@
     missionFocus, missionCelebration, firePacer 100%.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 2 – Delete the registry seam (mechanical)
+## Phase 2 – Delete the registry seam (mechanical) [checkpoint: 3fdc726]
 
 - [x] Task: Remove `spawnOne`/`trySpawn` and the per-entry `focus` (FR2) (046abcc)
   - [x] Delete `spawnOne()` from the registry API and implementation,
@@ -79,7 +79,7 @@
 
 ## Phase 3 – Truthful marker adapter (TDD)
 
-- [ ] Task: `MarkerAdapter.showIn` optional; drop `FIRE_FLAME.showIn` (FR3)
+- [~] Task: `MarkerAdapter.showIn` optional; drop `FIRE_FLAME.showIn` (FR3)
   - [ ] Write failing tests (red): an adapter with no `showIn` is never visible
     through the generic sync (`markerVisible` reports false in every state)
     while its `markerTap` seams still work; `FIRE_FLAME` carries no `showIn`
