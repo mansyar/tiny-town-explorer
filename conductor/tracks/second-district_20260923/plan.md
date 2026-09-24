@@ -198,7 +198,7 @@
   Gates: `pnpm check` + `pnpm typecheck` clean, 64 files / 788 tests green.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (53091f1)
 
-## Phase 6 – Town life: six parked, three movers, spawns (mixed)
+## Phase 6 – Town life: six parked, three movers, spawns (mixed) [checkpoint: 203f160]
 
 - [x] Task: Town-wide kerb reservation + 3-per-ring placements (FR8, FR9) (TDD) (9e1a159)
   - [x] Write failing tests: three parked cars per ring on each ring's three
@@ -245,11 +245,11 @@
   no bias values changed (`TRAFFIC_LATERAL_BIAS` 0.177 still covers widest +
   pass clearance). Gates: `pnpm check` + `pnpm typecheck` clean, 64 files /
   790 tests green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (203f160)
 
 ## Phase 7 – Measurements, docs and device pass (mixed)
 
-- [ ] Task: Full gates + measurements + docs (NFR2, NFR4, AC9)
+- [~] Task: Full gates + measurements + docs (NFR2, NFR4, AC9)
   - [ ] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
     >80% on every logic module touched
   - [ ] Measure the assembled scene at the **junction worst-case window** with
