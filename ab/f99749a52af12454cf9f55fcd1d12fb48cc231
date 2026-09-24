@@ -5,3 +5,11 @@ Summary: the Light wandering traffic entry is rewritten to the fixed state - the
 Files: conductor/tech-stack.md
 
 Why: NFR4 + AC5 - the ledger records the fixed state and the accepted trade. Docs-only task (Guiding Principle 3 exemption - no red/green); verified by reading the rendered entry.
+
+Task: Desktop browser verification pass (AC4, manual-verify)
+
+Summary: the AC4 desktop pass ran 2026-09-24 against the fresh dev build (localhost:5177 - ports 5173-5176 held stale older-build servers, the pass ran on the fixed build). All four confirmed by the user: (1) same-side pass clean at the parked strip - the 0.041 clip gone; (2) head-on reads as squash comedy, not collision; (3) mission taps, pacing and celebrations unaffected; (4) offline reload unchanged. Files: none (manual pass). Why: AC4 - the track's acceptance criterion needed a human eye on the feel.
+
+Verification report (Phase 2 checkpoint, 2026-09-24)
+
+Scope 490a42d..HEAD: conductor/tech-stack.md + conductor/tracks/same-side-traffic-clearance_20260924/plan.md - docs/plan only, no code files (trivially paired). Quality gates: biome clean, tsc --noEmit clean, vitest 790/790 across 64 files. Coverage on touched logic: trafficBrain.ts 94.54 stmts / 91.42 branch / 100 funcs (>80% policy). Public constants documented (TRAFFIC_LATERAL_BIAS derivation); tech-stack documented (this commit). Manual verification = the AC4 desktop pass (user: 'All four confirmed'); phase question confirmed ('Yes - Phase 2 confirmed').
