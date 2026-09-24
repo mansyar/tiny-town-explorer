@@ -137,11 +137,11 @@ function buildCarriage(options: {
     // No static hitboxes on purpose: a wanderer's lane is authored road, and
     // an ambient car that bonks around the furniture reads as a mistake. It
     // meets the kid and its twin in the one collision language (FR4); all else
-    // is scenery it drives past. At the tightest its wheels edge 0.041 into the
-    // parked cars' strip — the carriageway has no room for two lanes and
-    // parking, so head-on clearance (0.354) is what the geometry allows.
-    // The sweep radius is the car's own fitted half-width: capsule-vs-box
-    // sweeps then honour TRAFFIC_PASS_CLEARANCE exactly, not just the boxes.
+    // is scenery it drives past. Since the lanes narrowed (0.136, 2026-09-24)
+    // a same-side pass is clean past the parked strip, and a head-on squashes
+    // past with a slight overlap — the accepted comedy, see tech-stack.md.
+    // The sweep radius is the car's own fitted half-width, so the capsule
+    // matches the footprint box exactly.
     radius: extents.halfWidth,
     speed: options.spec.speed,
     dynamicObstacles: options.others,

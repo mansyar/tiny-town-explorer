@@ -17,25 +17,21 @@ import type { TileCoord, Vec2 } from '../town/townTypes';
  */
 
 /**
- * The gap a pass keeps between two fitted footprints — the town's measured
- * clearance idiom (0.03, the same figure as `KERB_CLEARANCE`).
+ * How far a wanderer holds off the road centre line: the parked-cars strip's
+ * near edge (0.2982 — `PARKED_CAR_KERB_OFFSET` 0.46 minus the widest fitted
+ * half-width, sedan 0.1618 at 0.55 fit) minus that same half-width, rounded
+ * DOWN (0.46 − 2 × 0.1618 = 0.1364 → 0.136). Swept reach is then 0.2978 —
+ * inside the strip, so a same-side pass never clips a parked car (AC1).
+ *
+ * The trade (2026-09-24, see tech-stack.md's lane-narrowing note): the pair
+ * takes opposite sides 2 × 0.136 = 0.272 apart and straight passes overlap —
+ * 0.0152 between the authored sedan and hatchback, 0.0516 between two sedans.
+ * Accepted squash comedy: movers are silent, crashable and non-blocking, and
+ * the 0.60 carriageway has no room for two lanes and parking. Supersedes the
+ * old derivation (widest half-width + half the 0.03 pass clearance) and the
+ * kerb-kiss slack — both retired here with their contracts.
  */
-export const TRAFFIC_PASS_CLEARANCE = 0.03;
-
-/**
- * How far a wanderer holds off the road centre line: the widest fitted model
- * (sedan, half-width 0.1618 at 0.55 fit) plus half the pass clearance. The
- * pair takes opposite sides 2 × 0.177 = 0.354 apart, leaving 0.0668 between
- * the sedan and hatchback footprints — 0.0304 even between two sedans.
- */
-export const TRAFFIC_LATERAL_BIAS = 0.177;
-
-/**
- * How far a footprint may reach past the kerb band's inner edge (0.30): the
- * bias plus the widest half-width lands 0.0388 past it — wheels kiss the kerb
- * strip, never the kerb top.
- */
-export const TRAFFIC_KERB_SLACK = 0.04;
+export const TRAFFIC_LATERAL_BIAS = 0.136;
 
 export interface TrafficBrainOptions {
   /** The road network to wander. */

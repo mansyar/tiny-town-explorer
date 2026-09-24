@@ -96,12 +96,15 @@
 - **Light wandering traffic (added 2026-09-23):** two ambient civilian cars
   (Car Kit sedan and hatchback-sports — the same two models the parked-cars
   budget lever freed) drive the ring for the whole session on seeded endless
-  BFS routes at 0.8 and 1.0 units/s, holding opposite lanes (bias 0.177 =
-  widest fitted half-width 0.1618 + half the 0.03 pass clearance). A known
-  cosmetic at the tightest: the sedan mover's swept reach (0.3388 from the
-  centre line) edges 0.041 into the parked cars' strip (near edge 0.2982) on
-  same-side passes — the 0.60 carriageway has no room for two lanes and
-  parking, so head-on clearance is what the geometry allows. Silent
+  BFS routes at 0.8 and 1.0 units/s, holding opposite lanes (bias **0.136**
+  since 2026-09-24 — the original derivation, 0.177 = widest fitted half-width
+  0.1618 + half the 0.03 pass clearance, is superseded by the lane-narrowing
+  trade below). As shipped (2026-09-23), a known cosmetic at the tightest: the
+  sedan mover's swept reach (0.3388 from the centre line) edged 0.041 into the
+  parked cars' strip (near edge 0.2982) on same-side passes. **Fixed
+  2026-09-24** by the trade below: swept reach 0.29776 now sits 0.00047 inside
+  the strip — the clip is gone, and the overlap moved to mover↔mover straight
+  passes (measured band 0.0152 / 0.05153). Silent
   (FR7), crashable like a cone (FR4), absent from the mission seam and the
   tap router (FR6), mounted through `vehicleActor` at the parked cars' 0.55
   fit with one merged following blob mesh. Measured on the running game at
@@ -120,6 +123,33 @@
   stays at **48 entries** and **4,191.87 KiB** (was 4,186.67 — +5.20 KiB of
   bundle code, zero new asset files: the movers ride art the town already
   precached).
+
+  **Lane-narrowing trade (recorded 2026-09-24 ahead of the code change, per
+  workflow Guiding Principle 2; the measured figures below come from
+  `same-side-traffic-clearance_20260924`'s Phase 1 and replace the
+  pre-implementation estimates):** the lanes narrowed — bias 0.177 → **0.136**,
+  re-derived from fit data as *parked-cars strip near edge 0.29824
+  (`PARKED_CAR_KERB_OFFSET` 0.46 − widest fitted half-width 0.16176) − that
+  same half-width = 0.136470…, rounded down* (swept reach **0.29776** —
+  0.00047 inside the strip). The 0.041 same-side clip is gone: the worst
+  per-seat clip was 0.0405 (sedan mover past the sedan seat) and every seat
+  now clears. The trade reverses: the old derivation (half-width + half the
+  0.03 pass clearance) and the kerb-kiss contract (`TRAFFIC_KERB_SLACK`,
+  "wheels kiss the kerb strip, never the kerb top") are **retired** — with
+  `TRAFFIC_PASS_CLEARANCE` (0.03) — superseded by one contract: *no mover
+  footprint point reaches past 0.29824 from the centre line toward parking*
+  (pinned in `trafficBrain.test.ts`'s AC1 suite — every straight and every
+  authored seat, plus the waypoint poses of seeded corner drives; at the bend
+  itself a rotating footprint can pass ~0.02 wider, where no seat stands).
+  Mover↔mover straight passes now interpenetrate by a measured
+  band — **0.0152** between the authored sedan↔hatchback pair, **0.05153**
+  widest-vs-widest (pinned as the literals `AuthoredPairSquash` 0.015 /
+  `WidestPairSquash` 0.052; well inside the ≈0.1 line where squash stops
+  reading as comedy). Accepted, on the record: movers already "squash past
+  each other as comedy" and are silent, crashable and non-blocking, while a
+  mover clipping a *stationary* parked car reads as a bug. The 0.60
+  carriageway still has no room for two lanes and parking — the overlap moved
+  to where the town's comedy covers it.
 
 - **Second district (added 2026-09-24):** the town grows from the 6×6 ring into
   a figure-eight — two block loops meeting at one shared junction — with a
