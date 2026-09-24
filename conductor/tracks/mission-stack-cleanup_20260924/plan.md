@@ -112,7 +112,7 @@
     100% stmts/branch/funcs; `fireMission` 97.22% stmts / 100% branch.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
-## Phase 4 – Behavior-freeze proof & docs (manual-verify)
+## Phase 4 – Behavior-freeze proof & docs (manual-verify) [checkpoint: 16d52f4]
 
 - [x] Task: Four-mission walkthrough at `?calmGap=2` (AC6) — manual
   verification steps recorded per workflow.md
@@ -144,4 +144,4 @@
     and `tsc --noEmit` clean; `CI=true pnpm test` = 64 files / 787 tests pass
     (AC-5) — this run also serves as the checkpoint protocol's test run, as
     no code has changed since.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md)
