@@ -487,7 +487,7 @@ async function main(): Promise<void> {
   pondDucks = createPondDucks(grid);
   town.group.add(pondDucks.group);
 
-  // Two of the town's own cars wander the ring on their own errands (FR1):
+  // Three of the town's own cars wander the rings on their own errands (FR8):
   // silent, seeded and sealed - the system says update/poses/footprints and
   // knows nothing of the camera, the engine note or the taps.
   traffic = createTrafficSystem({

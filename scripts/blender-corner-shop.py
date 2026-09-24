@@ -3,7 +3,7 @@
 No Kenney kit ships a shopfront building, so this is the authored landmark of
 the second district (FR3). It is authored to the *measured* City Kit (Suburban)
 contract (see `conductor/archive/v1-playtest-slice_20260921/kit-mount-measurements.md`
-and `conductor/tracks/second-district_20260923/spec.md` FR3), so the town's
+and `conductor/archive/second-district_20260923/spec.md` FR3), so the town's
 usual house mounting handles it: fit-capped, footprint published after mount.
 
 Gate 1.1 measurement table (measured before this recipe was written):

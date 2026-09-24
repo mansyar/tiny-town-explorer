@@ -109,7 +109,7 @@ export const TOWN_MAP: TownMapSpec = {
     { kind: 'tree', tile: { x: 7, y: 8 }, offset: { x: 0.2, y: 0.2 } },
     { kind: 'tree', tile: { x: 8, y: 8 }, offset: { x: 0.2, y: 0.2 } },
 
-    // Four parked cars (FR1, FR10), authored on the *street* tile and offset
+    // Six parked cars, three per ring (FR8), authored on the *street* tile and offset
     // toward the kerb they sit against, with a yaw that lies them along that
     // street.
     //
