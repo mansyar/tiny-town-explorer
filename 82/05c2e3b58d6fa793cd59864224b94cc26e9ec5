@@ -32,3 +32,30 @@ fire mission, not a manager.
 Gates: pnpm check clean, tsc --noEmit clean, 64 files / 790 tests pass.
 Coverage: fireMission 97.22% stmts / 100% branch; missionBusy, missionFocus,
 missionCelebration, firePacer 100%.
+
+Phase 1 Verification Report — Mission-Stack Naming & Seam Cleanup
+(Phase 1 – Fire-mission rename (mechanical))
+
+Automated tests (announced command: CI=true pnpm test, pwsh form
+$env:CI='true'; pnpm test): 64 files / 790 tests pass. Also clean:
+pnpm check (Biome), pnpm typecheck (tsc --noEmit). Coverage on touched
+logic: fireMission 97.22% stmts / 100% branch; missionBusy, missionFocus,
+missionCelebration, firePacer 100%.
+
+Phase scope (git diff --name-only 0766320 HEAD): fireMission.ts +
+fireMission.test.ts (renamed from missionManager.*), src/main.ts,
+firePacer.ts, missionBusy.ts (+ test), missionCelebration.ts (+ test),
+missionFocus.ts, missionFsm.test.ts, missionMarkers.test.ts,
+missionStateMatrix.test.ts, missionAbortParity.test.ts, track plan.md.
+Test-file check: every changed code file has a test file; src/main.ts is
+the documented test-exempt DOM-glue composition root (workflow Guiding
+Principle 3).
+
+Manual verification steps (frontend):
+1. pnpm dev
+2. Open the URL Vite prints (http://localhost:5173)
+3. Confirm the town loads exactly as before (rename-only phase); play the
+   fire mission: flame marker shows, hose bursts extinguish, confetti + sun +
+   cheer celebration runs exactly once.
+
+User confirmation: "Yes, meets expectations" (2026-09-24).
