@@ -1,0 +1,28 @@
+Task: Remove spawnOne/trySpawn and the per-entry focus (FR2)
+
+Summary: Deleted the unused half of the missionRegistry seam. The registry's
+live surface (tick/tap/isBusy + focus delegating to the town-wide
+`missionFocus` resolver) is untouched — main.ts uses exactly that path
+(createMissionRegistry's second arg + missions.focus() at the helper hand).
+
+Deleted:
+- `spawnOne()` from the MissionRegistry interface and implementation
+  (spawning goes through tickPacers + missionRotation in main.ts)
+- `MissionContribution.trySpawn` and `MissionContribution.focus` fields
+- the per-entry focus fallback loop inside `focus()` — with no per-entry
+  vote, the town-wide resolver (or the car) is the single focus answer
+- 6 orphaned tests (3 spawnOne/trySpawn + 3 per-entry focus blocks) and the
+  stray `spawnOne()` assertion in the empty-registry test; the town-wide
+  resolver test was adapted to entries without `focus` (the type system now
+  proves what its `asked` assertion used to)
+- module/interface JSDoc updated to the surviving shape
+
+Files: src/game/mission/missionRegistry.ts, src/game/mission/missionRegistry.test.ts
+
+Why: spec FR2 — the spawn/focus seam was implemented and tested but never
+exercised by main.ts (spawning runs via tickPacers + missionRotation, focus
+via the town-wide missionFocus resolver). Delete the path per simplicity.
+
+Gates: rg 'spawnOne|trySpawn' src/ empty; pnpm check clean; tsc --noEmit
+clean; 64 files / 784 tests pass (exactly the 6 orphaned tests removed).
+Coverage: missionRegistry 100% stmts / branch / funcs.
