@@ -1,0 +1,9 @@
+Task: LitterField.dispose() and the replacement call (FR7, AC4)
+
+Summary: the park litter field allocated fresh SphereGeometry, ConeGeometry, IcosahedronGeometry and MeshLambertMaterial per piece per round and never released them, so every park round orphaned its GPU buffers for the rest of the session. LitterField now claims each resource once as it builds and frees them all in a new dispose(). createLitterField clears its bounce set at the same time, which is what makes update() a natural no-op afterwards with no extra flag. startPark() calls dispose() on the outgoing field right after the scene.remove, before building the replacement.
+
+Files: created src/game/mission/parkLitterFx.test.ts; modified src/game/mission/parkLitterFx.ts; modified src/main.ts (startPark replacement path only).
+
+Why: dispose() deliberately covers pieces parkPickup already collected - remove() only stops them bouncing, it does not release what they were made of, so a teardown that walked the live set would leak exactly the pieces a child had driven over. The claim is per resource rather than per mesh because the tied bag shares one material across its two meshes and a per-mesh teardown would double-free it. Scoped to this one allocator: ModelLibrary.instantiate() shares via clone(true), so vehicle morphing is not a leaker, and every other FX object is built once at boot.
+
+Red/green: 4 tests written first and confirmed failing (field.dispose is not a function), then green. parkLitterFx.ts 98.36% stmts / 100% funcs / 98.36% lines; branch 75% sits in the workflow-exempt visual paths (the material-array branch and the bounce clamp), with the disposal contract itself at 100%. Gates: pnpm check && pnpm typecheck && pnpm test -> 794/794 passing, 65 files.
