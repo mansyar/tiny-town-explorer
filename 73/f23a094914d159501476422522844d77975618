@@ -1,0 +1,38 @@
+Task: MarkerAdapter.showIn optional; drop FIRE_FLAME.showIn (FR3)
+
+Summary: Truthful marker adapter (the only red/green phase of the track).
+The flame's visibility has always been owned by `fireFx` — `FIRE_FLAME.showIn`
+was a describing field no production code read (a `markerVisible`-drives-flame
+wiring would run `extinguish()` during the celebration and cut the lingering
+smoke 2.5s early — a visible change rejected earlier). The contract now says
+that out loud.
+
+Red-then-green (vitest red run: exactly 4 failures, 17 passes):
+- `MarkerAdapter.showIn` is now optional (`readonly showIn?: readonly S[]`);
+  `markerVisible` treats absent as "drives no visibility" (false).
+- `FIRE_FLAME` no longer carries `showIn`; its JSDoc names `fireFx` as the
+  flame's owner.
+- New tests: an adapter with no `showIn` is never visible through the generic
+  sync while its `markerTap` seams still work; `'showIn' in FIRE_FLAME` is
+  false (pin); every visibility-driving adapter (ORDER_CONE, PARK_FIELD,
+  PUPPY_PAW, PUPPY_HEART) still declares its exact `showIn` states.
+
+USER-SANCTIONED frozen-suite amendment (asked before implementation, per
+workflow deviation protocol): FR3 contradicted AC4 because two assertions in
+the frozen `missionMarkers.test.ts` pinned `markerVisible(FIRE_FLAME, ...)`
+true in spawned/driving/active — the very field FR3 deletes. User chose
+"Amend the two assertions". Only those two changed, in place:
+1. 'shows in spawned/driving/active, hides otherwise' -> 'drives no
+   visibility — fireFx owns the flame (FR3)' (all states now false, with the
+   2.5s-smoke reason in a comment).
+2. cross-adapter isolation: `markerVisible(FIRE_FLAME, 'spawned')` true ->
+   false ('while a fire is spawned, no other marker is present').
+Every other frozen assertion (tap seams, armIn pins, other adapters,
+syncMarker) is untouched.
+
+Files: src/game/mission/missionMarkers.ts, src/game/mission/missionMarkers.test.ts,
+src/game/mission/fireMission.ts
+
+Gates: pnpm check clean; tsc --noEmit clean; 64 files / 787 tests pass
+(784 + 3 new). Coverage: missionMarkers 100% stmts/branch/funcs;
+fireMission 97.22% stmts / 100% branch.
