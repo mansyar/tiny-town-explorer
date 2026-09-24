@@ -307,8 +307,8 @@ describe('hitting things', () => {
 describe('parked cars in the town (FR5)', () => {
   const grid = createTownGrid(TOWN_MAP);
   const obstacles = collectObstacles(grid);
-  /** The van on the north ring road: an east-west street, so the lane is simple. */
-  const van = grid.props.find((prop) => prop.kind === 'parkedVan');
+  /** The hatchback on the second loop's north edge: an east-west street, so the lane is simple. */
+  const van = grid.props.find((prop) => prop.tile.x === 7 && prop.tile.y === 5);
 
   /**
    * A point in the parked car's own kerbside lane, `tileX` along the ring road.
@@ -320,7 +320,7 @@ describe('parked cars in the town (FR5)', () => {
    * tap inside the house's hitbox, which is a different story (a solid leg).
    */
   const lane = (tileX: number) => {
-    const centre = grid.tileToWorld({ x: tileX, y: 0 });
+    const centre = grid.tileToWorld({ x: tileX, y: 5 });
     return { x: centre.x, z: centre.z + 0.3 };
   };
 

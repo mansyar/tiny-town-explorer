@@ -121,20 +121,13 @@ export const TOWN_MAP: TownMapSpec = {
     // 0.576) - and the roomiest kerb of all (0.748) is the puppy's hiding
     // place, so neither is used here.
     //
-    // Six cars shipped in the parked-cars track; the light-wandering-traffic
-    // track spends lever one from `tech-stack.md` - "four cars on the four
-    // roomiest kerbs" - so the two tightest went (house-1's kerb at a 0.038
-    // gap, house-3's at 0.071) and these four stand at the largest gaps (0.074
-    // to 0.147). Their freed kerbs rejoined the park mission's litter draw,
-    // which now gets (1,2), (1,3), (2,4), (4,2), (4,3) and (4,4) to choose
-    // three from - only (4,1) is still taken here. Phase 6 redistributes all
-    // six across the two rings.
-    {
-      kind: 'parkedVan',
-      tile: { x: 4, y: 0 },
-      offset: { x: 0, y: KERB },
-      yaw: QUARTER_TURN,
-    },
+    // Six cars, three per ring (FR8), on each loop's three roomiest measured
+    // kerbs — the lineup `parkedCarsPlacement.test.ts` re-derives from the
+    // mounted walls, so a model or map change resurfaces as a failure rather
+    // than a car standing against a tighter wall. house-8 (type-r) and
+    // house-5 (type-f) can host no car at any offset, and the kerbs the
+    // missions declare — house-1's, house-3's and the puppy's roomiest hide
+    // beside house-4 — stay with the reservation.
     {
       kind: 'parkedSuv',
       tile: { x: 3, y: 2 },
@@ -152,6 +145,27 @@ export const TOWN_MAP: TownMapSpec = {
       tile: { x: 4, y: 5 },
       offset: { x: 0, y: -KERB },
       yaw: QUARTER_TURN,
+    },
+    // The second loop's three: the north edge beside the type-c house (the
+    // lineup's tightest kerb, so the narrowest car), the west edge beside the
+    // type-h house, and the east edge beside the type-q house.
+    {
+      kind: 'parkedHatchback',
+      tile: { x: 7, y: 5 },
+      offset: { x: 0, y: KERB },
+      yaw: QUARTER_TURN,
+    },
+    {
+      kind: 'parkedSedan',
+      tile: { x: 5, y: 7 },
+      offset: { x: KERB, y: 0 },
+      yaw: Math.PI,
+    },
+    {
+      kind: 'parkedVan',
+      tile: { x: 9, y: 6 },
+      offset: { x: -KERB, y: 0 },
+      yaw: 0,
     },
   ],
   // The puppy's hiding places (FR6): behind the park trees, beside the

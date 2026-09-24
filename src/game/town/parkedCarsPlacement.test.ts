@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type Obstacle, overlapsObstacle } from '../collision/collision';
+import { declaredKerbs } from '../mission/kerbReservation';
+import { spawnParkLitter } from '../mission/parkLitter';
 import { CAR_RADIUS } from '../vehicle/vehicleMotor';
 import { createTownGrid, type TownProp } from './townGrid';
 import { TOWN_MAP } from './townMap';
@@ -11,6 +13,7 @@ import {
   isParkedCarKind,
   KERB_CLEARANCE,
   MIN_KERB_WALL,
+  PARKED_CAR_KERB_OFFSET,
   PARKED_CAR_SEAT_HEIGHT,
   parkedCarHalfExtents,
   widestParkedHalfWidth,
@@ -63,6 +66,15 @@ function boxesOverlap(left: Footprint, right: Footprint): boolean {
     Math.abs(left.centre.x - right.centre.x) < left.halfX + right.halfX &&
     Math.abs(left.centre.z - right.centre.z) < left.halfZ + right.halfZ
   );
+}
+
+/** A tiny deterministic random, so the litter draw replays per seed. */
+function seededRandom(seed: number): () => number {
+  let state = (seed * 16807) % 2147483647;
+  return () => {
+    state = (state * 16807) % 2147483647;
+    return state / 2147483647;
+  };
 }
 
 /** Authored offset of a parked car from its street tile's centre. */
@@ -259,34 +271,87 @@ describe('clearance contracts (FR4)', () => {
   });
 });
 
-describe('the four roomiest kerbs (FR10)', () => {
-  /** Gap between a car's outer edge and the wall it stands against. */
-  function wallGap(prop: TownProp): number {
-    const tile = kerbTile(prop);
-    const house = grid.houses.find(
-      (candidate) => candidate.tile.x === tile.x && candidate.tile.y === tile.y,
+describe('six cars, three per ring (FR8)', () => {
+  /** The junction tile splits the figure-eight into its two loops. */
+  const Junction = { x: 5, y: 5 };
+  const ringOf = (tile: { x: number; y: number }): 'old' | 'new' =>
+    tile.x <= Junction.x && tile.y <= Junction.y ? 'old' : 'new';
+
+  /** Kerb quality, car-independent: room left beyond the widest fitted car. */
+  function eligibleKerbs(): { tile: { x: number; y: number }; room: number }[] {
+    // A kerb a mission has declared — the puppy's hides and the park slots —
+    // stays out of the lineup: the reservation owns it (FR8).
+    const declared = new Set(
+      declaredKerbs(grid).map(
+        (entry) => `${entry.edge.road.x},${entry.edge.road.y}:${entry.edge.toward}`,
+      ),
     );
-    if (house === undefined) throw new Error(`${prop.id} faces no house`);
-    const wall = houseWallDistance(house.model, grid.tileSize);
-    const offset = kerbOffset(prop);
-    const outward = Math.max(Math.abs(offset.x), Math.abs(offset.z));
-    const halfWidth = isParkedCarKind(prop.kind)
-      ? parkedCarHalfExtents(prop.kind).halfWidth
-      : 0;
-    return wall - (outward + halfWidth);
+    const kerbs: { tile: { x: number; y: number }; room: number }[] = [];
+    for (const house of grid.houses) {
+      // The house's own kerb: the street its door faces (the measured wall).
+      const step = DIRECTION_STEPS[house.facing];
+      const tile = { x: house.tile.x + step.x, y: house.tile.y + step.y };
+      if (!grid.isRoad(tile) || grid.roadShape(tile) !== 'straight') continue;
+      const towards = Object.entries(DIRECTION_STEPS).find(
+        ([, back]) =>
+          tile.x + back.x === house.tile.x && tile.y + back.y === house.tile.y,
+      )?.[0];
+      if (towards === undefined || declared.has(`${tile.x},${tile.y}:${towards}`))
+        continue;
+      const room =
+        houseWallDistance(house.model, grid.tileSize) -
+        (PARKED_CAR_KERB_OFFSET + widestParkedHalfWidth());
+      if (room < KERB_CLEARANCE) continue;
+      kerbs.push({ tile, room });
+    }
+    return kerbs;
   }
 
-  it('keeps exactly the four largest gaps of the six kerbs the town could host', () => {
-    // Measured when six cars shipped: house-1's kerb 0.038 and house-3's 0.071
-    // are the two that go (lever one: four cars on the four *roomiest* kerbs),
-    // and the survivors stand at these gaps. A model or map change resurfaces
-    // here rather than quietly re-parking a car against a tighter wall.
-    const gaps = parked.map((prop) => wallGap(prop)).sort((left, right) => left - right);
-    expect(gaps).toHaveLength(4);
-    expect(gaps[0]).toBeCloseTo(0.0739, 3);
-    expect(gaps[1]).toBeCloseTo(0.0814, 3);
-    expect(gaps[2]).toBeCloseTo(0.1194, 3);
-    expect(gaps[3]).toBeCloseTo(0.1467, 3);
+  it('stands three cars on each ring’s three roomiest measured kerbs', () => {
+    // Measured, not remembered: the lineup must be each loop's three best
+    // straight-segment kerbs, so a model or map change resurfaces here rather
+    // than quietly re-parking a car against a tighter wall.
+    expect(parked).toHaveLength(6);
+    for (const ring of ['old', 'new'] as const) {
+      const cars = parked.filter((prop) => ringOf(prop.tile) === ring);
+      expect(cars, `${ring} ring car count`).toHaveLength(3);
+      const best = eligibleKerbs()
+        .filter((kerb) => ringOf(kerb.tile) === ring)
+        .sort((left, right) => right.room - left.room)
+        .slice(0, 3)
+        .map((kerb) => `${kerb.tile.x},${kerb.tile.y}`)
+        .sort();
+      const stood = cars.map((prop) => `${prop.tile.x},${prop.tile.y}`).sort();
+      expect(stood, `${ring} ring lineup`).toEqual(best);
+    }
+  });
+
+  it('leaves the two tightest historic kerbs to the litter draw', () => {
+    // house-1's 0.038 and house-3's 0.071 wall gaps stayed out of the lineup
+    // when the kerb lever was first spent; they must never quietly return.
+    const stood = parked.map((prop) => `${prop.tile.x},${prop.tile.y}`);
+    expect(stood).not.toContain('0,2');
+    expect(stood).not.toContain('0,3');
+  });
+
+  it('never lets the litter draw stand a piece inside a parked car', () => {
+    // FR8's town-wide reservation: a parked car's kerb is taken, so across
+    // many seeds no park piece may ever share a footprint with a car — on
+    // either ring.
+    for (let seed = 1; seed <= 40; seed += 1) {
+      const pieces = spawnParkLitter({ grid, random: seededRandom(seed) });
+      for (const piece of pieces) {
+        for (const car of parked) {
+          expect(
+            boxesOverlap(
+              { centre: piece.position, halfX: 0.01, halfZ: 0.01 },
+              footprintOf(car),
+            ),
+            `seed ${seed}: ${piece.id} beside ${car.id}`,
+          ).toBe(false);
+        }
+      }
+    }
   });
 });
 

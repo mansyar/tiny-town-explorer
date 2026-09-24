@@ -96,13 +96,13 @@ describe('parked cars in the authored town', () => {
   });
 });
 
-describe('the budget lever: four cars on the four roomiest kerbs (FR10)', () => {
-  it('parks four cars, not six', () => {
-    // Lever one from `tech-stack.md`: "four cars on the four roomiest kerbs",
-    // spending the parked-cars overage before the wandering traffic earns it
-    // back. The count is the whole contract; the ranking lives in
+describe('six cars across two rings (FR8)', () => {
+  it('parks six cars, three per ring', () => {
+    // The second district's Phase 6 rebuilds the lineup the wandering traffic
+    // spent: six cars again, but three per ring on the two loops' roomiest
+    // measured kerbs. The count is the contract here; the ranking lives in
     // `parkedCarsPlacement.test.ts`.
-    expect(parked).toHaveLength(4);
+    expect(parked).toHaveLength(6);
   });
 
   it('frees the two tightest kerbs — house-1 and house-3 — back to the town', () => {
