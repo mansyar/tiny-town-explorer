@@ -13,7 +13,7 @@
 > state the spec doesn't accept. Phase 2 closes with the honest ledger rewrite
 > and the desktop pass (AC4) — the one criterion the tests cannot carry.
 
-## Phase 1 – Pin the geometry, then narrow the lanes (TDD) [checkpoint: ____]
+## Phase 1 – Pin the geometry, then narrow the lanes (TDD) [checkpoint: 490a42d]
 
 - [x] Task: Amend the tech-stack ledger ahead of the code change (GP2) `da58c8f`
   - [x] Rewrite `tech-stack.md`'s lane-bias derivation line and the
