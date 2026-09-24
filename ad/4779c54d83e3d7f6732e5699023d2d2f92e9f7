@@ -1,0 +1,9 @@
+Task: Red characterization - the parking-strip clearance contract (AC1)
+
+Summary: Four tests added to trafficBrain.test.ts under 'the parking-strip clearance contract (AC1)': fit-data re-derivation pin (passes), straight-lane sweep contract, behavioral box-vs-authored-seat test (all 6 seats x both lanes x both mover kinds), and the every-driven-pose route test over seeded real legs (corners included). Three fail exactly as the defect predicts.
+
+Measured (re-derived from fit data; pnpm assets:measure run 2026-09-24 - 344 models, suv.glb 1.50x1.30x2.70 confirms PARKED_CAR_EXTENTS): widest half-width 0.16176 (sedan at 0.55 fit), hatchback 0.12544, strip near edge 0.29824 (PARKED_CAR_KERB_OFFSET 0.46 - widest). Today's reach 0.33876 = bias 0.177 + 0.16176, clipping 0.0405 past the strip. Per-seat same-side clips today: sedan 0.0405, suv 0.0315, van 0.0288, hatchback 0.0042. Target at bias 0.136: reach 0.29776 (margin 0.00047 inside); head-on band sedan<->hatchback 0.0152, widest pair 0.0516.
+
+Files: src/game/traffic/trafficBrain.test.ts
+
+Why: the 0.041 same-side clip tech-stack.md carried is now a red test - the tests are the defect. Red: 3 failed / 19 passed (expected); the 19 pre-existing tests untouched and green.
