@@ -15,16 +15,24 @@
 
 ## Phase 1 – Pin the geometry, then narrow the lanes (TDD) [checkpoint: ____]
 
-- [ ] Task: Amend the tech-stack ledger ahead of the code change (GP2)
-  - [ ] Rewrite `tech-stack.md`'s lane-bias derivation line and the
+- [x] Task: Amend the tech-stack ledger ahead of the code change (GP2) `da58c8f`
+  - [x] Rewrite `tech-stack.md`'s lane-bias derivation line and the
     known-cosmetic entry to the target trade: bias 0.177 → **0.136**
     (0.2982 − 0.1618 = 0.1364, rounded down), parking clip removed, mover↔mover
     straight-pass overlap ≈0.015 (authored pair) / ≈0.052 (widest pair) accepted
     — figures marked *"estimates until measured in Phase 1"*, with a dated note
     on the trade reversal (accepted squash-comedy beats an unaccepted parked-car
     clip)
-  - [ ] Commit: `docs(tech-stack): record the lane-narrowing trade for the
+  - [x] Commit: `docs(tech-stack): record the lane-narrowing trade for the
     clearance fix`
+
+  **Done:** the derivation parenthetical and the known-cosmetic sentence are
+  marked superseded (kept as the shipped record) and the dated lane-narrowing
+  trade note is appended to the entry — target bias 0.136, the accepted
+  mover↔mover overlap (≈0.015 / ≈0.052, estimates until Phase 1 measures
+  them), and the one superseding clearance contract. Docs task — no red/green
+  (not logic-bearing, Guiding Principle 3 exemption); verified by reading the
+  rendered entry.
 - [ ] Task: Red characterization — the parking-strip clearance contract (AC1)
   - [ ] Write failing tests in `trafficBrain.test.ts`'s FR3 suite: sampling
     every road tile/pose on every leg (straights **and** curves, tangent-following
