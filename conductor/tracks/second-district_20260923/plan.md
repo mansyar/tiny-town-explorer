@@ -225,15 +225,26 @@
   vehicleMotor lane fixture). Gates: `pnpm check` + `pnpm typecheck` clean,
   64 files / 790 tests green; coverage townMap 100%, parkSlots 100%,
   parkLitter 97.6%.
-- [ ] Task: Third wanderer + three-mover lane re-pin (FR8) (TDD)
-  - [ ] Write failing tests: three movers run seeded endless routes spanning
+- [x] Task: Third wanderer + three-mover lane re-pin (FR8) (TDD) (203f160)
+  - [x] Write failing tests: three movers run seeded endless routes spanning
     both rings through the junction; the lane-clearance contract re-pinned on
     the bigger graph — head-on (opposite lanes) and same-lane overtaking clear
     on every straight; same-lane opposite-direction encounters resolve as the
     mover↔mover squash language (asserted crashable, never solid)
-  - [ ] Implement (third mover row in `trafficSystem` — likely the van, already
+  - [x] Implement (third mover row in `trafficSystem` — likely the van, already
     precached — and only what red proves missing)
-  - [ ] Refactor + coverage
+  - [x] Refactor + coverage
+  **Done (203f160):** the roster is three — sedan 0.8, hatchback 1.0, van 0.9
+  (`parkedVan`, precached) — alternating sides, `pickStarts` generalized to N
+  distinct tiles so the roster never starts stacked. Red-first: the roster
+  contract (three stable ids, three crashable boxes — same-lane meets squash
+  past as the mover-to-mover comedy, never walls; every wanderer advances a
+  step per frame; starts pairwise apart). In-flight note: the lane-clearance
+  contract (trafficBrain FR3) is **pair-wise and count-agnostic** — head-on
+  and overtake already clear on every straight of the figure-eight grid, so
+  no bias values changed (`TRAFFIC_LATERAL_BIAS` 0.177 still covers widest +
+  pass clearance). Gates: `pnpm check` + `pnpm typecheck` clean, 64 files /
+  790 tests green.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 7 – Measurements, docs and device pass (mixed)
