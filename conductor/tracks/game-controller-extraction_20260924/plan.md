@@ -22,7 +22,7 @@
 > reachable — `game.test.ts` from Phase 2 on — plus the manual verification
 > steps each phase records.
 
-## Phase 1 - Litter field disposal contract (TDD)
+## Phase 1 - Litter field disposal contract (TDD) [checkpoint: ea3cfb8]
 
 - [x] Task: `LitterField.dispose()` and the replacement call (FR7, AC4) `ea3cfb8`
   - [x] Write failing tests in `parkLitterFx.test.ts`: `dispose()` releases every geometry and material the field allocated; a disposed field is never updated by `update()`; `startPark()`'s replacement path calls `dispose()` on the outgoing field before the `scene.remove` (red first)
