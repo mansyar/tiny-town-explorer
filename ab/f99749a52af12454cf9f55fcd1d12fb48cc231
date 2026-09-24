@@ -1,0 +1,7 @@
+Task: Record the measured outcome in tech-stack.md (NFR4, AC5)
+
+Summary: the Light wandering traffic entry is rewritten to the fixed state - the known-cosmetic paragraph is now a dated record (shipped 2026-09-23: sedan mover reach 0.3388 edged 0.041 into the parked strip; fixed 2026-09-24: reach 0.29776, 0.00047 inside) and the lane-narrowing trade note carries the Phase 1 measurements: bias derivation 0.46 - 2 x 0.16176 = 0.136470 floored to 0.136, worst per-seat clip 0.0405 gone, accepted band 0.0152 authored pair / 0.05153 widest pair (literals AuthoredPairSquash 0.015 / WidestPairSquash 0.052), TRAFFIC_KERB_SLACK and TRAFFIC_PASS_CLEARANCE recorded retired with the single clearance contract pinned in the AC1 suite.
+
+Files: conductor/tech-stack.md
+
+Why: NFR4 + AC5 - the ledger records the fixed state and the accepted trade. Docs-only task (Guiding Principle 3 exemption - no red/green); verified by reading the rendered entry.
