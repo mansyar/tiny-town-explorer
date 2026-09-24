@@ -57,3 +57,29 @@ User confirmation: "Yes, meets expectations" (2026-09-24).
 Note: this phase includes the one user-sanctioned frozen-suite amendment
 (two FIRE_FLAME visibility assertions in missionMarkers.test.ts), recorded
 in full in the task-summary note on this same commit.
+
+Phase 4 Verification Report — track 'mission-stack-cleanup_20260924'
+
+Automated: pnpm check && pnpm typecheck && CI=true pnpm test
+Result: Biome (145 files) + tsc clean; 64 files / 787 tests, all passing.
+
+Scope check (prev checkpoint 356407b -> HEAD): plan.md only — no code
+files changed in this phase, so the test-file requirement is trivially met.
+
+Manual verification performed by the user (AC-6, four-mission walkthrough
+at ?calmGap=2 on pnpm dev):
+- All four missions (fire, ice-cream, park, puppy) played through in one
+  session with beats identical to the consolidation-track walkthrough.
+- Markers only in their states; fire smoke lingers through the 2.5s
+  celebration; confetti + sun + cheer per completion with exactly one
+  sparkle, never in free play; helper hand demos exactly one tap per idle
+  stretch.
+User confirmation: "Yes, meets expectations" (2026-09-24).
+
+Freeze review (AC-4/NFR1): the five frozen suites' diffs vs main contain
+only forced renames + wraps, the 3 additive FR3 tests, and the two
+user-sanctioned FIRE_FLAME amendments. missionFocus.test.ts unchanged.
+
+Docs (AC-7/NFR4): docs/playtest.md, conductor/archive/*, README.md and
+conductor/tech-stack.md byte-identical to main. The remaining 'missionManager'
+mention is the historical v1 AC4 row in docs/playtest.md (kept as written).
