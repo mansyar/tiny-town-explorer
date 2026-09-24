@@ -91,7 +91,7 @@
   first band tests derived their expectation from the bias under test; fixed by
   pinning the approved figures as measured literals. Gates: biome ✓, tsc ✓,
   790/790 ✓; `trafficBrain.ts` coverage 94.54/91.42/100.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `490a42d`
 
 ## Phase 2 – Ledger honesty and the desktop pass (mixed) [checkpoint: abf9974]
 
@@ -135,3 +135,6 @@
   no code files (trivially paired). Manual verification = the AC4 desktop pass
   (Task 5 — all four confirmed). User confirmed the checkpoint ("Yes — Phase 2
   confirmed"); the verification report and task note are appended to `abf9974`.
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions `94defbd`
