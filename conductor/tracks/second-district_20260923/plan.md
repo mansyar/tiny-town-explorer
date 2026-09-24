@@ -196,11 +196,11 @@
   PLANE (`SNAP_GROUND_DET`) — the first cut rebuilt the focus in the light
   basis and dropped its y, so the round trip drifted and idempotence failed.
   Gates: `pnpm check` + `pnpm typecheck` clean, 64 files / 788 tests green.
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (53091f1)
 
 ## Phase 6 – Town life: six parked, three movers, spawns (mixed)
 
-- [ ] Task: Town-wide kerb reservation + 3-per-ring placements (FR8, FR9) (TDD)
+- [~] Task: Town-wide kerb reservation + 3-per-ring placements (FR8, FR9) (TDD)
   - [ ] Write failing tests: three parked cars per ring on each ring's three
     roomiest **measured** kerbs (straight segments only; the old 0.038 / 0.071
     wall-gap kerbs stay excluded); no parked car overlaps any of the 2 + 2
