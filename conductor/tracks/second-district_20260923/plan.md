@@ -174,16 +174,28 @@
   manual-verify).
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (142e333)
 
-## Phase 5 – Shadow frustum follows the car (manual-verify)
+## Phase 5 – Shadow frustum follows the car (manual-verify) [checkpoint: 53091f1]
 
-- [~] Task: Car-following, texel-snapped shadow camera (FR7)
-  - [ ] Rebuild the sun's shadow camera to track the active car snapped to
+- [x] Task: Car-following, texel-snapped shadow camera (FR7) (53091f1)
+  - [x] Rebuild the sun's shadow camera to track the active car snapped to
     texel increments (no shimmer while driving); both loops cast full shadows
     at play distance; nothing clips at the old ±5-unit bounds (if the snap
     helper is extracted as pure logic it takes red-first tests; the rig itself
     is exempt scene-setup)
-  - [ ] Manual steps recorded: drive both loops — house/shop/tree shadows stay
+  - [x] Manual steps recorded: drive both loops — house/shop/tree shadows stay
     grounded, flicker-free, on the sun's side
+
+  **Done (53091f1):** `SUN_SHADOW_TEXEL` + `sunShadowSnap` (pure, red-first —
+  3 tests: idempotent; sub-cell creep leaves the map still; `followSun` aims
+  the light and its target at the snapped focus) and `GameScene.followSun` —
+  the sun travels with the car instead of holding fixed ±8 bounds on the
+  world origin, so both loops keep full shadows and the 1024 map stays sharp
+  on the window rather than the town. main.ts wires
+  `followSun(motor.position)` into `tickVehicle`. In-flight refinement: the
+  snap rounds on the map's lattice but solves the step BACK IN THE GROUND
+  PLANE (`SNAP_GROUND_DET`) — the first cut rebuilt the focus in the light
+  basis and dropped its y, so the round trip drifted and idempotence failed.
+  Gates: `pnpm check` + `pnpm typecheck` clean, 64 files / 788 tests green.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6 – Town life: six parked, three movers, spawns (mixed)
