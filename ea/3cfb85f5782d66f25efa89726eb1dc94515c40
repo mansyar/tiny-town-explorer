@@ -7,3 +7,36 @@ Files: created src/game/mission/parkLitterFx.test.ts; modified src/game/mission/
 Why: dispose() deliberately covers pieces parkPickup already collected - remove() only stops them bouncing, it does not release what they were made of, so a teardown that walked the live set would leak exactly the pieces a child had driven over. The claim is per resource rather than per mesh because the tied bag shares one material across its two meshes and a per-mesh teardown would double-free it. Scoped to this one allocator: ModelLibrary.instantiate() shares via clone(true), so vehicle morphing is not a leaker, and every other FX object is built once at boot.
 
 Red/green: 4 tests written first and confirmed failing (field.dispose is not a function), then green. parkLitterFx.ts 98.36% stmts / 100% funcs / 98.36% lines; branch 75% sits in the workflow-exempt visual paths (the material-array branch and the bounce clamp), with the disposal contract itself at 100%. Gates: pnpm check && pnpm typecheck && pnpm test -> 794/794 passing, 65 files.
+
+Phase Verification & Checkpoint Report — Phase 1: Litter field disposal contract (TDD)
+Track: game-controller-extraction_20260924
+
+SCOPE (workflow step 2)
+Target functional commit: ea3cfb8 "fix(mission): Dispose the park litter field when a round replaces it"
+Changed files in phase: src/game/mission/parkLitterFx.test.ts (new), src/game/mission/parkLitterFx.ts, src/main.ts.
+No previous phase checkpoint existed in plan.md; scope taken as this phase's functional commit.
+
+TEST-FILE COVERAGE PER CHANGED CODE FILE (workflow step 2.3)
+- parkLitterFx.ts -> parkLitterFx.test.ts (4 disposal tests; disposal contract 100%; file 98.36% stmts / 100% funcs, branch 75% sitting in workflow-exempt visual paths).
+- main.ts -> NO test twin, by the exemption documented in plan.md ("main.ts carries no unit-test twin at any checkpoint — workflow-exempt UI glue, Guiding Principle 3"). Its one changed line (litterField.dispose() in startPark()'s replacement path, right after scene.remove) is pinned by parkLitterFx.test.ts's replacement test ("frees the outgoing field and leaves its replacement live"). Recorded as a documented exemption, not a gap.
+
+AUTOMATED TESTS (workflow step 3)
+Commands: pnpm check && pnpm typecheck && $env:CI='true'; pnpm test
+(Note: "CI=true pnpm test" is sh syntax; on this Windows/pwsh machine the env var is set via $env:CI='true' before pnpm test.)
+Results (2026-09-24):
+- Biome: 148 files checked, no fixes applied.
+- tsc --noEmit: clean.
+- Vitest v5.0.1: 794/794 tests passing across 65 files (3.64s), including the 4 new parkLitterFx disposal tests and the five frozen suites (missionStateMatrix, missionAbortParity, missionBusy, missionFocus, missionMarkers) — green and unmodified.
+
+MANUAL VERIFICATION STEPS (workflow step 4, presented to owner)
+1. pnpm dev; open the printed URL (usually http://localhost:5173).
+2. Morph to the Garbage Truck, start "Clean Up the Park"; litter pieces spawn in the park, bounce gently, and gulp away on drive-over — identical to before.
+3. Run a second park round: the replacement litter field looks and behaves identical (no blank frames, flicker, or missing pieces at the field swap).
+4. Optional: DevTools Performance Monitor — WebGL/memory no longer climbs round over round.
+Expected outcome: zero child-visible change; FR7 is a GPU-resource leak fix only.
+
+OWNER CONFIRMATION (workflow step 5)
+"Yes, it meets expectations." — confirmed 2026-09-24.
+
+CHECKPOINT ANCHOR (workflow steps 6-8)
+Per step 6 no empty commit was created; the checkpoint is anchored to the last functional commit of the phase, ea3cfb8, recorded in plan.md as [checkpoint: ea3cfb8].
