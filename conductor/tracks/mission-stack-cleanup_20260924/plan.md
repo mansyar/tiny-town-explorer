@@ -79,18 +79,37 @@
 
 ## Phase 3 – Truthful marker adapter (TDD)
 
-- [~] Task: `MarkerAdapter.showIn` optional; drop `FIRE_FLAME.showIn` (FR3)
-  - [ ] Write failing tests (red): an adapter with no `showIn` is never visible
+- [x] Task: `MarkerAdapter.showIn` optional; drop `FIRE_FLAME.showIn` (FR3) (73f23a0)
+  - [x] Write failing tests (red): an adapter with no `showIn` is never visible
     through the generic sync (`markerVisible` reports false in every state)
     while its `markerTap` seams still work; `FIRE_FLAME` carries no `showIn`
     property (pinning that `fireFx` owns flame visibility); every other adapter
     (`ORDER_CONE`, `PARK_FIELD`, `PUPPY_PAW`, `PUPPY_HEART`) still declares
     `showIn` and behaves exactly as before
-  - [ ] Implement to pass (green): `readonly showIn?: readonly S[]` on
+  - [x] Implement to pass (green): `readonly showIn?: readonly S[]` on
     `MarkerAdapter`; `markerVisible` treats absent as "drives no visibility";
     delete the `showIn` line from `FIRE_FLAME`
-  - [ ] Refactor + coverage (`missionMarkers` well above 80%; frozen suites
+  - [x] Refactor + coverage (`missionMarkers` well above 80%; frozen suites
     green and unmodified)
+  - **Done:** Red-first confirmed (red run: exactly 4 failing / 17 passing —
+    `markerVisible` threw on the missing field, the property pin, and the two
+    amended assertions). `MarkerAdapter.showIn` now optional;
+    `markerVisible` treats absent as "drives no visibility"; `FIRE_FLAME`
+    dropped `showIn`, its JSDoc naming `fireFx` as the flame's owner. 3 new
+    tests: the no-`showIn` adapter contract (never visible while its
+    `markerTap` seams still work), the `'showIn' in FIRE_FLAME` property pin,
+    and the four visibility-driving adapters' exact `showIn` declarations.
+    **Sanctioned frozen-suite amendment (user-approved via the deviation
+    protocol before implementation — it supersedes "unmodified" above):**
+    only the two FIRE_FLAME visibility assertions in `missionMarkers.test.ts`
+    changed in place — the per-state matrix became "drives no visibility —
+    fireFx owns the flame (FR3)" (all states false; the 2.5s-smoke reason in a
+    comment) and the cross-adapter isolation line flipped `true`→`false`
+    (retitled 'while a fire is spawned, no other marker is present'). Every
+    other frozen assertion untouched (tap seams, `armIn` pins, other
+    adapters, `syncMarker`). AC-3 satisfied. Gates: `pnpm check` + `tsc`
+    clean, 64 files / 787 tests (784 + 3 new). Coverage: `missionMarkers`
+    100% stmts/branch/funcs; `fireMission` 97.22% stmts / 100% branch.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4 – Behavior-freeze proof & docs (manual-verify)
