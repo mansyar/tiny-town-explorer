@@ -122,7 +122,7 @@ async function main(): Promise<void> {
   }
 
   const renderer = createRenderer(container);
-  const { scene } = createScene();
+  const { scene, followSun } = createScene();
   const grid = createTownGrid();
 
   // The car starts on the street and the camera opens on it, so the sky is on
@@ -726,6 +726,9 @@ async function main(): Promise<void> {
       return;
     }
     rig.setTarget(motor.position);
+    // The sun's shadows ride with the car (FR7): the map stays texel-still
+    // while the town slides beneath it.
+    followSun(motor.position);
     // The engine note rides the speed: silent parked, chugging under way.
     audio.setEngine(motor.isDriving() ? fleet.engineRate(motor.speed()) : 0);
     if (motor.bonkCount() > bonks) {
