@@ -6,7 +6,7 @@
  * two numbers the mission keeps — the spec's 60-90 second calm gap and the
  * two-house separation from the last fire.
  *
- * Deliberately separate from `MissionManager`, which owns what a fire *is*:
+ * Deliberately separate from `fireMission`, which owns what a fire *is*:
  * this module only decides when the town is due for one more and where it
  * lands, so the calm gap can be tested without a state machine and the state
  * machine can be tested without a clock.

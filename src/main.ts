@@ -19,6 +19,12 @@ import { createVehicleHud, type VehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { calmGapOverride } from './game/mission/devCalmGap';
 import { createFireFx } from './game/mission/fireFx';
+import {
+  createFireMission,
+  distanceBetween,
+  FIRE_FLAME,
+  fireAwaitsKid,
+} from './game/mission/fireMission';
 import { createFirePacer } from './game/mission/firePacer';
 import { createHelperHand } from './game/mission/helperHand';
 import { createHelperTrace } from './game/mission/helperTrace';
@@ -29,12 +35,6 @@ import {
   type MissionCelebrationDeps,
 } from './game/mission/missionCelebration';
 import { missionFocus } from './game/mission/missionFocus';
-import {
-  createMissionManager,
-  distanceBetween,
-  FIRE_FLAME,
-  fireAwaitsKid,
-} from './game/mission/missionManager';
 import {
   markerArmed,
   markerTap,
@@ -157,7 +157,7 @@ async function main(): Promise<void> {
   // the hand that helps after ten quiet seconds, and the fire and route trace
   // they draw. None of it waits on the models, so the loop can tick it from the
   // first frame.
-  const mission = createMissionManager();
+  const mission = createFireMission();
   // Both pacers choose from the same lots. They never have to avoid each
   // other's pick, because the two missions never run at once.
   const houseLots = grid.houses.map((house) => ({

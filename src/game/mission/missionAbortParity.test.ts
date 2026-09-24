@@ -22,16 +22,16 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  BURSTS_MIN,
+  createFireMission,
+  COMPLETE_LINGER_SECONDS as FIRE_LINGER,
+  type FireMissionState,
+} from './fireMission';
+import {
   createIceCreamMission,
   type IceCreamState,
   COMPLETE_LINGER_SECONDS as ORDER_LINGER,
 } from './iceCreamMission';
-import {
-  BURSTS_MIN,
-  createMissionManager,
-  COMPLETE_LINGER_SECONDS as FIRE_LINGER,
-  type MissionState,
-} from './missionManager';
 import { createOrderBeats, orderIsOpen, resolveOrderTap } from './orderFlow';
 import {
   createParkMission,
@@ -46,7 +46,13 @@ import {
   resolvePuppyTap,
 } from './puppyMission';
 
-const FIRE_STATES: MissionState[] = ['idle', 'spawned', 'driving', 'active', 'complete'];
+const FIRE_STATES: FireMissionState[] = [
+  'idle',
+  'spawned',
+  'driving',
+  'active',
+  'complete',
+];
 const ORDER_STATES: IceCreamState[] = [
   'idle',
   'spawned',
@@ -76,8 +82,8 @@ const litterFieldShows = (state: ParkState): boolean =>
 
 // --- Walkers: build to a state, then drain from it to a pristine idle. -------
 
-function buildFire(state: MissionState) {
-  const mission = createMissionManager({ random: () => 0 });
+function buildFire(state: FireMissionState) {
+  const mission = createFireMission({ random: () => 0 });
   if (state === 'idle') return mission;
   mission.spawn('house-4');
   if (state === 'spawned') return mission;
@@ -89,7 +95,7 @@ function buildFire(state: MissionState) {
   return mission;
 }
 
-function drainFire(state: MissionState) {
+function drainFire(state: FireMissionState) {
   const mission = buildFire(state);
   if (state === 'idle') return mission;
   if (state === 'spawned') mission.respond();

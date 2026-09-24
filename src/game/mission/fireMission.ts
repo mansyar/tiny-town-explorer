@@ -34,17 +34,17 @@ export const COMPLETE_LINGER_SECONDS = 2.5;
 export const BURSTS_MIN = 3;
 export const BURSTS_MAX = 4;
 
-export type MissionState = 'active' | 'complete' | 'driving' | 'idle' | 'spawned';
+export type FireMissionState = 'active' | 'complete' | 'driving' | 'idle' | 'spawned';
 
-export interface MissionSnapshot {
-  readonly state: MissionState;
+export interface FireMissionSnapshot {
+  readonly state: FireMissionState;
   /** The burning house, or `undefined` when nothing is burning. */
   readonly fireHouseId: string | undefined;
   /** Bursts still needed; 0 when nothing is burning or the fire is out. */
   readonly burstsLeft: number;
 }
 
-export interface MissionManagerOptions {
+export interface FireMissionOptions {
   /** Source of the burst count. Injectable so tests can pin it. */
   readonly random?: () => number;
 }
@@ -54,7 +54,7 @@ export interface MissionManagerOptions {
  * The window in which the helper hand may point at the burning house - shared
  * with the hand's own focus rule rather than restated there.
  */
-export function fireAwaitsKid(state: MissionState): boolean {
+export function fireAwaitsKid(state: FireMissionState): boolean {
   return state === 'spawned' || state === 'driving';
 }
 
@@ -67,13 +67,13 @@ export function fireAwaitsKid(state: MissionState): boolean {
  * No arm state is declared: the hose arms by *proximity* (`isHoseReady`), so
  * an arm state here would name a rule nothing reads (see `MarkerAdapter`).
  */
-export const FIRE_FLAME: MarkerAdapter<MissionState, 'ignore' | 'respond'> = {
+export const FIRE_FLAME: MarkerAdapter<FireMissionState, 'ignore' | 'respond'> = {
   showIn: ['spawned', 'driving', 'active'],
   taps: [{ inState: 'spawned', needsTarget: true, outcome: 'respond' }],
 };
 
-export interface MissionManager {
-  snapshot(): MissionSnapshot;
+export interface FireMission {
+  snapshot(): FireMissionSnapshot;
   /** Whether the hose button should be showing for a car this far away. */
   isHoseReady(distanceToFire: number): boolean;
   /** Lights a fire at a house. Only from `idle`; a burning town ignores it. */
@@ -98,9 +98,7 @@ export interface MissionManager {
   abort(): boolean;
 }
 
-export function createMissionManager(
-  options: MissionManagerOptions = {},
-): MissionManager {
+export function createFireMission(options: FireMissionOptions = {}): FireMission {
   const random = options.random ?? Math.random;
 
   let fireHouseId: string | undefined;
@@ -119,7 +117,7 @@ export function createMissionManager(
   // Declared stages, declared linger (FR1): the module owns the transitions
   // that used to be assigned by hand here, including the linger's return to
   // idle and the abort teardown.
-  const fsm = createMissionFsm<MissionState>({
+  const fsm = createMissionFsm<FireMissionState>({
     states: ['idle', 'spawned', 'driving', 'active', 'complete'],
     initialState: 'idle',
     celebratingState: 'complete',

@@ -7,9 +7,9 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
+import { COMPLETE_LINGER_SECONDS as FIRE_LINGER } from './fireMission';
 import { COMPLETE_LINGER_SECONDS as ORDER_LINGER } from './iceCreamMission';
 import { createMissionFsm } from './missionFsm';
-import { COMPLETE_LINGER_SECONDS as FIRE_LINGER } from './missionManager';
 import { COMPLETE_LINGER_SECONDS as PARK_LINGER } from './parkMission';
 import { COMPLETE_LINGER_SECONDS as PUPPY_LINGER } from './puppyMission';
 

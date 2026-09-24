@@ -13,13 +13,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { createIceCreamMission, type IceCreamState } from './iceCreamMission';
 import {
   BURSTS_MIN,
-  createMissionManager,
-  type MissionSnapshot,
-  type MissionState,
-} from './missionManager';
+  createFireMission,
+  type FireMissionSnapshot,
+  type FireMissionState,
+} from './fireMission';
+import { createIceCreamMission, type IceCreamState } from './iceCreamMission';
 import { orderIsOpen, resolveOrderTap } from './orderFlow';
 import { createParkMission, type ParkState, resolveParkTap } from './parkMission';
 import { createPuppyMission, type PuppyState, resolvePuppyTap } from './puppyMission';
@@ -38,7 +38,7 @@ const ALL_PARK_STATES: ParkState[] = [
   'collecting',
   'complete',
 ];
-const ALL_FIRE_STATES: MissionState[] = [
+const ALL_FIRE_STATES: FireMissionState[] = [
   'idle',
   'spawned',
   'driving',
@@ -48,7 +48,7 @@ const ALL_FIRE_STATES: MissionState[] = [
 const ALL_PUPPY_STATES: PuppyState[] = ['idle', 'searching', 'carrying', 'complete'];
 
 /** Matches `main.ts`'s flame rule: a house with bursts left burns. */
-const flameShows = (fire: MissionSnapshot): boolean =>
+const flameShows = (fire: FireMissionSnapshot): boolean =>
   fire.fireHouseId !== undefined && fire.burstsLeft > 0;
 
 /**
@@ -59,8 +59,8 @@ const litterFieldShows = (state: ParkState): boolean =>
   state === 'spawned' || state === 'responding' || state === 'collecting';
 
 /** Drives a fresh fire mission to `state` and hands back the live mission. */
-function fireMissionAt(state: MissionState) {
-  const mission = createMissionManager({ random: () => 0 });
+function fireMissionAt(state: FireMissionState) {
+  const mission = createFireMission({ random: () => 0 });
   if (state !== 'idle') mission.spawn('house-4');
   if (state === 'spawned') return mission;
   if (['driving', 'active', 'complete'].includes(state)) mission.respond();
@@ -71,7 +71,8 @@ function fireMissionAt(state: MissionState) {
   return mission;
 }
 
-const fireAt = (state: MissionState): MissionSnapshot => fireMissionAt(state).snapshot();
+const fireAt = (state: FireMissionState): FireMissionSnapshot =>
+  fireMissionAt(state).snapshot();
 
 /** Drives a fresh order mission to `state` and hands back the state. */
 function orderAt(state: IceCreamState): IceCreamState {
@@ -113,7 +114,7 @@ function puppyAt(state: PuppyState): PuppyState {
 
 describe('fire: markers and taps by state (AC3)', () => {
   it('shows the flame only while a fire still has bursts', () => {
-    const markers: Record<MissionState, boolean> = {
+    const markers: Record<FireMissionState, boolean> = {
       idle: false,
       spawned: true,
       driving: true,
@@ -261,6 +262,6 @@ describe('cross-mission isolation (AC3)', () => {
       'ignore',
     );
     // And a fresh fire ignores an answer with nothing burning.
-    expect(createMissionManager({ random: () => 0 }).respond()).toBe(false);
+    expect(createFireMission({ random: () => 0 }).respond()).toBe(false);
   });
 });

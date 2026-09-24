@@ -10,8 +10,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { FIRE_FLAME, type FireMissionState } from './fireMission';
 import { type IceCreamState, ORDER_CONE } from './iceCreamMission';
-import { FIRE_FLAME, type MissionState } from './missionManager';
 import {
   type MarkerAdapter,
   markerArmed,
@@ -22,7 +22,7 @@ import {
 import { PARK_FIELD, type ParkState } from './parkMission';
 import { PUPPY_HEART, PUPPY_PAW, type PuppyState } from './puppyMission';
 
-type DriveState = MissionState | IceCreamState;
+type DriveState = FireMissionState | IceCreamState;
 
 const DRIVE_STATES: DriveState[] = ['idle', 'spawned', 'driving', 'active', 'complete'];
 const PARK_STATES: ParkState[] = [
@@ -75,7 +75,7 @@ describe('shared marker contract', () => {
 });
 
 describe('fire flame adapter matches the characterization matrix', () => {
-  const visible: Record<MissionState, boolean> = {
+  const visible: Record<FireMissionState, boolean> = {
     idle: false,
     spawned: true,
     driving: true,

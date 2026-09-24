@@ -3,19 +3,19 @@ import {
   BURSTS_MAX,
   BURSTS_MIN,
   COMPLETE_LINGER_SECONDS,
-  createMissionManager,
+  createFireMission,
   fireAwaitsKid,
   HOSE_RANGE,
-} from './missionManager';
+} from './fireMission';
 
-/** A manager whose burst count is fixed, so assertions do not roll dice. */
+/** A fire mission whose burst count is fixed, so assertions do not roll dice. */
 function fixedRandom(value = 0): () => number {
   return () => value;
 }
 
 /** Runs the clock in one-second frames, the way the render loop would. */
 function tick(
-  mission: ReturnType<typeof createMissionManager>,
+  mission: ReturnType<typeof createFireMission>,
   seconds: number,
   distance: number,
 ): void {
@@ -25,8 +25,8 @@ function tick(
 }
 
 /** Spawns a fire and answers it, leaving the hose armed. */
-function atTheFire(): ReturnType<typeof createMissionManager> {
-  const mission = createMissionManager({ random: fixedRandom(0) });
+function atTheFire(): ReturnType<typeof createFireMission> {
+  const mission = createFireMission({ random: fixedRandom(0) });
   mission.spawn('house-4');
   mission.respond();
   mission.update(1 / 60, HOSE_RANGE - 0.1);
@@ -35,7 +35,7 @@ function atTheFire(): ReturnType<typeof createMissionManager> {
 
 describe('the mission states', () => {
   it('starts idle with nothing burning', () => {
-    const mission = createMissionManager({ random: fixedRandom() });
+    const mission = createFireMission({ random: fixedRandom() });
     expect(mission.snapshot().state).toBe('idle');
     expect(mission.snapshot().fireHouseId).toBeUndefined();
     expect(mission.snapshot().burstsLeft).toBe(0);
@@ -43,7 +43,7 @@ describe('the mission states', () => {
 
   it('spawns a fire with a burst count between the bounds', () => {
     for (const roll of [0, 0.999]) {
-      const mission = createMissionManager({ random: fixedRandom(roll) });
+      const mission = createFireMission({ random: fixedRandom(roll) });
       expect(mission.spawn('house-4')).toBe(true);
       const { state, fireHouseId, burstsLeft } = mission.snapshot();
       expect(state).toBe('spawned');
@@ -54,7 +54,7 @@ describe('the mission states', () => {
   });
 
   it('walks idle → spawned → driving → active → complete → idle', () => {
-    const mission = createMissionManager({ random: fixedRandom(0) });
+    const mission = createFireMission({ random: fixedRandom(0) });
     expect(mission.snapshot().state).toBe('idle');
 
     mission.spawn('house-2');
@@ -82,27 +82,27 @@ describe('the mission states', () => {
 
 describe('illegal transitions', () => {
   it('will not light a second fire while one is burning', () => {
-    const mission = createMissionManager({ random: fixedRandom(0) });
+    const mission = createFireMission({ random: fixedRandom(0) });
     mission.spawn('house-4');
     expect(mission.spawn('house-6')).toBe(false);
     expect(mission.snapshot().fireHouseId).toBe('house-4');
   });
 
   it('ignores a response when nothing is burning', () => {
-    const mission = createMissionManager({ random: fixedRandom() });
+    const mission = createFireMission({ random: fixedRandom() });
     expect(mission.respond()).toBe(false);
     expect(mission.snapshot().state).toBe('idle');
   });
 
   it('ignores a second response while already driving', () => {
-    const mission = createMissionManager({ random: fixedRandom() });
+    const mission = createFireMission({ random: fixedRandom() });
     mission.spawn('house-4');
     expect(mission.respond()).toBe(true);
     expect(mission.respond()).toBe(false);
   });
 
   it('never sprays before the hose is armed', () => {
-    const mission = createMissionManager({ random: fixedRandom() });
+    const mission = createFireMission({ random: fixedRandom() });
     mission.spawn('house-4');
     expect(mission.spray()).toBe(false);
     mission.respond();
@@ -162,9 +162,9 @@ describe('putting the fire out', () => {
   });
 
   it('picks the burst count from the injected roll', () => {
-    const low = createMissionManager({ random: fixedRandom(0) });
+    const low = createFireMission({ random: fixedRandom(0) });
     low.spawn('house-1');
-    const high = createMissionManager({ random: fixedRandom(0.999) });
+    const high = createFireMission({ random: fixedRandom(0.999) });
     high.spawn('house-1');
     expect(low.snapshot().burstsLeft).toBe(BURSTS_MIN);
     expect(high.snapshot().burstsLeft).toBe(BURSTS_MAX);
@@ -184,7 +184,7 @@ describe('putting the fire out', () => {
 
 describe('waiting on the kid', () => {
   it('holds from the moment the fire is lit until the car arrives', () => {
-    const mission = createMissionManager();
+    const mission = createFireMission();
     expect(fireAwaitsKid(mission.snapshot().state)).toBe(false);
 
     mission.spawn('house-1');
@@ -199,7 +199,7 @@ describe('waiting on the kid', () => {
   });
 
   it('lets go while the fire celebrates, and again once the town is idle', () => {
-    const mission = createMissionManager({ random: fixedRandom(0) });
+    const mission = createFireMission({ random: fixedRandom(0) });
     mission.spawn('house-1');
     mission.respond();
     mission.update(1 / 60, 0);
