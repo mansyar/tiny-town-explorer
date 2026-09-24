@@ -32,7 +32,7 @@
 
 ## Phase 2 - The controller seam: ports and world ownership (TDD)
 
-- [ ] Task: Narrow port interfaces and `createGame()` over the world (FR1, FR2, FR3, FR4)
+- [~] Task: Narrow port interfaces and `createGame()` over the world (FR1, FR2, FR3, FR4)
   - [ ] Write failing tests in `game.test.ts`: `createGame()` returns a usable game without awaiting anything; `advance(delta)` is safe to call before mounting resolves and holds the pre-mount `motor`/`actor`/`traffic`/`pond` guards; the `scene` port is used for `add`/`remove` and nothing else; each of `GameAudio`, `GameHud`, `GameScene`, `GameCamera` declares only the members the controller calls (AC2) (red first — `src/game/game.ts` does not exist)
   - [ ] Declare the four port interfaces and `createGame()` in `src/game/game.ts`, and move the world construction and the async mounting inside it — model library, town mount, vehicle motor and actors, traffic system and actors, pond watcher and ducks, parked/traffic shadows, and every mission subsystem and feedback object
   - [ ] Refactor + coverage (>80% statements and branches on `game.ts`)
