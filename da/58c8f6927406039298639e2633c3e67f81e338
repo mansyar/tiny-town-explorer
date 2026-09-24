@@ -1,0 +1,7 @@
+Task: Amend the tech-stack ledger ahead of the code change (GP2)
+
+Summary: Recorded the lane-narrowing trade in conductor/tech-stack.md before any code change. The light-wandering-traffic entry's derivation parenthetical and its known-cosmetic sentence are marked superseded (kept as the shipped record) and a dated lane-narrowing note documents the target trade: bias 0.177 -> 0.136 (0.2982 - 0.1618 = 0.1364, rounded down), the 0.041 same-side clip removed, and mover<->mover straight-pass overlap ~0.015 (authored sedan/hatchback pair) / ~0.052 (widest pair) accepted as squash comedy. Figures are estimates until measured in Phase 1.
+
+Files: conductor/tech-stack.md
+
+Why: workflow.md Guiding Principle 2 - tech-stack changes must be documented before implementation, and the trade reversal (accepted mover<->mover squash vs unaccepted mover<->parked clip) must be on the record, not buried.
