@@ -95,12 +95,20 @@
 
 ## Phase 2 – Ledger honesty and the desktop pass (mixed) [checkpoint: ____]
 
-- [ ] Task: Record the measured outcome in `tech-stack.md` (NFR4, AC5)
-  - [ ] Replace the estimate figures with the Phase 1 measurements; the
+- [x] Task: Record the measured outcome in `tech-stack.md` (NFR4, AC5) `abf9974`
+  - [x] Replace the estimate figures with the Phase 1 measurements; the
     known-cosmetic entry becomes a dated record: clip fixed, the accepted
     overlap figures, and the superseded kerb-kiss contract
-  - [ ] Commit: `docs(tech-stack): record the measured clearance outcome`
-- [ ] Task: Desktop browser verification pass (AC4, manual-verify)
+  - [x] Commit: `docs(tech-stack): record the measured clearance outcome`
+
+  **Done:** the entry now records the fixed state — the known-cosmetic
+  paragraph is a dated record (shipped 2026-09-23: reach 0.3388 clipped 0.041
+  into the strip; fixed 2026-09-24: reach 0.29776, 0.00047 inside) — and the
+  trade note carries the measured figures (0.136470 → 0.136, worst per-seat
+  clip 0.0405 gone, accepted band 0.0152 / 0.05153, `TRAFFIC_KERB_SLACK` and
+  `TRAFFIC_PASS_CLEARANCE` recorded retired). Docs-only (GP3 exemption);
+  verified by reading the rendered entry.
+- [~] Task: Desktop browser verification pass (AC4, manual-verify)
   - [ ] `pnpm dev` → open the town; watch a mover thread the tightest kerb past
     the parked cars — **no clip**; watch the pair pass head-on — **reads as
     squash comedy, not collision**; run one mission and confirm taps, pacing and
