@@ -247,7 +247,7 @@
   790 tests green.
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (203f160)
 
-## Phase 7 – Measurements, docs and device pass (mixed)
+## Phase 7 – Measurements, docs and device pass (mixed) [checkpoint: 2cefa2d]
 
 - [x] Task: Full gates + measurements + docs (NFR2, NFR4, AC9) (0e15d7b)
   - [x] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
@@ -271,9 +271,15 @@
   entry + budget note; `product.md` records the district shipped;
   `docs/playtest.md` gains the section (iPad subsection pending Task 2).
   Gates: `pnpm check` + `pnpm typecheck` clean, 64 files / 790 tests green.
-- [~] Task: iPad device pass (AC10)
-  - [ ] iPad sitting: first-load time and frame rate vs. the pre-track figures,
+- [x] Task: iPad device pass (AC10) (2cefa2d)
+  - [x] iPad sitting: first-load time and frame rate vs. the pre-track figures,
     drive-time feel across the junction (voyages read calm, not tedious), shop
     legibility at play distance and 48px, pond delight, offline intact;
     verdicts recorded in `docs/playtest.md`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+  **Done (2cefa2d):** one iPad 9th-gen sitting (2026-09-24) — all verdicts pass:
+  load and frame rate hold against the pre-track build, the junction voyages
+  read calm not tedious, the shop reads at play distance and 48px and rests on
+  the ground, the pond delights (sploosh + poof, muted-readable, ducks ignore
+  taps), street life holds (six parked, three wanderers, no item inside a
+  car), offline reload works from the 49-entry precache.
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) (2cefa2d)
