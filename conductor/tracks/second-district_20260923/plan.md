@@ -249,17 +249,29 @@
 
 ## Phase 7 – Measurements, docs and device pass (mixed)
 
-- [~] Task: Full gates + measurements + docs (NFR2, NFR4, AC9)
-  - [ ] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
+- [x] Task: Full gates + measurements + docs (NFR2, NFR4, AC9) (0e15d7b)
+  - [x] Run `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` and coverage —
     >80% on every logic module touched
-  - [ ] Measure the assembled scene at the **junction worst-case window** with
+  - [x] Measure the assembled scene at the **junction worst-case window** with
     the GL-counter method + `pnpm assets:measure`; confirm precache entries/KiB
     (expect +1 GLB, ≤1 audio clip); record all of it in `tech-stack.md` with
     the honest budget note — **the overage is carried and stated plainly,
     never rounded into the ~50k heuristic**
-  - [ ] `product.md` records the second district as shipped; `docs/playtest.md`
+  - [x] `product.md` records the second district as shipped; `docs/playtest.md`
     gains the section
-- [ ] Task: iPad device pass (AC10)
+  **Done (0e15d7b):** GL-counter measured on the running game (shadow-inclusive,
+  windows sampled along a spawn→junction drive): fresh spawn **237 draws /
+  56,232 tris**, transit peak 275 / 50,795 (avg), junction settled 270 /
+  47,745 (avg) — the honest worst window is the **fresh spawn at 56,232,
+  ~6.2k over the ~50k heuristic**, carried plainly (NFR2); the junction
+  window itself sits *inside* the heuristic (the ortho window keeps expansion
+  nearly per-frame-neutral). Precache from a real `pnpm build`: **49 entries /
+  4,236.32 KiB** (+1 GLB = `corner-shop.glb` 42.11 kB packed, zero new audio —
+  the sploosh is synthesized) (NFR4). `tech-stack.md` gains the rendering
+  entry + budget note; `product.md` records the district shipped;
+  `docs/playtest.md` gains the section (iPad subsection pending Task 2).
+  Gates: `pnpm check` + `pnpm typecheck` clean, 64 files / 790 tests green.
+- [~] Task: iPad device pass (AC10)
   - [ ] iPad sitting: first-load time and frame rate vs. the pre-track figures,
     drive-time feel across the junction (voyages read calm, not tedious), shop
     legibility at play distance and 48px, pond delight, offline intact;
