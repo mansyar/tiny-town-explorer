@@ -115,6 +115,25 @@ export function sampledSoundFor(event: AbilityEvent): SampledSound | undefined {
   return undefined;
 }
 
+/** The sploosh's falling drop of tones — soft, round, over in one beat. */
+const SPLOOSH_STEPS: readonly { readonly frequency: number; readonly seconds: number }[] =
+  [
+    { frequency: 440, seconds: 0.06 },
+    { frequency: 349.23, seconds: 0.07 },
+    { frequency: 261.63, seconds: 0.09 },
+    { frequency: 174.61, seconds: 0.24 },
+  ];
+
+/** The pond splash (FR10): a soft round drop of tones from `startAt`. */
+export function splooshSchedule(startAt: number): readonly Tone[] {
+  let at = startAt;
+  return SPLOOSH_STEPS.map((step) => {
+    const tone: Tone = { frequency: step.frequency, at, seconds: step.seconds };
+    at += step.seconds;
+    return tone;
+  });
+}
+
 export interface AudioEngine {
   /** Call from the first pointerdown: browsers only start audio from a gesture. */
   unlock(): Promise<boolean>;
@@ -131,6 +150,8 @@ export interface AudioEngine {
   playAbility(events: readonly AbilityEvent[]): void;
   /** The dead-zone honk: a two-note toy beep. */
   honk(): void;
+  /** The pond splash (FR10): a soft round drop of tones. */
+  sploosh(): void;
   /** Set the engine's note from `VehicleSystem.engineRate`; `0` stops it. */
   setEngine(rate: number): void;
   dispose(): void;
@@ -330,6 +351,11 @@ export function createAudioEngine(options: AudioEngineOptions = {}): AudioEngine
     honk: () => {
       const { context: ctx } = graph();
       scheduleTones(hornSchedule(ctx.currentTime + 0.02), 'square');
+    },
+
+    sploosh: () => {
+      const { context: ctx } = graph();
+      scheduleTones(splooshSchedule(ctx.currentTime + 0.02), 'sine');
     },
 
     dispose: () => {

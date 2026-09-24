@@ -7,6 +7,7 @@ import {
   MASTER_GAIN_CAP,
   sampledSoundFor,
   sirenSchedule,
+  splooshSchedule,
 } from './audioEngine';
 
 describe('the kid-safe ceiling', () => {
@@ -92,6 +93,34 @@ describe('the horn', () => {
     expect(tones[0]?.frequency).toBe(tones[2]?.frequency);
     expect(tones[1]?.frequency).toBe(tones[3]?.frequency);
     expect(tones[0]?.seconds).toBe(tones[1]?.seconds);
+  });
+});
+
+describe('the sploosh', () => {
+  it('drops a round little splash from the start time it was given', () => {
+    const tones = splooshSchedule(3);
+    expect(tones.length).toBeGreaterThan(1);
+    expect(tones[0]?.at).toBe(3);
+    // Falling away rather than rising like the jingle: the splash lands soft.
+    for (let index = 1; index < tones.length; index += 1) {
+      const previous = tones[index - 1];
+      const tone = tones[index];
+      expect(tone?.frequency).toBeLessThan(previous?.frequency ?? 0);
+    }
+  });
+
+  it('steps its notes along in time and is over inside one soft beat', () => {
+    const tones = splooshSchedule(0);
+    for (let index = 1; index < tones.length; index += 1) {
+      const previous = tones[index - 1];
+      const tone = tones[index];
+      expect(tone?.at).toBeCloseTo((previous?.at ?? 0) + (previous?.seconds ?? 0));
+    }
+    for (const tone of tones) {
+      expect(tone.seconds).toBeGreaterThan(0);
+    }
+    const last = tones[tones.length - 1];
+    expect((last?.at ?? 0) + (last?.seconds ?? 0)).toBeLessThan(0.6);
   });
 });
 
