@@ -51,17 +51,30 @@
 
 ## Phase 2 – Delete the registry seam (mechanical)
 
-- [ ] Task: Remove `spawnOne`/`trySpawn` and the per-entry `focus` (FR2)
-  - [ ] Delete `spawnOne()` from the registry API and implementation,
+- [x] Task: Remove `spawnOne`/`trySpawn` and the per-entry `focus` (FR2) (046abcc)
+  - [x] Delete `spawnOne()` from the registry API and implementation,
     `MissionContribution.trySpawn`, and the per-entry `focus` fallback +
     `MissionContribution.focus` — the town-wide `missionFocus` resolver remains
     the single focus path and `tick`/`tap`/`isIdle`/`isBusy` are untouched
-  - [ ] Delete the now-orphaned tests (`spawnOne`/`trySpawn`/`focus` blocks in
+  - [x] Delete the now-orphaned tests (`spawnOne`/`trySpawn`/`focus` blocks in
     `missionRegistry.test.ts`); update the module JSDoc
     (`{ tick, tap, focus, isIdle, trySpawn }` → the surviving shape)
-  - [ ] Verify `rg 'spawnOne|trySpawn' src/` is empty; the remaining registry
+  - [x] Verify `rg 'spawnOne|trySpawn' src/` is empty; the remaining registry
     suite passes unchanged
-  - [ ] Refactor + coverage (`missionRegistry` stays >80%)
+  - [x] Refactor + coverage (`missionRegistry` stays >80%)
+  - **Done:** Net −137 lines. Deleted `spawnOne()` (interface + impl), the
+    `MissionContribution.trySpawn`/`focus` fields, and the per-entry focus
+    fallback loop — the registry's `focus()` now delegates to the town-wide
+    resolver or falls back to the car. Confirmed live surface first:
+    `main.ts` builds the registry with `missionFocus` as second arg and calls
+    `missions.focus()` at the helper hand; no `spawnOne`/`trySpawn`/per-entry
+    `focus` consumer exists anywhere. 6 orphaned tests deleted (3 spawn +
+    3 per-entry focus), the town-wide resolver test adapted to entries
+    without `focus` (its `asked` assertion is now structurally guaranteed),
+    and the stray `spawnOne()` assertion dropped from the empty-registry
+    test. AC-2 sweep clean. Gates: `rg 'spawnOne|trySpawn' src/` empty,
+    `pnpm check` + `tsc` clean, 64 files / 784 tests pass (790 − 6). Coverage:
+    `missionRegistry` 100% stmts / branch / funcs.
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3 – Truthful marker adapter (TDD)
