@@ -4,6 +4,8 @@ import { nearestRoadTile, type Path, roadRoute } from '../path/pathfinder';
 import { createTownGrid, type TownGrid } from '../town/townGrid';
 import { TOWN_MAP } from '../town/townMap';
 import {
+  isParkedCarKind,
+  PARKED_CAR_KERB_OFFSET,
   parkedCarHalfExtents,
   type TileCoord,
   type Vec2,
@@ -500,5 +502,101 @@ describe('lane discipline and the pass-clearance contract (FR3)', () => {
     const reach = TRAFFIC_LATERAL_BIAS + widestParkedHalfWidth();
     expect(reach - KERB_BAND_INNER).toBeLessThanOrEqual(TRAFFIC_KERB_SLACK);
     expect(TRAFFIC_KERB_SLACK).toBeCloseTo(0.04);
+  });
+});
+
+/**
+ * The parking-strip clearance contract (AC1): a mover's swept footprint never
+ * reaches past the parked-cars strip's near edge — the widest parked car at its
+ * authored kerb seat (0.46 out). Today's reach (bias 0.177 + widest 0.1618 =
+ * 0.3388) edges 0.041 past it on same-side passes, clipping a parked car's
+ * body; these tests are that defect, red until the lanes narrow to 0.136.
+ */
+describe('the parking-strip clearance contract (AC1)', () => {
+  /** Float tolerance for the measured contract, never a licence to clip. */
+  const CLEARANCE_EPSILON = 0.0005;
+
+  /** Where the parked-cars strip begins, measured from a street's centre line. */
+  function parkedNearEdge(): number {
+    return PARKED_CAR_KERB_OFFSET - widestParkedHalfWidth();
+  }
+
+  it('re-derives the strip near edge and widest half-width from the fit data', () => {
+    expect(widestParkedHalfWidth()).toBeCloseTo(0.1618, 3);
+    expect(parkedNearEdge()).toBeCloseTo(0.2982, 3);
+  });
+
+  it('never sweeps past the parked strip on any straight, either lane', () => {
+    const widest = widestParkedHalfWidth();
+    const straights = straightsOf(grid);
+    expect(straights.length).toBeGreaterThan(0);
+
+    for (const { tile, normal } of straights) {
+      for (const side of [1, -1] as const) {
+        const reach = acrossFrom(lanePoint(tile, normal, side), tile, normal) + widest;
+        expect(reach).toBeLessThanOrEqual(parkedNearEdge() + CLEARANCE_EPSILON);
+      }
+    }
+  });
+
+  it('never clips a car standing in its authored kerb seat — every seat, both lanes', () => {
+    const seats = grid.props.filter((prop) => isParkedCarKind(prop.kind));
+    expect(seats.length).toBeGreaterThan(0);
+
+    for (const seat of seats) {
+      const footprint = seat.footprint;
+      if (footprint === undefined) {
+        throw new Error('expected a parked footprint');
+      }
+      const centre = grid.tileToWorld(seat.tile);
+      const offset = { x: seat.position.x - centre.x, z: seat.position.z - centre.z };
+      const length = Math.hypot(offset.x, offset.z);
+      const normal = { x: offset.x / length, z: offset.z / length };
+      const alongX = Math.abs(normal.z) > 0.5;
+      const parked: Box = {
+        x: seat.position.x,
+        z: seat.position.z,
+        halfX: footprint.halfX,
+        halfZ: footprint.halfZ,
+      };
+
+      for (const side of [1, -1] as const) {
+        for (const kind of ['parkedSedan', 'parkedHatchback'] as const) {
+          const mover = parkedCarHalfExtents(kind);
+          const at = {
+            x: centre.x + side * TRAFFIC_LATERAL_BIAS * normal.x,
+            z: centre.z + side * TRAFFIC_LATERAL_BIAS * normal.z,
+          };
+          const box = boxAt(at, alongX, mover.halfLength, mover.halfWidth);
+          expect(gapAcross(box, parked)).toBeGreaterThanOrEqual(-CLEARANCE_EPSILON);
+        }
+      }
+    }
+  });
+
+  it('holds the reach inside the strip at every pose it actually drives, corners included', () => {
+    const widest = widestParkedHalfWidth();
+    for (const seed of [3, 7, 21]) {
+      const brain = createTrafficBrain({ grid, random: seeded(seed), side: 1 });
+      const { waypoints } = wander(brain, 24);
+      for (const path of waypoints) {
+        for (let i = 0; i + 1 < path.length; i++) {
+          const fromPoint = path[i];
+          const toPoint = path[i + 1];
+          if (fromPoint === undefined || toPoint === undefined) {
+            continue;
+          }
+          const from = grid.worldToTile(fromPoint);
+          const to = grid.worldToTile(toPoint);
+          const normal = legNormal(from, to);
+          expect(acrossFrom(fromPoint, from, normal) + widest).toBeLessThanOrEqual(
+            parkedNearEdge() + CLEARANCE_EPSILON,
+          );
+          expect(acrossFrom(toPoint, to, normal) + widest).toBeLessThanOrEqual(
+            parkedNearEdge() + CLEARANCE_EPSILON,
+          );
+        }
+      }
+    }
   });
 });
