@@ -45,7 +45,7 @@
 
 ## Phase 3 — Full player and release verification
 
-- [ ] Task: Run automated quality gates
+- [~] Task: Run automated quality gates
   - [ ] Run `pnpm check`.
   - [ ] Run `pnpm typecheck`.
   - [ ] Run `CI=true pnpm test`.
