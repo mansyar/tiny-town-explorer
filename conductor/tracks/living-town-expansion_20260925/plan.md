@@ -66,11 +66,13 @@
   - [x] Refactor only duplicated profile/pose plumbing while tests remain green.
   - **Green result:** Traffic, shadow, brain, collision, motor, and controller suites passed (185 tests); `pnpm typecheck` and `pnpm check` passed.
 
-- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [x] Review all changed logic files and their corresponding tests.
-  - [ ] Announce and run the exact phase test command.
-  - [ ] Debug failures, document results, and obtain explicit user confirmation.
-  - [ ] Attach a verification Git note and record the checkpoint SHA in `plan.md`.
+  - [x] Announce and run the exact phase test command.
+  - [x] Debug failures, document results, and obtain explicit user confirmation.
+  - [x] Attach a verification Git note and record the checkpoint SHA in `plan.md`.
+  - **Checkpoint:** `cd89651` — user-approved Phase 2 movement and actor implementation.
+  - **Verification note:** `git notes show cd89651`
 
 ## Phase 3 — Scene mounting, animation, and asset integration
 
