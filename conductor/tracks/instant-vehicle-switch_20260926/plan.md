@@ -69,7 +69,7 @@ item and remains outstanding.
 Checkpoint: `b95d977`, the last functional commit of the phase. No empty commit
 was created.
 
-## Phase 2 — Warm the fleet during the boot window
+## Phase 2 — Warm the fleet during the boot window [checkpoint: f6a26c6]
 
 - [x] **Task: Add red tests for boot-window prewarming** [12824f9]
   - [ ] Assert that all four hero vehicle URLs are requested through the library before `game.ready` resolves.
@@ -86,10 +86,40 @@ was created.
   - [ ] Do not add a second town, a duplicate instance, a new asset, or a general asset scheduler.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — **75/75 passed**. `pnpm check`, `pnpm typecheck` and the full suite (892 tests / 69 files) are all clean. Biome's configured naming convention required `PascalCase` for the two new test consts; `check:fix` applied that mechanically and it was reviewed. **Commit:** `f6a26c6`
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
-  - [ ] Identify the changed production and test files and their corresponding tests.
-  - [ ] Run the exact targeted test and quality commands.
-  - [ ] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** [f6a26c6]
+  - [x] Identify the changed production and test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
+  - [x] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 2 implementation record (2026-09-26)
+
+Two tasks, two functional commits: `12824f9` red tests, `f6a26c6` the warm.
+`pnpm check`, `pnpm typecheck` and the full suite at 892 tests across 69 files
+all pass, up from 887.
+
+Two red-phase findings worth recording. First, the modelLibrary mock was an
+empty object, so the warm had nothing to be observed through; it became a
+`vi.hoisted` fake carrying inspectable `load`/`instantiate` spies. Second, two
+of the five new cases passed vacuously on the first run — a failure path with
+no failure to absorb, and an assertion that the warm touches nothing outside
+the fleet, which is trivially true of an empty list. The second was tightened
+to assert exactly four loads, which pins the "once each, no duplicates" half of
+FR2 and made it genuinely red.
+
+The placement is the design decision worth keeping. `warmFleet()` is called
+from `mount()` immediately after the town base is on screen — not at the top
+of `mount()` — so it rides behind the traffic-actor and hero-car loads that
+were already in flight, instead of competing with the town's own ~25 model
+loads for bandwidth. It uses `load`, not `instantiate`, so a warm nobody asked
+to drive never builds a scene graph, and it is never awaited, so it cannot hold
+`ready` by construction rather than by convention.
+
+`check:fix` renamed the two new test consts to `PascalCase` per the repo's
+configured naming convention and wrapped one long call. Mechanical, reviewed,
+no behaviour change.
+
+Checkpoint: `f6a26c6`, the last functional commit of the phase. No empty commit
+was created.
 
 ## Phase 3 — Draw the pending state, with no text
 
