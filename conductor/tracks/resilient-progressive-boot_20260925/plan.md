@@ -172,15 +172,47 @@
   - [x] Update the playtest record with the successful progressive boot, retry, offline reopen, and target-device evidence.
   - [x] Do not document context-loss recovery, service-worker redesign, or bundle splitting as shipped features.
 
-- [ ] **Task: Perform browser and target-device verification**
-  - [ ] Start the development server and verify the base town appears before the delayed model set completes.
-  - [ ] Verify the loading overlay is calm, icon-only, touch-responsive, and safe-area correct in portrait and landscape.
-  - [ ] Block a model request and verify the retry icon appears and one tap performs one reload.
-  - [ ] Block an audio sample and verify the game still reaches ready with all visual cues intact.
-  - [ ] Load the production preview, complete a first visit, enable airplane mode, and verify a cache-backed reopen reaches ready.
-  - [ ] Exercise representative vehicle selection, movement, traffic, pond, helper, and mission interactions after readiness.
-  - [ ] Run the physical iPad 9th-generation check at the existing render budget.
-  - [ ] **Commit:** `chore(conductor): document resilient boot verification`
+- [~] **Task: Perform browser and target-device verification**
+  - [x] Start the development server and verify the base town appears before the delayed model set completes.
+  - [x] Verify the loading overlay is calm, icon-only, touch-responsive, and safe-area correct in portrait and landscape.
+  - [x] Block a model request and verify the retry icon appears and one tap performs one reload.
+  - [x] Block an audio sample and verify the game still reaches ready with all visual cues intact.
+  - [x] Load the production preview, complete a first visit, enable airplane mode, and verify a cache-backed reopen reaches ready.
+  - [x] Exercise representative vehicle selection, movement, traffic, pond, helper, and mission interactions after readiness.
+  - [ ] Run the physical iPad 9th-generation check at the existing render budget. — **outstanding, owner's device**
+  - [x] **Commit:** `chore(conductor): document resilient boot verification`
+
+### Phase 5 browser verification record (2026-09-25)
+
+**Dev server (Chromium, scripted network conditions)**
+
+- Delayed GLB responses: the progressive base, sky and roads render first, the
+  loading toy is shown, and no HUD is present until readiness.
+- Blocked GLB response: the retry icon replaces the toy, the render loop is
+  verifiably stopped, and exactly one retry tap causes exactly one reload.
+- Blocked optional sample: the game still reaches ready with **0 unhandled
+  rejections** and all visual cues intact.
+- Post-ready canvas taps reach the canvas, not intercepted by a removed overlay.
+
+**Production preview (`pnpm build` + `pnpm preview`)**
+
+- First visit: overlay cleared, 6 HUD buttons, service worker registered and
+  active, **0 page errors**.
+- Airplane-mode reopen: with `navigator.onLine === false`, the reload still
+  reached ready, the full world rendered, and two screenshots taken 700 ms apart
+  differed — the offline world is animating, not frozen.
+- Interaction smoke: all four vehicle selections took effect
+  (`aria-pressed="true"` on each after selection), the ability fired, three
+  routed canvas taps produced no errors, and the three-second parent hold opened
+  the panel with both toggles.
+- Safe areas: at 810×1080 portrait and 1080×810 landscape every control stayed
+  fully in-viewport at full touch size — vehicles 91×91, ability 96×96, mute
+  72×72, parent gear 56×56 — with the overlay gone in both orientations.
+
+**Outstanding:** the physical iPad 9th-generation check is the owner's to run and
+is deliberately left unchecked, per the track's stop condition that an
+unavailable device step leaves the phase incomplete rather than marked by
+proxy.
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
   - [ ] Present the complete automated and manual verification report.
