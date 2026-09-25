@@ -1,0 +1,26 @@
+Task: Investigate camera-only and built-in frustum culling; select the render-budget lever.
+
+Summary:
+- Audited the live scene inventory: 0 meshes disable frustum culling, and the renderer already submits fewer calls than the visible mesh inventory. Manual per-frame camera visibility was rejected as redundant and risky.
+- Ran controlled shadow-group/extent experiments and selected a behavior-preserving reduction: roads and non-car props leave the shadow map, the hero vehicle opts out of its real shadow pass, and the car-following sun extent is 5.5 instead of 8. Houses remain real shadow casters; parked and wandering cars keep their blob-shadow language.
+- Updated the live technical ledger and track measurements with the decision and before/after evidence.
+
+Files:
+- src/game/scene.ts
+- src/game/scene.test.ts
+- src/game/town/townLayout.ts
+- src/game/town/townLayout.test.ts
+- src/game/vehicle/vehicleActor.ts
+- src/game/vehicle/vehicleActor.test.ts
+- src/game/game.ts
+- src/game/renderProbe.ts
+- conductor/tech-stack.md
+- conductor/tracks/render-budget-recovery_20260925/measurements.md
+
+Verification:
+- 851 tests passed across 67 files.
+- pnpm check, pnpm typecheck, and pnpm build passed.
+- Controlled shipped-path measurements at 1280x720 / DPR 1: fresh spawn 48,463 triangles / 180 calls; transit 46,477 / 176; settled junction 45,797 / 154; dev-paced mission 49,080 / 203.
+- Visual comparison retained the town composition, house shadows, and grounded vehicle read.
+
+Why: close the documented spawn-window budget gap without deleting visible content or adding a second camera-visibility traversal.
