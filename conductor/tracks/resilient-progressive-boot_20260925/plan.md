@@ -55,10 +55,19 @@
   - [x] Confirm the pre-mount frame guards still cover the new earlier scene attachment.
   - [x] **Commit:** `feat(game): attach town base during progressive mount` (`39218bf`)
 
-- [ ] **Task: Verify Phase 2**
-  - [ ] Run targeted town and controller tests.
-  - [ ] Manually delay model responses and confirm the base layer is visible before the first model completes.
-  - [ ] **Checkpoint:** `Phase Verification & Checkpoint (Refer to workflow.md)`
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)** [39218bf]
+  - [x] Identify the changed production/test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
+  - [x] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 2 implementation record (2026-09-25)
+
+- `mountTown` now mounts all ground placements first, signals the base-ready seam once, then mounts models in authored order; rejection, transforms, footprints, and disposal remain intact.
+- `game.mount` attaches the town group from that seam, removing the later all-at-once scene attachment while leaving `driven`/`ready` and pre-mount guards unchanged.
+- Automated results: `pnpm check` — passed; `pnpm typecheck` — passed; `$env:CI='true'; pnpm test` — **877 tests across 68 files passed**; scoped `townRenderer.ts` — **100%**; scoped `game.ts` — **94.01% statements / 86.16% branches / 90.36% functions**.
+- Manual verification plan: slow model requests, confirm the base/roads render while the loop continues, then confirm models fill the same group and normal HUD/input return after readiness.
+- Checkpoint commit: `39218bf` (`feat(game): attach town base during progressive mount`), with a detailed Git note attached.
+- Checkpoint confirmation: the user explicitly approved the Phase 2 report and delayed-model verification plan.
 
 ## Phase 3 — Make sampled audio failure non-blocking
 
