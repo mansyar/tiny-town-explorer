@@ -1933,7 +1933,7 @@ describe('the pending answer to a switch tap', () => {
 
 describe('warming the fleet while the child waits', () => {
   /** Which hero model each vehicle id drives, in the registry's own keys. */
-  const HERO_MODEL_KEY = {
+  const HeroModelKey = {
     fire: 'firetruck',
     iceCream: 'iceCreamTruck',
     garbage: 'garbageTruck',
@@ -1941,7 +1941,7 @@ describe('warming the fleet while the child waits', () => {
   } as const satisfies Record<(typeof VEHICLE_IDS)[number], keyof typeof VEHICLE_MODELS>;
 
   /** The four hero models a switch can need. */
-  const HERO_MODELS = VEHICLE_IDS.map((id) => VEHICLE_MODELS[HERO_MODEL_KEY[id]]);
+  const HeroModels = VEHICLE_IDS.map((id) => VEHICLE_MODELS[HeroModelKey[id]]);
 
   it('requests every hero model through the library before ready', async () => {
     const game = createGame(deps());
@@ -1950,7 +1950,7 @@ describe('warming the fleet while the child waits', () => {
     const warmed = new Set(fakeLibrary.load.mock.calls.map(([url]) => url));
     // Without the warm the only hero model anyone asks for is the one the boot
     // mounts, and the other three are fetched by a child's first tap instead.
-    expect(HERO_MODELS.every((url) => warmed.has(url))).toBe(true);
+    expect(HeroModels.every((url) => warmed.has(url))).toBe(true);
   });
 
   it('warms the templates without building an instance for each', async () => {
@@ -1967,7 +1967,7 @@ describe('warming the fleet while the child waits', () => {
     const warmed = fakeLibrary.load.mock.calls.map(([url]) => url);
     // Every load the warm issued is a hero model, so the controller has not
     // quietly widened "warm the fleet" into warming the whole kit.
-    expect(warmed.filter((url) => !HERO_MODELS.includes(url))).toEqual([]);
+    expect(warmed.filter((url) => !HeroModels.includes(url))).toEqual([]);
   });
 
   it('reaches ready even when a warm model fails, and reports nothing', async () => {
@@ -1996,12 +1996,14 @@ describe('warming the fleet while the child waits', () => {
       }
       return { url };
     });
-    vi.mocked(mountTown).mockImplementationOnce(async (_grid, _library, _plan, options) => {
-      tick += 1;
-      baseReadyAt = tick;
-      options?.onBaseReady?.(group);
-      return { group, houseFootprints: new Map(), dispose: vi.fn() };
-    });
+    vi.mocked(mountTown).mockImplementationOnce(
+      async (_grid, _library, _plan, options) => {
+        tick += 1;
+        baseReadyAt = tick;
+        options?.onBaseReady?.(group);
+        return { group, houseFootprints: new Map(), dispose: vi.fn() };
+      },
+    );
 
     const game = createGame(attached);
     await game.ready;

@@ -66,6 +66,7 @@ import { createVehicleMotor } from './vehicle/vehicleMotor';
 import {
   type AbilityEvent,
   createVehicleSystem,
+  VEHICLE_IDS,
   type VehicleId,
 } from './vehicle/vehicleSystem';
 
@@ -1490,6 +1491,31 @@ export function createGame(deps: GameDeps): Game {
     pressAbility();
   }
 
+  /**
+   * Fills the library's cache for every vehicle the child could switch into,
+   * while the boot overlay is still up.
+   *
+   * The child is already waiting here, every one of these four GLBs is already
+   * precached, and the work that follows — traffic actors, then the hero car —
+   * is all in flight regardless. So the warm is close to free, and it is the
+   * difference between a switch being a cache hit and a switch being a fetch
+   * nobody has started (FR2).
+   *
+   * Never awaited. A slow or failing warm must not hold the boot, and a warm
+   * that fails is not a boot failure: `load` evicts a failed model from the
+   * cache, so the tap that needs it retries, which is the existing recovery
+   * path and needs no help from here.
+   */
+  function warmFleet(): void {
+    for (const id of VEHICLE_IDS) {
+      // `load`, not `instantiate`: the warm wants the parsed template, and must
+      // not build a scene graph for a vehicle nobody is driving yet.
+      void library?.load(fleet.spec(id).model).catch(() => {
+        // Nothing to do, and nothing to say. A switch retries.
+      });
+    }
+  }
+
   async function mount(): Promise<void> {
     library = createModelLibrary();
     world.library = library;
@@ -1499,6 +1525,9 @@ export function createGame(deps: GameDeps): Game {
       onBaseReady: (group) => scene.add(group),
     });
     world.town = town;
+    // Started only once the base is on screen, so the warm rides behind the
+    // traffic and hero loads instead of competing with the town's own.
+    warmFleet();
     // The parked cars' faked shadows join the town's own graph: one static mesh
     // seated above the kerb top, so a car reads as resting on the street the way
     // the houses do rather than as a floating box.

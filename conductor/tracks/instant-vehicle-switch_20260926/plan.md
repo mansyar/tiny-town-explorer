@@ -79,7 +79,7 @@ was created.
   - [ ] Assert that a post-boot switch issues no second network request for a warmed model.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — recorded 70 pre-existing cases passing and the intentional red baseline: 3 of the 5 new cases fail. The other two pass vacuously (a failure path with no failure to absorb, and ordinary switching) and become load-bearing once the warm exists. **Commit:** `12824f9`
 
-- [ ] **Task: Implement non-blocking fleet prewarming** []
+- [~] **Task: Implement non-blocking fleet prewarming** []
   - [ ] Start the warm in `game.mount`, after the town base is on screen and alongside the hero model's own load, iterating `VEHICLE_IDS` through `ModelLibrary.load`.
   - [ ] Never await the warm from `ready`; a slow or failing warm must not hold the boot.
   - [ ] Keep the library's evict-on-failure behavior intact so a failed warm is retried by a later switch.
