@@ -53,3 +53,45 @@ Measured shipped-path evidence is recorded in conductor/tracks/render-budget-rec
 - dev-paced mission 49,080 / 203
 
 Verdict: Phase 1 accepted; proceed to Phase 2 optimization verification.
+
+Phase 2 verification report — Minimal behavior-preserving optimization
+
+Automated command:
+pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build
+
+Results:
+- Biome clean across 154 files.
+- TypeScript clean.
+- 851 tests passed across 67 files.
+- Production build passed; PWA generated 49 precache entries (4238.99 KiB).
+- Logic-bearing renderMetrics coverage remained green; browser/three.js render-probe edge glue remains manually verified as intended by the track scope.
+
+Changed code files and test pairing:
+- src/game/scene.ts — paired with src/game/scene.test.ts.
+- src/game/town/townLayout.ts — paired with src/game/town/townLayout.test.ts.
+- src/game/vehicle/vehicleActor.ts — paired with src/game/vehicle/vehicleActor.test.ts.
+- src/game/game.ts — controller integration; covered by the existing game/controller suites.
+- src/game/renderProbe.ts — development-only browser/three.js edge probe; manually exercised in Chromium and excluded from logic coverage by scope.
+- src/game/renderMetrics.ts — covered by its dedicated renderMetrics.test.ts.
+- src/game/renderLoop.ts — paired with renderLoop tests; optional post-render sampling remains behavior-neutral.
+- src/main.ts — thin browser-edge composition; manual runtime verification covered the probe wiring.
+
+Manual verification plan and result:
+1. Run pnpm dev and open http://localhost:5173.
+2. Inspect fresh-spawn grounding: town, houses, road grid, parked cars, and hero car remain visible; house shadows stay soft/directional; parked/wandering cars and hero read as grounded.
+3. Drive from the original district through the junction into the second district; check for shadow clipping, popping, or missing mission art at camera edges.
+4. Switch all four vehicles and trigger each ability; verify morphs, bonks, traffic, HUD, and input remain unchanged.
+5. Use ?calmGap=2 to inspect all four mission families; verify order, litter, paw, heart, target-ring, confetti, and sun effects remain visible and grounded.
+6. Resize landscape/portrait; verify camera framing, shadows, HUD, and safe areas.
+
+User confirmation: Yes, confirm (2026-09-25).
+
+Measured shipped-path evidence in Chromium at 1280x720 / DPR 1:
+- fresh spawn: 48,463 triangles / 180 draw calls
+- transit peak: 46,477 triangles / 176 draw calls
+- settled junction: 45,797 triangles / 154 draw calls
+- dev-paced mission-active: 49,080 triangles / 203 draw calls
+
+The worst representative fresh-spawn window is below the 50,000-triangle target, and draw calls do not increase versus the recorded baseline. No road, prop, vehicle, traffic, mission, marker, pond, or visible town content was removed. An unrelated headless-browser audio decode message was observed and did not affect WebGL rendering or measurements.
+
+Verdict: Phase 2 accepted; proceed to Phase 3 automated, production/offline, desktop, and iPad verification.
