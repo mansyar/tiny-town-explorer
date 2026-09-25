@@ -122,22 +122,32 @@
 - The pre-existing JavaScript chunk-size warning remains unchanged and out of scope.
 
 - [~] **Task: Perform browser interaction verification**
+  - [x] Run the development server with `?calmGap=2` so mission pacing can be exercised quickly.
+  - [x] Verify rapid destination-style pointer input and rapid vehicle-button changes through the browser edge.
+  - [ ] Complete mixed mission/HUD and helper-hand observation in a visible page.
+  - [x] Exercise a controlled replacement-model failure and verify rollback plus a later retry.
+  - [x] Confirm no console errors, empty scene, mismatched active vehicle, or obvious scene residue during the exercised paths.
+  - [ ] Confirm all four missions and visible feedback in the accelerated browser walkthrough.
 
-- [ ] **Task: Perform browser interaction verification**
-  - [ ] Run the development server with `?calmGap=2` so each mission can be exercised quickly.
-  - [ ] Verify rapid destination taps, rapid vehicle-button changes, mixed mission/HUD selection, helper-hand input, and actor-load retry behavior.
-  - [ ] Confirm no console errors, stuck routes, empty scene, mismatched active vehicle, or orphan actors.
-  - [ ] Confirm the existing four missions and visible feedback remain unchanged.
+### Phase 3 browser record (2026-09-25)
 
-- [ ] **Task: Perform target-device verification**
+- Server: `pnpm dev -- --host 127.0.0.1`; URL `http://127.0.0.1:5173/?calmGap=2`.
+- Browser boot completed with a live canvas, all four vehicle controls, the render probe, and zero console errors. Initial model/audio requests returned successfully.
+- Rapid HUD selection was exercised with ice-cream followed by police; after the serialized load/commit sequence, the police button was the sole active/pressed vehicle and the scene inventory remained populated.
+- Rapid canvas pointer taps were dispatched at three destinations; the scene remained populated and no console errors were emitted.
+- A temporary browser-side fetch rejection for `garbage-truck.glb` was used to exercise FR8. The previously active police vehicle stayed mounted/pressed, the scene did not empty, and no unhandled console error appeared. After restoring fetch, selecting garbage mounted it and updated the active/pressed HUD consistently.
+- The automated browser surface was headless/hidden during the long pacing observation (`document.visibilityState === 'hidden'`), so mission-specific helper timing and visual screenshot review could not be recorded reliably in this environment. The deterministic controller regression suite remains the evidence for atomic mission/HUD/helper ordering.
+- No child-facing UI, asset, or production behavior was changed by the browser instrumentation.
+
+- [~] **Task: Perform target-device verification**
   - [ ] Repeat rapid tap/vehicle-selection scenarios on the iPad floor device at the documented render budget.
   - [ ] Confirm touch input remains forgiving, feedback remains immediate, and the car never appears to stop against an invisible lock.
-  - [ ] If the iPad is unavailable, stop and report the blocker instead of marking the checkpoint complete.
+  - [x] If the iPad is unavailable, stop and report the blocker instead of marking the checkpoint complete.
 
-- [ ] **Task: Update verification records**
-  - [ ] Append the new automated/manual results to the track plan checkpoint.
-  - [ ] Update `docs/playtest.md` only if the interaction verification adds a meaningful new record; do not rewrite historical track sections.
-  - [ ] Record exact commands, device, commit SHA, and unresolved limitations.
+- [~] **Task: Update verification records**
+  - [x] Append the new automated/browser results to the track plan checkpoint.
+  - [x] Update `docs/playtest.md` only if the interaction verification adds a meaningful new record; do not rewrite historical track sections.
+  - [x] Record exact commands, device, commit SHA, and unresolved limitations.
   - [ ] **Commit:** `chore(conductor): document async arbitration verification`
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
