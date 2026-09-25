@@ -187,7 +187,7 @@
   - [x] Call `disableRealShadows` for creature actors instead of relying on the three.js default.
   - [x] Bring `README.md`, `product.md`, and `tech-stack.md` in line with the shipped roster and the per-material merge contract.
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Obtain final user confirmation.
-  - [ ] Attach the review verification note and record the final checkpoint SHA.
-  - [ ] Mark the track ready for implementation completion/archival according to the Conductor workflow.
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Obtain final user confirmation. — Approved; all review findings applied and verified.
+  - [x] Attach the review verification note and record the final checkpoint SHA. — Review note on `3f0b6e5`; `git notes show 3f0b6e5`
+  - [x] Mark the track ready for implementation completion/archival according to the Conductor workflow. — Every phase and task is checked; the track is ready to archive.
