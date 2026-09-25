@@ -48,12 +48,12 @@
   - [x] Preserve the `TownMount` return contract and model-library cache behavior.
   - [x] **Run:** the targeted town-renderer tests and confirm they are green. **Commit:** `e585de5`
 
-- [ ] **Task: Attach the progressive town at the game boundary**
-  - [ ] Pass the base-ready seam from `game.mount` so the town group enters the scene before model completion.
-  - [ ] Remove the later duplicate `scene.add(town.group)` path.
-  - [ ] Keep `driven`/`ready` signaling, motor measurement, and scene ownership unchanged.
-  - [ ] Confirm the pre-mount frame guards still cover the new earlier scene attachment.
-  - [ ] **Commit:** `feat(town): reveal the base town during model mount`
+- [x] **Task: Attach the progressive town at the game boundary** [39218bf]
+  - [x] Pass the base-ready seam from `game.mount` so the town group enters the scene before model completion.
+  - [x] Remove the later duplicate `scene.add(town.group)` path.
+  - [x] Keep `driven`/`ready` signaling, motor measurement, and scene ownership unchanged.
+  - [x] Confirm the pre-mount frame guards still cover the new earlier scene attachment.
+  - [x] **Commit:** `feat(game): attach town base during progressive mount` (`39218bf`)
 
 - [ ] **Task: Verify Phase 2**
   - [ ] Run targeted town and controller tests.
