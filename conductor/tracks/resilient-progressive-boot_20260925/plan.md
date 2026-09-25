@@ -15,9 +15,20 @@
   - [x] Inject the reload callback so the one-shot retry behavior is testable without a real page reload.
   - [x] **Run:** the targeted test command and confirm the new contract is green. **Commit:** `e32650b`
 
-- [ ] **Task: Verify Phase 1**
-  - [ ] Confirm the state logic has coverage above the project’s 80% threshold for logic-bearing code.
-  - [ ] **Checkpoint:** `Phase Verification & Checkpoint (Refer to workflow.md)`
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)** [e32650b]
+  - [x] Identify the changed production/test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
+  - [x] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 1 implementation record (2026-09-25)
+
+- Boot status is a pure state contract with `loading`, `ready`, `failed`, and one-shot `retrying` phases; a late failure cannot replace a successful boot.
+- Targeted tests: `$env:CI='true'; pnpm test -- src/game/hud/bootStatus.test.ts` — **5/5 passed**.
+- Quality gates: `pnpm check` — passed (159 files); `pnpm typecheck` — passed.
+- Scoped coverage for `src/game/hud/bootStatus.ts`: **94.44% statements / 88.88% branches / 85.71% functions**.
+- Manual verification plan: normal cold boot remains visually unchanged in this phase; confirm existing boot and console behavior, with visual loading/retry deferred to Phase 4.
+- Checkpoint commit: `e32650b` (`feat(boot): add boot status state contract`), with a detailed Git note attached.
+- Checkpoint confirmation: the user explicitly approved the Phase 1 report and unchanged-boot manual plan.
 
 ## Phase 2 — Make the town mount progressive
 
