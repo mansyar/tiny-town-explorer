@@ -71,25 +71,35 @@
 
 ## Phase 3 — Make sampled audio failure non-blocking
 
-- [ ] **Task: Add red tests for aggregate sample loading**
-  - [ ] Test that one rejected or undecodable sample does not reject the aggregate operation.
-  - [ ] Test that all other samples still load and the result contains no unhandled rejection.
-  - [ ] Test that a failed sample is silent when played while synthesized voices remain usable.
-  - [ ] Test that a later successful load can still populate the failed sample through the existing model/audio seam where applicable.
-  - [ ] **Run:** the targeted audio test command and confirm the new behavior is red.
+- [x] **Task: Add red tests for aggregate sample loading** [4f635e5]
+  - [x] Test that one rejected or undecodable sample does not reject the aggregate operation.
+  - [x] Test that all other samples still load and the result contains no unhandled rejection.
+  - [x] Test that a failed sample is silent when played while synthesized voices remain usable.
+  - [x] Test that a later successful load can still populate the failed sample through the existing model/audio seam where applicable.
+  - [x] **Run:** the targeted audio test command and confirm the new behavior is red.
 
-- [ ] **Task: Implement settled sample loading**
-  - [ ] Add the smallest testable aggregate loader around the existing `AudioEngine.load` contract.
-  - [ ] Use settled semantics rather than `Promise.all` so one optional sample cannot block or reject boot.
-  - [ ] Keep the sample registry, URLs, decode path, synthesized sounds, mute behavior, and first-gesture unlock unchanged.
-  - [ ] Do not surface failed-sample diagnostics in child-facing UI.
-  - [ ] **Run:** targeted audio tests and confirm they are green.
-  - [ ] **Commit:** `fix(audio): keep optional samples from blocking boot`
+- [x] **Task: Implement settled sample loading** [eb0e252]
+  - [x] Add the smallest testable aggregate loader around the existing `AudioEngine.load` contract.
+  - [x] Use settled semantics rather than `Promise.all` so one optional sample cannot block or reject boot.
+  - [x] Keep the sample registry, URLs, decode path, synthesized sounds, mute behavior, and first-gesture unlock unchanged.
+  - [x] Do not surface failed-sample diagnostics in child-facing UI.
+  - [x] **Run:** targeted audio tests and confirm they are green.
+  - [x] **Commit:** `fix(audio): keep optional samples from blocking boot` (`eb0e252`)
 
-- [ ] **Task: Verify Phase 3**
-  - [ ] Run the audio test suite and confirm existing scheduling tests remain green.
-  - [ ] Confirm no new production dependency, asset, or visible control was introduced.
-  - [ ] **Checkpoint:** `Phase Verification & Checkpoint (Refer to workflow.md)`
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)** [eb0e252]
+  - [x] Identify the changed production/test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
+  - [x] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 3 implementation record (2026-09-25)
+
+- Added `src/game/audio/sampleLoader.ts` with a small `loadSamples` helper built on `Promise.allSettled` over the existing `AudioEngine.load` contract; `src/main.ts` now uses it at boot instead of `Promise.all`.
+- Failure semantics: a rejected fetch or decode leaves that one sample silent, never rejects or escapes at boot, never surfaces child-facing diagnostics, and never blocks the other samples; synthesized voices, mute, and first-gesture unlock are unchanged, and a later `load` can still populate a previously failed sample.
+- Automated results: `pnpm check` — passed (161 files); `pnpm typecheck` — passed; targeted audio tests — **20 passed**; `$env:CI='true'; pnpm test` — **882 tests across 69 files passed**; scoped `sampleLoader.ts` — **100%** statements/branches/functions/lines.
+- Observed pre-existing gap, deliberately not in scope: `audioEngine.ts` remains at 54% because its existing tests cover the pure schedules only; this track added no new untested production logic there.
+- Manual verification plan: block one sampled file, confirm boot and driving are unaffected with no unhandled rejection, confirm the blocked ability is silent while a synthesized ability still sounds, then unblock and reload to confirm normal playback.
+- Checkpoint commit: `eb0e252` (`fix(audio): keep optional samples from blocking boot`), with a detailed Git note attached.
+- Checkpoint confirmation: the user explicitly approved the Phase 3 report and blocked-sample verification plan.
 
 ## Phase 4 — Wire the browser edge and failure recovery
 
