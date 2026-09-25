@@ -194,6 +194,39 @@ describe('createGame controller seam (Phase 2)', () => {
     expect(setBusy).toHaveBeenCalledWith(false);
   });
 
+  it('attaches the town group as soon as its base is ready', async () => {
+    const attached = deps();
+    const group = { add: vi.fn() };
+    const townMount = deferred<{
+      group: typeof group;
+      houseFootprints: Map<string, never>;
+      dispose: () => void;
+    }>();
+    const progressiveMount = mountTown as unknown as (...args: unknown[]) => Promise<
+      typeof townMount extends Deferred<infer T> ? T : never
+    >;
+    vi.mocked(progressiveMount).mockImplementationOnce(async (...args) => {
+      const options = args[3] as
+        | { readonly onBaseReady?: (value: typeof group) => void }
+        | undefined;
+      options?.onBaseReady?.(group);
+      return townMount.promise;
+    });
+
+    const game = createGame(attached);
+    try {
+      await Promise.resolve();
+      expect(attached.scene.add).toHaveBeenCalledWith(group);
+    } finally {
+      townMount.resolve({
+        group,
+        houseFootprints: new Map(),
+        dispose: vi.fn(),
+      });
+      await game.ready;
+    }
+  });
+
   it('uses the scene port for add/remove and nothing else', async () => {
     const attached = deps();
     const game = createGame(attached);
