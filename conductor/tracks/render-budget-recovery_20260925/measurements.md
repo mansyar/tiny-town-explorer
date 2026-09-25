@@ -73,3 +73,11 @@ Measured from the actual source path after the changes, in Chromium at 1280×720
 
 The headless browser reported an unrelated `Unable to decode audio data` console message while loading the audio samples; it did not prevent WebGL rendering or the measurement probe.
 The probe is development-only and exposes no child-visible UI.
+
+## Phase 3 release verification
+
+The final quality-gate run was `pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build`: Biome checked 154 files, TypeScript passed, all 851 tests across 67 files passed, and the PWA build generated 49 precache entries / 4,238.99 KiB. The existing JavaScript chunk-size warning was unchanged.
+
+A controlled Playwright/Chromium replay at 1280×720 / DPR 1 reproduced the shipped fresh-spawn result of 48,463 triangles / 180 calls after the authored town and seeded traffic settled. Real road-route windows measured 48,709 / 199, 48,343 / 198, 46,473 / 174, and 41,829 / 132; the recorded settled-junction reference remains 45,797 / 154. The desktop and physical iPad 9th-generation visual/gameplay checks were confirmed by the owner, including all four missions, traffic, parked cars, pond effects, target rings, bonks, shadows, rotation, and airplane-mode offline play.
+
+The production preview service worker controlled the page and a reload succeeded after the preview server was stopped, confirming cache-backed offline startup. The dev-only probe was absent from production.
