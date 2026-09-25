@@ -24,3 +24,32 @@ Verification:
 - Visual comparison retained the town composition, house shadows, and grounded vehicle read.
 
 Why: close the documented spawn-window budget gap without deleting visible content or adding a second camera-visibility traversal.
+
+Phase 1 verification report — Baseline and culling evidence
+
+Automated command:
+pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build
+
+Results:
+- Biome clean across 154 files.
+- TypeScript clean.
+- 851 tests passed across 67 files.
+- Production build passed; PWA generated 49 precache entries (4238.99 KiB).
+
+Manual verification plan and result:
+1. Run pnpm dev and open http://localhost:5173.
+2. Inspect fresh-spawn grounding: town, houses, road grid, parked cars, and hero car remain visible; house shadows stay soft/directional; parked/wandering cars and the hero read as grounded.
+3. Drive from the original district through the junction into the second district; check for shadow clipping, popping, or missing mission art at camera edges.
+4. Switch all four vehicles and trigger each ability; verify morphs, bonks, traffic, HUD, and input remain unchanged.
+5. Use ?calmGap=2 to inspect all four mission families; verify order, litter, paw, heart, target-ring, confetti, and sun effects remain visible and grounded.
+6. Resize landscape/portrait; verify camera framing, shadows, HUD, and safe areas.
+
+User confirmation: Yes, confirm (2026-09-25).
+
+Measured shipped-path evidence is recorded in conductor/tracks/render-budget-recovery_20260925/measurements.md:
+- fresh spawn 48,463 triangles / 180 calls
+- transit 46,477 / 176
+- settled junction 45,797 / 154
+- dev-paced mission 49,080 / 203
+
+Verdict: Phase 1 accepted; proceed to Phase 2 optimization verification.
