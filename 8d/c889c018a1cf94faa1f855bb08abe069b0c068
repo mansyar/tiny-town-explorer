@@ -1,0 +1,17 @@
+Task: The frame and the camera order (Phase 4 task 1).
+
+advance() is now the whole game frame: wanderers, motor, actor, the feedback stack, the fleet clock, the HUD ability-busy edge, then tickVehicle (camera target, shadow focus, engine note, bonks, the town, the pond splash) and tickMissions (registry, pacers, helper hand). main.ts keeps only the DOM chrome (hold gate, parent panel, install hint) between the game frame and rig.update, and rig.update still runs last, so the camera never lags a frame.
+
+The camera port grew the two members the vehicle frame needs and nothing else: setTarget and followSun. It deliberately has no update/snapTo/resize — the rig's own easing stays at the edge, and the suite's strict proxy would throw if the controller reached for it.
+
+The edge surface is closed. main.ts now touches the controller through { advance, tapAt, honk, noteActivity, selectVehicle, pressAbility, carPosition, activeVehicle, setHelperEnabled, ready, driven } and nothing else: no world, no rule handles. Two naming notes — selectVehicle is the HUD's onSelect (activate + swapVehicle, the pairing main.ts used to do itself), and setHelperEnabled is the parent panel's helper toggle, which was the last line reaching into world.hand.
+
+Deviation from the plan, deliberate and recorded: the plan's literal list was { advance, tapAt, honk, noteActivity }. Six more entries are provably required — createInputRouter stays at the edge (FR6) so main needs the car's live position for getCarPosition; createVehicleHud stays at the edge (it is workflow-exempt DOM glue) so main needs the opening vehicle id and the two handler callbacks; and the parent panel's helper toggle needs an entry now that world is closed. The world handle and the rule handles remain on the returned object purely as the contract suite's observation surface (AC3 asks for every case to keep passing with no edit, and 43 cases pin individual rules through them); main.ts reaches for neither.
+
+Frame order note: the DOM chrome now runs after the game frame rather than between the feedback stack and the fleet clock. It is DOM-only (hold ring, panel reveal, install-hint fade) and shares no state with the fleet or the feedback stack, so nothing child-visible moves.
+
+Red/green: 5 tests written first and failing (camera target inside the vehicle frame with followSun after it, the camera held still pre-mount and following every frame after, the ability-busy edge firing on the fleet clock rather than every frame, AC5's boot window, and the whole mission frame from one advance call). Green at 48 tests in the file.
+
+AC1 check: a search of main.ts for absorb, serveArmedNow, deliverPuppy, onSirenCast, swapVehicle, tickPacers or tickMissions returns nothing. main.ts is 236 lines — the full FR8 list and nothing more; the overage against 'roughly 200' is documentation, not logic.
+
+Coverage game.ts: 94.76% stmts / 86.6% branches / 89.55% funcs. Gates: biome 150 files clean, tsc clean, 842/842 tests (66 files).
