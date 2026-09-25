@@ -50,7 +50,7 @@
   - [ ] Run `pnpm typecheck`.
   - [ ] Run `CI=true pnpm test`.
   - [ ] Run `pnpm build` and verify the PWA output remains complete and offline-capable.
-- [ ] Task: Complete the desktop gameplay sweep
+- [~] Task: Complete the desktop gameplay sweep
   - [ ] Verify spawn, transit, and junction rendering windows.
   - [ ] Drive through all four missions with the existing traffic and parked cars.
   - [ ] Confirm camera edges, markers, pond effects, target rings, bonks, shadows, and newest-tap behavior.
