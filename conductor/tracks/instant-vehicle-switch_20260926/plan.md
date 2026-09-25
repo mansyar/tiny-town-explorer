@@ -376,3 +376,17 @@ not by the suite, which does not typecheck: `let committedId = VEHICLE_IDS[0]`
 inferred the literal type `"fire"` from the `as const` tuple, and `main.ts` still
 called `hudControls.setAbility` when seeding the freshly created HUD. Both
 fixed; a green suite did not imply a green build, which is worth remembering.
+
+**Device recheck of the fix (2026-09-26).** The fix changed the ability button's
+painting, and the ability button is the control a child presses most, so the two
+states the fix touched were re-run on device rather than closed on the strength
+of the fourteen new cases alone: a failed switch (`garbage-truck.glb` blocked)
+and the supersession sequence. Both reported working as expected. The full
+record is in `docs/playtest.md` under *Post-review fix recheck - 2026-09-26*.
+
+That recheck is the second half of a lesson this track records twice. The
+finding itself was a direct cost of declining the Phase 1 offer to add a jsdom
+test and lift `vehicleHud.ts` out of the coverage exclusion. Keeping that
+exclusion saved a dependency; the review then charged for the saving with a
+reachable bug. A test file is not overhead on top of correct code - for a module
+whose entire job is to reconcile two pushed values, it *is* the code.

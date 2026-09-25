@@ -863,3 +863,29 @@ claims the check as a whole.
   ring still on, and the final state is police with nothing ringed.
 - **Non-taps**: a mission morph, the helper siren demo, and a direct swap never
   raise a pending answer, because the child did not ask for them.
+
+### Post-review fix recheck - 2026-09-26
+
+The review found a High defect in the presentation layer, and the fix changed how
+the ability button is painted, so the switch tap was re-run on device. The two
+states below are the ones the fix touched; everything else in the track was
+already verified above and is not repeated here.
+
+- **Failed switch, the High finding.** With `garbage-truck.glb` blocked and the
+  fire truck active, tapping garbage still raises the ring and still repoints
+  the ability button at the garbage truck - the tap is pending, so that part is
+  correct. When the load fails, the ring clears, the fire truck stays active, and
+  **the ability button returns to the fire truck's hose.** Before the fix it
+  stayed on the garbage truck's trick, a truck that never arrived, until the next
+  successful switch. The owner's verdict: works as expected.
+- **Supersession.** fire → garbage → police leaves the ring on police, and the
+  fire truck's brief commit does **not** repoint the ability button at the hose
+  while the newer tap is pending.
+- **No regressions.** Driving, honking, abilities, a mission, the parent panel
+  and mute all unchanged; no console errors.
+
+Per-step observations are the owner's own report and were not captured
+independently, so this section records a pass as a pass rather than dressing it
+up as a measured result. The two manifests are also pinned in
+`vehicleHud.test.ts`, which was verified non-vacuous by stashing the fix and
+watching exactly those two cases fail.
