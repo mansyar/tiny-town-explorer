@@ -634,3 +634,62 @@ replace it.
 production PWA, desktop, and physical iPad 9th-generation criteria are all
 satisfied. The existing JavaScript chunk-size warning remains outside this
 performance track.
+
+## Async intent arbitration (track `async-intent-arbitration_20260925`)
+
+This section records the verification of the focused async intent-arbitration
+bug-fix track. It does not replace the historical performance/device records
+above.
+
+### Automated gates
+
+- `pnpm check` — passed; 155 files checked.
+- `pnpm typecheck` — passed.
+- `CI=true pnpm test` — passed; **862 tests across 67 files**.
+- `CI=true pnpm test:coverage` — passed; overall **91.3% statements / 87.7%
+  branches / 92.75% functions / 91.16% lines**. The touched `src/game/game.ts`
+  measured **93.24% statements / 84.36% branches**.
+- `pnpm build` — passed; Vite generated 49 precache entries totaling
+  approximately **4,239.87 KiB**. The pre-existing JavaScript chunk-size warning
+  remains outside this track.
+
+### Browser verification
+
+The development server was run with `?calmGap=2` and exercised through the
+browser edge at commit `622aa14` (implementation `fb725d7`):
+
+- Boot completed with a live canvas, vehicle controls, render probe, and no
+  console errors.
+- Rapid ice-cream → police HUD selection serialized and finished on police.
+- Rapid canvas pointer input left the scene populated without console errors.
+- A controlled rejection of `garbage-truck.glb` preserved the previously
+  committed police actor, fleet/HUD state, and populated scene. Restoring the
+  fetch and retrying mounted garbage successfully.
+- Native browser automation reported `document.visibilityState === 'hidden'`
+  during long pacing observation, so it was not used to claim visual mission
+  timing; the physical pass below supplied the visible interaction evidence.
+
+### Physical iPad pass
+
+The user confirmed a physical iPad pass on 2026-09-25. The pass covered rapid
+destination taps, rapid vehicle changes, mission-required morphs, the helper
+hand, and all four missions: fire, ice-cream, park cleanup, and lost puppy. No
+failure, stuck route, invisible lock, missing vehicle/HUD state, or other
+regression was reported.
+
+### Post-review fix recheck — 2026-09-25
+
+After the principal-review fixes at commit `a036275`, the updated browser edge
+passed a bounded smoke pass: rapid ice-cream → police selection settled on
+police as the sole active/pressed vehicle, three rapid canvas taps completed
+without console errors, and the render inventory remained populated. The
+full suite increased to **864 tests across 67 files**; coverage measured
+**91.34% statements / 87.91% branches** overall and **93.43% / 85.37%** for
+`src/game/game.ts`. The production build passed with 49 precache entries
+totaling approximately **4,240.07 KiB**; the known chunk-size warning remains
+out of scope.
+
+The user also completed and confirmed the post-fix physical iPad recheck. Rapid
+destination taps, rapid vehicle changes, mission-required morphs, helper input,
+and the four-mission interaction set passed again with no stuck route,
+invisible lock, missing vehicle/HUD state, or other regression.

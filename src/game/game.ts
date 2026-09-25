@@ -27,7 +27,7 @@ import {
   markerVisible,
   syncMarker,
 } from './mission/missionMarkers';
-import { createMissionRegistry } from './mission/missionRegistry';
+import { createMissionRegistry, type MissionTapContext } from './mission/missionRegistry';
 import { createMissionRotation } from './mission/missionRotation';
 import {
   createOrderBeats,
@@ -73,6 +73,17 @@ import {
 const RIDE_HEIGHT = 0.28;
 /** Seconds for the hop-out run to the owner's door (FR10). */
 const DOOR_RUN_SECONDS = 0.7;
+
+/** Which caller owns a serialized actor replacement. */
+type VehicleRequestMode = 'mission' | 'selection' | 'direct';
+type VehicleActor = Awaited<ReturnType<typeof createVehicleActor>>;
+
+interface PendingVehicleRequest {
+  readonly id: VehicleId;
+  readonly mode: VehicleRequestMode;
+  readonly generation: number;
+  readonly resolve: (committed: boolean) => void;
+}
 
 /**
  * The slice of the audio engine the controller calls. The engine itself is
@@ -454,6 +465,17 @@ export function createGame(deps: GameDeps): Game {
   // The demo tap the hand owes, once its trace has finished drawing.
   let pendingDemo: Vec2 | undefined;
 
+  // Intent ownership lives here, at the controller edge. A tap gets a
+  // generation before it awaits mission work; only the newest tap may commit a
+  // route after that await. Vehicle requests are serialized separately so an
+  // actor load can finish, commit, and only then let the next request start.
+  let latestDestinationGeneration = 0;
+  let latestVehicleRequest = 0;
+  let latestSelectionGeneration = 0;
+  let vehicleBusy = false;
+  const vehicleQueue: PendingVehicleRequest[] = [];
+  const vehicleReadyWaiters: Array<() => void> = [];
+
   // The seam that lets new missions join without a new tick/tap block here
   // (spec FR13): every mission contributes, the registry owns order, and
   // FR12's `missionFocus` is handed in as the one town-wide focus resolver —
@@ -468,7 +490,7 @@ export function createGame(deps: GameDeps): Game {
           mission.update(delta, distanceToFire(world.frameCarPosition));
           tickFireMission(world.frameCarPosition);
         },
-        tap: async (aim) => {
+        tap: async (aim, context) => {
           const burning = firePoint();
           const claimed =
             markerTap(FIRE_FLAME, {
@@ -482,8 +504,7 @@ export function createGame(deps: GameDeps): Game {
           }
           mission.respond();
           if (fleet.activeId() !== 'fire') {
-            activate('fire');
-            await swapVehicle('fire');
+            await requestVehicle('fire', 'mission', context);
           }
           return true;
         },
@@ -495,7 +516,7 @@ export function createGame(deps: GameDeps): Game {
           orders.update(delta, distanceToOrder(world.frameCarPosition));
           tickOrderMission(world.frameCarPosition);
         },
-        tap: async (aim) => {
+        tap: async (aim, context) => {
           const waiting = orderPoint();
           const action =
             waiting === undefined
@@ -508,8 +529,7 @@ export function createGame(deps: GameDeps): Game {
           if (action === 'respond') {
             orders.respond();
             if (fleet.activeId() !== 'iceCream') {
-              activate('iceCream');
-              await swapVehicle('iceCream');
+              await requestVehicle('iceCream', 'mission', context);
             }
             return true;
           }
@@ -524,14 +544,14 @@ export function createGame(deps: GameDeps): Game {
       {
         id: 'park',
         tick: (delta) => tickParkMission(delta, world.frameCarPosition),
-        tap: async (aim) => {
+        tap: async (aim, context) => {
           const onPiece = world.litter.some(
             (piece) => distanceBetween(aim, piece.position) <= MISSION_SNAP_RADIUS,
           );
           if (resolveParkTap({ state: park.snapshot().state, onPiece }) !== 'respond') {
             return false;
           }
-          await headToGarbageTruck();
+          await headToGarbageTruck(context);
           return true;
         },
         isIdle: () => park.snapshot().state === 'idle',
@@ -642,37 +662,193 @@ export function createGame(deps: GameDeps): Game {
     return motor?.position ?? spawn;
   }
 
-  async function swapVehicle(id: VehicleId): Promise<void> {
+  async function loadVehicleActor(id: VehicleId): Promise<VehicleActor | undefined> {
     // The cast is only reachable once the car is on the road: the HUD and the
     // tap router are both wired after the mount.
     if (library === undefined || motor === undefined) {
-      return;
+      return undefined;
     }
     const spec = fleet.spec(id);
-    const next = await createVehicleActor(library, spec.model, motor, {
-      facingYaw: spec.facingYaw,
-      fitLength: spec.fitLength,
-      castsShadow: false,
-    });
-    // The replacement is built before the old one goes, so no frame is empty.
-    if (actor !== undefined) {
-      scene.remove(actor.object);
+    try {
+      return await createVehicleActor(library, spec.model, motor, {
+        facingYaw: spec.facingYaw,
+        fitLength: spec.fitLength,
+        castsShadow: false,
+      });
+    } catch {
+      // A failed load leaves the last known-good actor, fleet ID, HUD, and
+      // route untouched. The model library can retry this request later.
+      return undefined;
     }
-    actor = next;
-    world.actor = next;
-    scene.add(next.object);
-    fx.burst('poof', motor.position, motor.heading());
-    audio.play('poof');
+  }
+
+  function restoreVehicleActor(
+    next: VehicleActor,
+    previousActor: VehicleActor | undefined,
+    previousActive: VehicleId,
+    mode: VehicleRequestMode,
+    removedPrevious: boolean,
+    addedNext: boolean,
+  ): void {
+    // These ports are intentionally tiny, but keep a failed commit from
+    // poisoning the queue or leaving a half-mounted actor behind.
+    if (addedNext) {
+      scene.remove(next.object);
+    }
+    if (removedPrevious && previousActor !== undefined) {
+      scene.add(previousActor.object);
+    }
+    actor = previousActor;
+    world.actor = previousActor;
+    if (mode !== 'direct') {
+      activate(previousActive);
+    }
+  }
+
+  function commitVehicleActor(
+    next: VehicleActor,
+    id: VehicleId,
+    mode: VehicleRequestMode,
+  ): boolean {
+    const previousActor = actor;
+    const previousActive = fleet.activeId();
+    let removedPrevious = false;
+    let addedNext = false;
+    try {
+      // Build first, then commit: no frame is empty and no failed load can
+      // partially change the live fleet.
+      if (previousActor !== undefined) {
+        scene.remove(previousActor.object);
+        removedPrevious = true;
+      }
+      actor = next;
+      world.actor = next;
+      scene.add(next.object);
+      addedNext = true;
+      if (mode !== 'direct') {
+        activate(id);
+      }
+      fx.burst('poof', motor?.position ?? spawn, motor?.heading() ?? 0);
+      audio.play('poof');
+      return true;
+    } catch {
+      restoreVehicleActor(
+        next,
+        previousActor,
+        previousActive,
+        mode,
+        removedPrevious,
+        addedNext,
+      );
+      return false;
+    }
+  }
+
+  async function runVehicleRequest(request: PendingVehicleRequest): Promise<void> {
+    try {
+      const next = await loadVehicleActor(request.id);
+      request.resolve(
+        next !== undefined && commitVehicleActor(next, request.id, request.mode),
+      );
+    } catch {
+      // Keep the queue alive even if a future port grows an unexpected throw.
+      request.resolve(false);
+    }
+  }
+
+  function waitForVehicleReady(): Promise<void> {
+    if (!vehicleBusy && vehicleQueue.length === 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => vehicleReadyWaiters.push(resolve));
+  }
+
+  function releaseVehicleReadyWaiters(): void {
+    if (vehicleBusy || vehicleQueue.length > 0) {
+      return;
+    }
+    const waiters = vehicleReadyWaiters.splice(0);
+    for (const resolve of waiters) {
+      resolve();
+    }
+  }
+
+  function drainVehicleQueue(): void {
+    if (vehicleBusy) {
+      return;
+    }
+    const request = vehicleQueue.shift();
+    if (request === undefined) {
+      releaseVehicleReadyWaiters();
+      return;
+    }
+    if (
+      request.mode === 'selection' &&
+      request.generation !== latestSelectionGeneration
+    ) {
+      request.resolve(false);
+      drainVehicleQueue();
+      return;
+    }
+
+    // Starting the first accepted request before returning makes it genuinely
+    // in-flight; later selections can only wait behind it.
+    vehicleBusy = true;
+    void runVehicleRequest(request).finally(() => {
+      vehicleBusy = false;
+      drainVehicleQueue();
+      releaseVehicleReadyWaiters();
+    });
+  }
+
+  /**
+   * Queues one actor replacement behind every earlier replacement. A mission
+   * request is never cancelled once its FSM claim is visible; a queued HUD
+   * selection may be skipped when a newer HUD selection has arrived.
+   */
+  function enqueueVehicleRequest(
+    id: VehicleId,
+    mode: VehicleRequestMode,
+  ): Promise<boolean> {
+    const generation = ++latestVehicleRequest;
+    if (mode === 'selection') {
+      latestSelectionGeneration = generation;
+    }
+
+    let resolveRequest!: (committed: boolean) => void;
+    const result = new Promise<boolean>((resolve) => {
+      resolveRequest = resolve;
+    });
+    vehicleQueue.push({ id, mode, generation, resolve: resolveRequest });
+    drainVehicleQueue();
+    return result;
+  }
+
+  async function requestVehicle(
+    id: VehicleId,
+    mode: Exclude<VehicleRequestMode, 'direct'>,
+    context?: MissionTapContext,
+  ): Promise<boolean> {
+    const committed = await enqueueVehicleRequest(id, mode);
+    if (!committed) {
+      context?.morphFailed();
+    }
+    return committed;
+  }
+
+  async function swapVehicle(id: VehicleId): Promise<void> {
+    // Keep the controller seam serialised even for direct test/helper callers;
+    // direct swaps do not claim the active-ID commit owned by mission/HUD paths.
+    await enqueueVehicleRequest(id, 'direct');
   }
 
   /** The respond gesture for the park errand: become the truck, head over. */
-  async function headToGarbageTruck(): Promise<boolean> {
+  async function headToGarbageTruck(context?: MissionTapContext): Promise<boolean> {
     if (!park.respond()) {
       return false;
     }
     if (fleet.activeId() !== 'garbage') {
-      activate('garbage');
-      await swapVehicle('garbage');
+      return requestVehicle('garbage', 'mission', context);
     }
     return true;
   }
@@ -1170,16 +1346,31 @@ export function createGame(deps: GameDeps): Game {
    * be able to steal the serve, nor a hydrant beside a burning one the hose.
    */
   async function tapAt(point: Vec2, aim: Vec2 = point): Promise<void> {
+    const generation = ++latestDestinationGeneration;
     const vehicle = motor;
     if (vehicle === undefined) {
       return;
     }
+    let morphFailed = false;
+    const context: MissionTapContext = {
+      morphFailed: () => {
+        morphFailed = true;
+      },
+    };
+
     // Ring before routing: a tap is answered within a frame even on the way to
     // a destination the road network cannot reach.
     ring.show(point);
     audio.play('tap');
 
-    await answerMissions(aim);
+    await answerMissions(aim, context);
+    await waitForVehicleReady();
+
+    // Mission claims are atomic, but their destination route is not. A newer
+    // tap owns the route, and a failed required morph owns no route at all.
+    if (morphFailed || generation !== latestDestinationGeneration) {
+      return;
+    }
 
     const route = findPath(grid, vehicle.position, point);
     if (route === undefined) {
@@ -1198,8 +1389,8 @@ export function createGame(deps: GameDeps): Game {
    * answers the burning house, ice-cream the ordering house (or serves a cone
    * when armed). The first claim wins; later missions never see that aim.
    */
-  async function answerMissions(aim: Vec2): Promise<void> {
-    await missions.tap(aim);
+  async function answerMissions(aim: Vec2, context?: MissionTapContext): Promise<void> {
+    await missions.tap(aim, context);
   }
 
   /**
@@ -1255,8 +1446,10 @@ export function createGame(deps: GameDeps): Game {
   /** The hand's demo of the siren button (FR12): be the police, then press. */
   async function demoSiren(): Promise<void> {
     if (fleet.activeId() !== 'police') {
-      activate('police');
-      await swapVehicle('police');
+      const committed = await requestVehicle('police', 'mission');
+      if (!committed) {
+        return;
+      }
     }
     pressAbility();
   }
@@ -1326,6 +1519,12 @@ export function createGame(deps: GameDeps): Game {
       fitLength: spec.fitLength,
       castsShadow: false,
     });
+    // A mission or explicit selection may have committed while the first model
+    // was still loading. The boot actor is only the default; never overwrite a
+    // replacement that won during the driven-before-ready window.
+    if (actor !== undefined) {
+      return;
+    }
     scene.add(car.object);
     actor = car;
     world.actor = car;
@@ -1420,10 +1619,9 @@ export function createGame(deps: GameDeps): Game {
     hand.noteActivity();
   }
 
-  /** The kid picked a vehicle on the HUD: morph the fleet, then the car. */
+  /** The kid picked a vehicle on the HUD: queue the latest explicit request. */
   async function selectVehicle(id: VehicleId): Promise<void> {
-    activate(id);
-    await swapVehicle(id);
+    await requestVehicle(id, 'selection');
   }
 
   /** The car's live position, for the input router at the edge. */

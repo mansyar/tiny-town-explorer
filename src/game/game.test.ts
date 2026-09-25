@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGame, type GameDeps } from './game';
 import { findPath } from './path/pathfinder';
 import { mountParkedShadows } from './town/parkedShadows';
@@ -130,6 +130,21 @@ describe('createGame controller seam (Phase 2)', () => {
       expect(game.world.traffic).toBeDefined();
       expect(() => game.advance(0.016)).not.toThrow();
     });
+  });
+
+  it('holds and releases the mission tap boundary for async ordering tests', async () => {
+    const { game } = await booted();
+    const pending = holdMissionTap(game);
+    const tap = game.tapAt({ x: 1, z: 1 });
+
+    await Promise.resolve();
+    expect(game.world.missions.tap).toHaveBeenCalledWith(
+      { x: 1, z: 1 },
+      expect.objectContaining({ morphFailed: expect.any(Function) }),
+    );
+
+    pending.resolve(false);
+    await tap;
   });
 
   it('ticks the mounted systems once they land', async () => {
@@ -302,6 +317,48 @@ async function settle(): Promise<void> {
     setTimeout(resolve, 0);
   });
 }
+
+type TestVehicleActor = Awaited<ReturnType<typeof createVehicleActor>>;
+
+type Deferred<T> = {
+  readonly promise: Promise<T>;
+  resolve(value: T | PromiseLike<T>): void;
+  reject(reason?: unknown): void;
+};
+
+/** A hand-controlled promise for deterministic async ordering tests. */
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, resolve, reject };
+}
+
+/** Gives each mocked actor a distinct object identity for scene assertions. */
+function testActor(label = 'vehicle'): TestVehicleActor {
+  return {
+    object: { label } as unknown as TestVehicleActor['object'],
+    sync: vi.fn(),
+  };
+}
+
+/** Holds the registry boundary so a test can release a tap in a chosen order. */
+function holdMissionTap(game: ReturnType<typeof createGame>): Deferred<boolean> {
+  const pending = deferred<boolean>();
+  vi.spyOn(game.world.missions, 'tap').mockReturnValueOnce(pending.promise);
+  return pending;
+}
+
+// The async model pipeline is faked at the actor boundary. Reset only that
+// boundary per test: the production code must still receive a fresh actor for
+// each mount, while a test can replace one call with a deferred promise.
+beforeEach(() => {
+  vi.mocked(createVehicleActor).mockReset();
+  vi.mocked(createVehicleActor).mockImplementation(async () => testActor());
+});
 
 describe('session rules: pickup, spawn and the mission frame (Phase 3)', () => {
   it('answers the park errand on the first drive-over and morphs to the truck', async () => {
@@ -1171,7 +1228,7 @@ describe('the frame, the camera order and the boot window (Phase 4)', () => {
   it('rejects `driven` when the mount dies before the car exists', async () => {
     // A model fetch failing is the realistic case: offline-first means the
     // first visit really can fail. The edge awaits `driven` before `ready`, so
-    // a mount that never reaches the motor must reject it — otherwise the boot
+    // a mount that never reaches the motor must reject it - otherwise the boot
     // parks on a promise nobody will ever settle and the failure is swallowed.
     const boom = new Error('model fetch failed');
     vi.mocked(mountTown).mockRejectedValueOnce(boom);
@@ -1179,5 +1236,380 @@ describe('the frame, the camera order and the boot window (Phase 4)', () => {
 
     await expect(game.driven).rejects.toThrow('model fetch failed');
     await expect(game.ready).rejects.toThrow('model fetch failed');
+  });
+});
+
+describe('async intent arbitration (regression coverage)', () => {
+  it('keeps the newest destination when taps resume out of order', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const [firstPoint, secondPoint] = attached.grid.spawnPoints;
+    if (motor === undefined || firstPoint === undefined || secondPoint === undefined) {
+      throw new Error('The car or spawn points are missing');
+    }
+
+    const firstMission = deferred<boolean>();
+    const secondMission = deferred<boolean>();
+    vi.spyOn(game.world.missions, 'tap')
+      .mockReturnValueOnce(firstMission.promise)
+      .mockReturnValueOnce(secondMission.promise);
+    const onRing = vi.spyOn(game.world.ring, 'show');
+    const onPlay = attached.audio.play as ReturnType<typeof vi.fn>;
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    onRing.mockClear();
+    onPlay.mockClear();
+
+    const firstTap = game.tapAt(firstPoint, firstPoint);
+    const secondTap = game.tapAt(secondPoint, secondPoint);
+
+    expect(onRing).toHaveBeenNthCalledWith(1, firstPoint);
+    expect(onRing).toHaveBeenNthCalledWith(2, secondPoint);
+    expect(onPlay).toHaveBeenCalledTimes(2);
+
+    secondMission.resolve(false);
+    await secondTap;
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+
+    firstMission.resolve(false);
+    await firstTap;
+
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(secondPoint);
+  });
+
+  it('keeps a pre-ready selection when the initial actor resolves', async () => {
+    const attached = deps();
+    const initialActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(initialActor.promise);
+    const game = createGame(attached);
+    await game.driven;
+    expect(game.world.actor).toBeUndefined();
+
+    const selectedActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(selectedActor.promise);
+    const onAdd = attached.scene.add as ReturnType<typeof vi.fn>;
+    const onRemove = attached.scene.remove as ReturnType<typeof vi.fn>;
+    onAdd.mockClear();
+    onRemove.mockClear();
+
+    const selection = game.selectVehicle('police');
+    await settle();
+    const committedActor = testActor('selected-police');
+    selectedActor.resolve(committedActor);
+    await selection;
+
+    expect(game.world.actor).toBe(committedActor);
+    expect(onAdd).toHaveBeenCalledWith(committedActor.object);
+
+    const bootActor = testActor('initial');
+    initialActor.resolve(bootActor);
+    await game.ready;
+
+    expect(game.world.actor).toBe(committedActor);
+    expect(onAdd).not.toHaveBeenCalledWith(bootActor.object);
+    expect(onRemove).not.toHaveBeenCalledWith(committedActor.object);
+  });
+
+  it('waits for a claimed morph before committing a newer destination', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || newerPoint === undefined) {
+      throw new Error('The town, car, or spawn point is missing');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(house.position, house.position);
+    await Promise.resolve();
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await Promise.resolve();
+
+    expect(onSetPath).not.toHaveBeenCalled();
+
+    actor.resolve(testActor('fire'));
+    await Promise.all([newerTap, missionTap]);
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(newerPoint);
+  });
+
+  it('does not resurrect an older route when the newest destination is unreachable', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const [firstPoint, secondPoint] = attached.grid.spawnPoints;
+    if (motor === undefined || firstPoint === undefined || secondPoint === undefined) {
+      throw new Error('The car or spawn points are missing');
+    }
+
+    const firstMission = deferred<boolean>();
+    const secondMission = deferred<boolean>();
+    vi.spyOn(game.world.missions, 'tap')
+      .mockReturnValueOnce(firstMission.promise)
+      .mockReturnValueOnce(secondMission.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    // The newer tap resolves first and has no route; the older tap then finds
+    // one, but it must not resurrect that superseded destination.
+    vi.mocked(findPath)
+      .mockReturnValueOnce(undefined)
+      .mockReturnValueOnce({ waypoints: [firstPoint], destination: firstPoint });
+
+    const firstTap = game.tapAt(firstPoint, firstPoint);
+    const secondTap = game.tapAt(secondPoint, secondPoint);
+    secondMission.resolve(false);
+    await secondTap;
+    firstMission.resolve(false);
+    await firstTap;
+
+    expect(onSetPath).not.toHaveBeenCalled();
+  });
+
+  it('keeps a claimed fire morph atomic while applying the newest destination', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || newerPoint === undefined) {
+      throw new Error('The town or spawn points are missing');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(house.position, house.position);
+
+    await Promise.resolve();
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await Promise.resolve();
+    actor.resolve(testActor('fire'));
+    await Promise.all([newerTap, missionTap]);
+
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('fire');
+    const finalPath = onSetPath.mock.calls[onSetPath.mock.calls.length - 1]?.[0];
+    expect(finalPath?.destination).toEqual(newerPoint);
+  });
+
+  it('keeps a claimed ice-cream morph atomic while applying a later tap', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || newerPoint === undefined) {
+      throw new Error('The town or spawn points are missing');
+    }
+
+    game.activate('police');
+    game.lightOrder(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(house.position, house.position);
+
+    await Promise.resolve();
+    expect(game.world.orders.snapshot().state).not.toBe('spawned');
+
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await Promise.resolve();
+    actor.resolve(testActor('iceCream'));
+    await Promise.all([newerTap, missionTap]);
+
+    expect(game.world.orders.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+    const finalPath = onSetPath.mock.calls[onSetPath.mock.calls.length - 1]?.[0];
+    expect(finalPath?.destination).toEqual(newerPoint);
+  });
+
+  it('keeps a claimed park morph atomic while applying a later tap', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (motor === undefined || newerPoint === undefined) {
+      throw new Error('The town or spawn points are missing');
+    }
+
+    game.startPark();
+    const piece = game.world.litter[0];
+    if (piece === undefined) {
+      throw new Error('The park round laid no litter');
+    }
+    game.activate('police');
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(piece.position, piece.position);
+
+    await settle();
+    expect(game.world.park.snapshot().state).not.toBe('spawned');
+
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await Promise.resolve();
+    actor.resolve(testActor('garbage'));
+    await Promise.all([newerTap, missionTap]);
+
+    expect(game.world.park.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('garbage');
+    const finalPath = onSetPath.mock.calls[onSetPath.mock.calls.length - 1]?.[0];
+    expect(finalPath?.destination).toEqual(newerPoint);
+  });
+
+  it('rolls back a failed mission morph and permits a later retry', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const beforeActor = game.world.actor;
+    if (house === undefined || motor === undefined || beforeActor === undefined) {
+      throw new Error('The town or car is missing');
+    }
+
+    game.activate('police');
+    const activeBefore = game.world.fleet.activeId();
+    const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    const onRemove = vi.spyOn(attached.scene, 'remove');
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    game.lightFire(house.id);
+    const failedTap = game.tapAt(house.position, house.position);
+
+    await settle();
+    actor.reject(new Error('actor load failed'));
+
+    await expect(failedTap).resolves.toBeUndefined();
+    expect(game.world.actor).toBe(beforeActor);
+    expect(game.world.fleet.activeId()).toBe(activeBefore);
+    expect(onHudActive).toHaveBeenLastCalledWith(activeBefore);
+    expect(onSetPath).not.toHaveBeenCalled();
+    expect(onRemove).not.toHaveBeenCalledWith(beforeActor.object);
+
+    const retryActor = testActor('fire-retry');
+    vi.mocked(createVehicleActor).mockResolvedValueOnce(retryActor);
+    await game.selectVehicle('fire');
+
+    expect(game.world.actor).toBe(retryActor);
+    expect(game.world.fleet.activeId()).toBe('fire');
+  });
+
+  it('serializes A-then-B vehicle selection and removes the superseded actor', async () => {
+    const { game, attached } = await booted();
+    const onAdd = attached.scene.add as ReturnType<typeof vi.fn>;
+    const onRemove = attached.scene.remove as ReturnType<typeof vi.fn>;
+    const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onAdd.mockClear();
+    onRemove.mockClear();
+    onHudActive.mockClear();
+    vi.mocked(createVehicleActor).mockClear();
+
+    const firstActor = deferred<TestVehicleActor>();
+    const secondActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor)
+      .mockReturnValueOnce(firstActor.promise)
+      .mockReturnValueOnce(secondActor.promise);
+
+    const firstRequest = game.selectVehicle('police');
+    const secondRequest = game.selectVehicle('iceCream');
+    await settle();
+
+    // The second selection must wait rather than start a concurrent swap.
+    expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(1);
+
+    const policeActor = testActor('police');
+    firstActor.resolve(policeActor);
+    await firstRequest;
+    await settle();
+    await settle();
+    expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(2);
+
+    const iceCreamActor = testActor('iceCream');
+    secondActor.resolve(iceCreamActor);
+    await secondRequest;
+
+    expect(game.world.actor).toBe(iceCreamActor);
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+    expect(onHudActive).toHaveBeenLastCalledWith('iceCream');
+    expect(onAdd).toHaveBeenCalledWith(policeActor.object);
+    expect(onAdd).toHaveBeenCalledWith(iceCreamActor.object);
+    expect(onRemove).toHaveBeenCalledWith(policeActor.object);
+    expect(onRemove).toHaveBeenCalledTimes(2);
+  });
+
+  it('serializes a mission-required morph before the latest HUD selection', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const fireActor = deferred<TestVehicleActor>();
+    const hudActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor)
+      .mockReturnValueOnce(fireActor.promise)
+      .mockReturnValueOnce(hudActor.promise);
+    const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onHudActive.mockClear();
+    vi.mocked(createVehicleActor).mockClear();
+
+    const missionTap = game.tapAt(house.position, house.position);
+    await settle();
+    const selection = game.selectVehicle('iceCream');
+    await Promise.resolve();
+
+    // The mission-required fire morph owns the in-flight slot first.
+    expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(1);
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+
+    const fireVehicle = testActor('fire');
+    fireActor.resolve(fireVehicle);
+    await settle();
+    expect(game.world.actor).toBe(fireVehicle);
+    expect(onHudActive).toHaveBeenLastCalledWith('fire');
+
+    const iceCreamVehicle = testActor('iceCream');
+    hudActor.resolve(iceCreamVehicle);
+    await Promise.all([selection, missionTap]);
+
+    expect(game.world.actor).toBe(iceCreamVehicle);
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+    expect(onHudActive).toHaveBeenLastCalledWith('iceCream');
+  });
+
+  it('keeps a helper-hand demo from overwriting a newer child tap', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [childPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || childPoint === undefined) {
+      throw new Error('The town, car, or spawn point is missing');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockClear();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    game.tickHelperHand(11, game.world.spawn);
+    vi.spyOn(game.world.helperTrace, 'isDone').mockReturnValue(true);
+    game.tickHelperHand(0.016, game.world.spawn);
+    await settle();
+
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const childTap = game.tapAt(childPoint, childPoint);
+    await Promise.resolve();
+    expect(onSetPath).not.toHaveBeenCalled();
+
+    actor.resolve(testActor('fire'));
+    await Promise.all([childTap, settle()]);
+
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);
   });
 });
