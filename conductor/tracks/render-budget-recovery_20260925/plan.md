@@ -7,7 +7,7 @@
 - Prefer behavior-preserving rendering changes over removing visible content.
 - No new missions, district, persistence, sticker board, runtime dependency, or asset pack.
 
-## Phase 1 — Baseline and culling evidence
+## Phase 1 — Baseline and culling evidence [checkpoint: 5e94020]
 
 - [x] Task: Establish a reproducible render-measurement contract `cc4afed`
   - [x] Write failing tests for the logic that classifies and records a measured render window, including camera state, shadow-pass inclusion, triangles, and draw calls.
@@ -23,7 +23,7 @@
 - [x] Task: Record the selected rendering strategy `5e94020`
   - [x] Document why the selected lever is preferable to deleting visible cars, traffic, or art.
   - [x] Update `conductor/tech-stack.md` before implementation if the chosen design changes the recorded rendering approach.
-  - [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+  - [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: `5e94020`]
 
 ## Phase 2 — Minimal behavior-preserving optimization
 
