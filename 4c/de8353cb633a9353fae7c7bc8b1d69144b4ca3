@@ -1,0 +1,54 @@
+Phase Verification & Checkpoint Report — Phase 4: Frame, thinning, freeze proof and docs (mixed)
+Track: game-controller-extraction_20260924
+
+SCOPE (workflow step 2)
+Phase commits: 8dc889c (the frame and camera order — the phase's last functional code commit) and 4cde835 (the live docs sweep), plus the plan updates between them.
+Changed files in phase: src/game/game.ts, src/game/game.test.ts, src/main.ts, README.md, conductor/tech-stack.md, conductor/tracks/.../plan.md.
+Previous checkpoint: ffea223 (Phase 3).
+
+TEST-FILE COVERAGE PER CHANGED CODE FILE (workflow step 2.3)
+- game.ts -> game.test.ts (48 cases).
+- main.ts -> no unit-test twin, by the exemption documented in plan.md (workflow-exempt UI glue, Guiding Principle 3). Every rule that used to live there is now reachable through game.test.ts.
+- README.md, tech-stack.md, plan.md are not code.
+
+AUTOMATED TESTS (workflow step 3)
+Commands: pnpm check && pnpm typecheck && $env:CI='true'; pnpm test
+Results (2026-09-25):
+- Biome: 150 files checked, no fixes applied.
+- tsc --noEmit: clean.
+- Vitest v5.0.1: 842/842 tests passing across 66 files.
+- Coverage on game.ts: 94.54% statements, 86.6% branches, 88.23% functions, 94.45% lines (AC7 requires >80% statements and branches).
+
+FREEZE PROOF (NFR1, AC3, AC6, AC8)
+- AC6: `git diff 2d7951f..HEAD` over missionStateMatrix.test.ts, missionAbortParity.test.ts, missionBusy.test.ts, missionFocus.test.ts and missionMarkers.test.ts is EMPTY. Not one line changed, so no import-path rename was even forced.
+- AC3: the 43 Phase 3 contract cases passed through the frame move with no edit to the cases themselves; the only test-side change in this phase was the camera port's own fake growing setTarget and followSun, which that task's red phase required. The whole file passes as written.
+- AC8: `pnpm build` emits a 49-entry / 4,238.80 KiB precache. The production bundle contains no URLSearchParams, no calmGapOverride and no devCalmGap, so the `?calmGap=` parser is tree-shaken out entirely. The only surviving `calmGap` token is the deps property name, which is FR9's data channel.
+- AC1: a search of main.ts for absorb, serveArmedNow, deliverPuppy, onSirenCast, swapVehicle, tickPacers or tickMissions returns nothing. main.ts is 236 lines: exactly the FR8 inventory, with the overage against "roughly 200" being documentation rather than logic.
+- The environment boundary holds: game.ts contains no `import.meta`, no `window.` and no `document.`; both env reads live in main.ts and resolve through the pure calmGapOverride() into the controller as data.
+
+DOCUMENTATION (NFR5)
+- README.md gained `game.ts` in the module map and a paragraph on the controller/edge split.
+- conductor/tech-stack.md gained a dated entry naming the moved identifiers.
+- docs/playtest.md and conductor/archive/* are byte-identical; historical records were not rewritten.
+
+FRAME ORDER (FR5, NFR1)
+- advance() is the whole game frame: wanderers, motor, actor, feedback stack, fleet clock, HUD ability-busy edge, then the vehicle frame (camera target, shadow focus, engine note, bonks, the town, the pond splash) and the mission frame (registry, pacers, helper hand).
+- The camera port declares only { facing, setTarget, followSun }. It has no update/snapTo/resize: the rig's own easing stays at the edge and runs after the game frame, so the camera never lags. The suite's strict proxy would throw if the controller reached for it.
+- The DOM chrome (hold gate, parent panel, install hint) runs between the game frame and rig.update. It is DOM-only and shares no state with the world or the fleet.
+
+MANUAL VERIFICATION STEPS (workflow step 4, presented to owner)
+1. pnpm dev; open the printed URL.
+2. Boot: sky immediately, town fading in, HUD in place.
+3. Camera: drive across town — smooth follow, still building shadows (no shimmer); rotate the device to confirm resize.
+4. Driving: tap the road (ring + drive), tap the car (honk), two quick taps (newest wins).
+5. All four vehicles and all four abilities, with no missing car mid-swap.
+6. All four missions end-to-end, each celebrating exactly once.
+7. Parent panel: three-second hold, then sound and helper-hand toggles.
+8. Helper hand: ~10s unanswered mid-mission, one demo tap, then backs off.
+9. Dev override: /?calmGap=2 starts missions about every 2 seconds.
+
+OWNER CONFIRMATION (workflow step 5)
+"Yes, it meets expectations" — confirmed 2026-09-25.
+
+CHECKPOINT ANCHOR (workflow steps 6-8)
+Per step 6 no empty commit was created. The phase's last functional code commit is 8dc889c; the phase's last commit overall is 4cde835 (docs). The checkpoint is anchored to 4cde835 — the phase as a whole — and recorded in plan.md as [checkpoint: 4cde835], with 8dc889c named here as the code commit it contains.
