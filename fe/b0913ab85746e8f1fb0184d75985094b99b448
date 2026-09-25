@@ -1,0 +1,1 @@
+Task 2 red baseline: added deterministic A-then-B destination tests, immediate feedback assertions, and newest-unreachable route protection. Baseline is intentionally red only on the two new arbitration assertions; 50 existing controller tests pass, and Biome/TypeScript pass.
