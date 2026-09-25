@@ -165,18 +165,27 @@
 
 ## Phase 6 — Review, documentation, and closeout
 
-- [ ] **Task: Review the completed track**
-  - [ ] Review the implementation against `spec.md`, `plan.md`, product guidelines, and the workflow.
-  - [ ] Check scope discipline, test coverage, asset provenance, performance, and offline behavior.
-  - [ ] Append any required review fixes to the plan.
+- [x] **Task: Review the completed track**
+  - [x] Review the implementation against `spec.md`, `plan.md`, product guidelines, and the workflow. — Principal-engineer review of all ten changed files (575 insertions): plan compliance confirmed, no Critical or High findings, no security surface touched, no new dependency (`BufferGeometryUtils` ships with three 0.186), and every internal `capsuleCentres` call verified to thread the new fitted `halfLength`.
+  - [x] Check scope discipline, test coverage, asset provenance, performance, and offline behavior. — Scope held to the ambient seam (no mission, input, HUD, parent-panel, persistence, or dependency changes); logic coverage above 80% on every changed logic module; creatures are primitives so no new asset or provenance entry exists; the +12-call worst window stays inside the recorded trade-off.
+  - [x] Append any required review fixes to the plan. — One Medium (README/product/tech-stack drift: the roster and the per-material merge contract were undocumented) and four Low findings (creature collision extents inset ~0.04 from the visible body, blob height measured to the body instead of the ear tips, an unnecessary geometry clone in the merge path, and creatures relying on the implicit `castShadow = false` default). The user chose to fix all of them; see Review Fixes below.
 
-- [ ] **Task: Update project documentation where needed**
-  - [ ] Update `tech-stack.md` only if a real technology, dependency, or rendering-contract change occurred.
-  - [ ] Update README or asset provenance only when the shipped content changed those facts.
+- [x] **Task: Update project documentation where needed**
+  - [x] Update `tech-stack.md` only if a real technology, dependency, or rendering-contract change occurred. — A rendering contract did change: creature bodies are merged per material through `three/examples/jsm/utils/BufferGeometryUtils.js`, so a Living Town Expansion entry now records the merge rule, the fitted-`halfLength` motor input, the shadow-pass exclusion, the re-measured budget, and the gates.
+  - [x] Update README or asset provenance only when the shipped content changed those facts. — README now says four wandering cars plus a cat and a rabbit, and `product.md`'s roadmap records the shipped expansion. No asset-provenance change: the creatures are primitives and the SUV model was already registered and attributed.
 
-- [ ] **Task: Run final review and quality gates**
-  - [ ] Re-run only the checks affected by review fixes.
-  - [ ] Confirm the final test/build/device results and working-tree scope.
+- [x] **Task: Run final review and quality gates**
+  - [x] Re-run only the checks affected by review fixes. — `pnpm exec biome check` on the two changed modules, `pnpm typecheck`, `CI=true pnpm test`, and `pnpm build`: 67 files / 869 tests passed, 49 precache entries at 4,246.61 KiB unchanged (the fixes touch collision boxes, shadow offsets, and comments, never geometry or assets). A live browser pass then confirmed both creatures still mount as three merged meshes each with `castShadow = false`, and the measured body radii (0.182 cat, 0.172 rabbit) now match the fitted extents (0.18, 0.17).
+  - [x] Confirm the final test/build/device results and working-tree scope. — Only the five intended files changed; the recorded render measurements still hold because the fixes add no geometry and no draw calls.
+
+## Phase 7 — Review Fixes
+
+- [x] **Task: Apply review suggestions `3f0b6e5`**
+  - [x] Fit the creature collision extents to the mounted bodies (cat 0.18×0.12, rabbit 0.17×0.11) and record where those numbers come from.
+  - [x] Measure the creature blob shadows to their ear tips (cat 0.26, rabbit 0.37).
+  - [x] Transform each owned part geometry in place instead of cloning it first.
+  - [x] Call `disableRealShadows` for creature actors instead of relying on the three.js default.
+  - [x] Bring `README.md`, `product.md`, and `tech-stack.md` in line with the shipped roster and the per-material merge contract.
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [ ] Obtain final user confirmation.
