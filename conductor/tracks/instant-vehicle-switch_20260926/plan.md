@@ -24,10 +24,11 @@ hand instead. Phase 4 runs the gates and the device check.
   - [ ] Do not change the queue, the generation scheme, `commitVehicleActor`, `restoreVehicleActor`, or `activate`.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — **70/70 passed**, including the 4 cases that were red. The pending answer reuses the arbitration's own generation counter rather than introducing a second one. **Commit:** `f995d39`
 
-- [ ] **Task: Expose the pending state through the HUD port** []
-  - [ ] Add one `GameHud` method carrying the pending vehicle id, or `undefined` for none.
-  - [ ] Keep the port no-oping before the real HUD exists, matching the five existing closures in `main.ts`.
-  - [ ] **Commit:** `fix(hud): answer a vehicle switch tap in the same frame`
+- [x] **Task: Expose the pending state through the HUD port** [b95d977]
+  - [x] Add one `GameHud` method carrying the pending vehicle id, or `undefined` for none.
+  - [x] Keep the port no-oping before the real HUD exists, matching the five existing closures in `main.ts`.
+  - [x] **Deviation (recorded per the in-flight refinement clause):** the plan put "Render the pending state in the vehicle HUD" in Phase 3 Task 1, but the edge cannot typecheck until `VehicleHud` declares `setPending`, and a declared-but-unimplemented member is dead code. The rendering therefore lands here, where it is required, and Phase 3 keeps the CSS ring styling and the hand verification.
+  - [x] **Commit:** `feat(hud): render the pending answer in the vehicle switcher` (`b95d977`)
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
   - [ ] Identify the changed production and test files and their corresponding tests.
