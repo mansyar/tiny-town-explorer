@@ -302,7 +302,7 @@ the same code the track added. The owner approved fixing both.
         statements / 87.56% branches, `vehicleHud.ts` **100 / 100 / 100 / 100**,
         `game.ts` 94.71 / 86.66; `pnpm build` -> 49 precache entries /
         4,250.30 KiB.
-  - [x] **Commit:** <pending>
+  - [x] **Commit:** 478acbe
 
 - [x] **Task: Cover the layer the bug actually lived in** []
   - [x] Add `jsdom` as a devDependency, which the stop conditions forbade.
@@ -314,21 +314,21 @@ the same code the track added. The owner approved fixing both.
   - [x] **Verify the new tests are not vacuous:** stashed the fix and re-ran,
         confirming exactly 2 of the 7 fail against the buggy `vehicleHud.ts` and
         pass against the fixed one. A test that cannot fail proves nothing.
-  - [x] **Commit:** <pending>
+  - [x] **Commit:** 478acbe
 
 - [x] **Task: Guard the bare port call in `enqueueVehicleRequest`** []
   - [x] Wrap `hud.setPending(id)` so a throwing port cannot strand the request
         before it reaches the queue, matching `runVehicleRequest`.
   - [x] Clear `pendingSelectionGeneration` in the guard's body, so a failed
         answer does not leave a phantom pending state with nothing to settle it.
-  - [x] **Commit:** <pending>
+  - [x] **Commit:** 478acbe
 
 - [x] **Task: Record the fix in the documentation** []
   - [x] Correct two claims the fix falsified: the note said "no new dependency"
         and that `activate` was untouched.
   - [x] Record the derived-state design, the removed port member, the coverage
         change, the jsdom deviation and why, and the new gate numbers.
-  - [x] **Commit:** <pending>
+  - [x] **Commit:** 478acbe
 
 ### Review Fixes record (2026-09-26)
 
