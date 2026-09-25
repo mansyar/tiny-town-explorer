@@ -14,16 +14,16 @@
   - [x] Implement the smallest non-production measurement helper or dev-only harness needed to collect the existing `renderer.info.render` data.
   - [x] Measure fresh-spawn, transit-peak, settled-junction, mission-active, and traffic-active states using one consistent method.
   - [x] Record the baseline, command, viewport assumptions, and scene-state differences in the track artifacts.
-- [~] Task: Investigate camera-only and built-in frustum culling
-  - [ ] Verify the current scene's culling behavior and object bounds; confirm there are no hidden `frustumCulled` exceptions.
-  - [ ] Compare total scene inventory with objects actually submitted in the camera and shadow passes.
-  - [ ] Run a controlled manual-visibility experiment only if the baseline shows culling is not already handling the dominant cost.
-  - [ ] Reject any approach that adds per-frame traversal or causes visible popping, marker disappearance, or shadow discontinuity.
-  - [ ] Record the result and select the smallest viable optimization lever.
-- [ ] Task: Record the selected rendering strategy
-  - [ ] Document why the selected lever is preferable to deleting visible cars, traffic, or art.
-  - [ ] Update `conductor/tech-stack.md` before implementation if the chosen design changes the recorded rendering approach.
-  - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [x] Task: Investigate camera-only and built-in frustum culling `5e94020`
+  - [x] Verify the current scene's culling behavior and object bounds; confirm there are no hidden `frustumCulled` exceptions.
+  - [x] Compare total scene inventory with objects actually submitted in the camera and shadow passes.
+  - [x] Run a controlled manual-visibility experiment only if the baseline shows culling is not already handling the dominant cost.
+  - [x] Reject any approach that adds per-frame traversal or causes visible popping, marker disappearance, or shadow discontinuity.
+  - [x] Record the result and select the smallest viable optimization lever.
+- [x] Task: Record the selected rendering strategy `5e94020`
+  - [x] Document why the selected lever is preferable to deleting visible cars, traffic, or art.
+  - [x] Update `conductor/tech-stack.md` before implementation if the chosen design changes the recorded rendering approach.
+  - [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
 
 ## Phase 2 — Minimal behavior-preserving optimization
 
