@@ -73,7 +73,6 @@ export function createBootOverlay(options: BootOverlayOptions): BootOverlay {
 
   const toy = document.createElement('div');
   toy.className = 'boot__toy';
-  toy.append(icon(LOADING_ICON));
 
   const retry = document.createElement('button');
   retry.className = 'boot__retry';
@@ -83,14 +82,29 @@ export function createBootOverlay(options: BootOverlayOptions): BootOverlay {
   retry.append(icon(RETRY_ICON));
   retry.style.display = 'none';
 
-  const onRetryPointerDown = (): void => {
+  const onRetryClick = (): void => {
     options.onRetry();
   };
-  retry.addEventListener('pointerdown', onRetryPointerDown);
+  // `click`, not `pointerdown`: a button that carries an `aria-label` is
+  // advertised to assistive technology, and Enter, Space, and screen-reader
+  // activation all fire `click`. `pointerdown` alone leaves the control
+  // focusable, announced, and completely inert for those users. `bootStatus`
+  // already refuses a second retry, so a rapid double tap still reloads once.
+  retry.addEventListener('click', onRetryClick);
 
   // A three-year-old taps to see whether the world heard them. The overlay takes
   // that tap so it never becomes a queued route, and answers it here with a
   // squash, so a loading screen is never a dead one.
+  //
+  // The squash lands on an inner element rather than the toy itself, so it
+  // composes with the CSS bounce instead of replacing its transform wholesale.
+  // Animating the toy directly would snap the bounce's current vertical offset
+  // to zero the instant the animation starts.
+  const face = document.createElement('div');
+  face.className = 'boot__toy-face';
+  face.append(icon(LOADING_ICON));
+  toy.append(face);
+
   let squash: Animation | undefined;
   const onOverlayPointerDown = (): void => {
     if (options.onTouch?.() !== true) {
@@ -98,7 +112,7 @@ export function createBootOverlay(options: BootOverlayOptions): BootOverlay {
     }
     // Restart rather than queue, so rapid taps each land as their own answer.
     squash?.cancel();
-    squash = toy.animate(TOUCH_SQUASH_KEYFRAMES, {
+    squash = face.animate(TOUCH_SQUASH_KEYFRAMES, {
       duration: TOUCH_SQUASH_MS,
       easing: 'ease-out',
     });
@@ -119,7 +133,7 @@ export function createBootOverlay(options: BootOverlayOptions): BootOverlay {
     dispose: () => {
       squash?.cancel();
       element.removeEventListener('pointerdown', onOverlayPointerDown);
-      retry.removeEventListener('pointerdown', onRetryPointerDown);
+      retry.removeEventListener('click', onRetryClick);
       element.remove();
     },
   };

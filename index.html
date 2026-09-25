@@ -308,6 +308,7 @@
          buttons, so it stays legible over sky, road, or grass instead of
          washing out against whichever base happens to be behind it. */
       .boot__toy {
+        align-items: center;
         animation: boot-bounce 1.6s ease-in-out infinite;
         background: #e1473e;
         border: 4px solid #fff;
@@ -316,8 +317,20 @@
           0 6px 0 rgb(0 0 0 / 18%),
           0 0 0 6px rgb(255 255 255 / 65%);
         color: #fff;
+        display: flex;
         height: 96px;
+        justify-content: center;
         width: 96px;
+      }
+      /* The icon lives on an inner face so the touch squash can scale it on its
+         own, composing with the bounce on the circle instead of overwriting the
+         bounce's transform. */
+      .boot__toy-face {
+        align-items: center;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        width: 100%;
       }
       .boot__retry {
         align-items: center;

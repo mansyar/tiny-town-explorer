@@ -113,7 +113,10 @@ the DNS instructions. Nothing in the app depends on the hostname (`scope` and
   tab rather than a corrupted bundle.
 - **One sound is silent but everything else works** — a sampled sound failed to
   load. Optional audio degrades to silence on purpose: the game still starts and
-  the synthesized sounds still play. Check the console for the failed clip.
+  the synthesized sounds still play. A missing file shows up in the console as a
+  404 like any other asset; a file that downloads and then fails to decode is
+  swallowed by the loader, so the console is empty and the symptom is just the
+  one missing sound.
 - **A stale build keeps serving** — close the tab and reopen it. Pages keeps a
   deployment history, so you can also roll back to an older deployment from the
   project's Deployments tab if a release is bad.
