@@ -22,17 +22,26 @@ Four design pillars, held absolutely rather than aspired to:
 
 ## What is in it
 
-- A hand-authored town on a 6×6 tile grid — the road tiles *are* the pathing
-  graph. Tap anywhere and the car hops the roads and finishes over grass.
+- A hand-authored town on a road grid — the road tiles *are* the pathing graph.
+  It is a figure-eight: two block loops meeting at one junction, with a corner
+  shop on the corner and a pond with ducks on the green. Tap anywhere and the car
+  hops the roads and finishes over grass.
 - Four drivable vehicles: fire truck, ice cream truck, garbage truck and police
   car. Each has its own engine note and its own one-shot — a hose burst, a jingle
   with dropped cones, a gulp, a siren wash.
-- **One mission**: a kitchen fire appears at a random house after a calm gap.
-  Tap the burning house and the car becomes the fire truck and drives over;
-  get close and the hose button appears; three or four bursts put it out and the
-  town celebrates with confetti and a smile.
+- **Four errands**, one at a time, each opening after the same quiet gap. **Put
+  out the kitchen fire**: tap the burning house, become the fire truck, and hose
+  it down. **Ice cream delivery**: a house raises a bouncing cone, jingle on the
+  way over, then tap the house to hand it over. **Clean up the park**: drive over
+  the litter to gulp it, or sweep a whole cluster with the truck's ability.
+  **Lost puppy**: the police siren answers the town's whine, and a paw print
+  shows where to drive until the pup is found and carried to its owner's door.
+  Every one ends the same way — confetti, the smiling sun, a cheer, a sparkle.
 - A helper hand that, after ten quiet seconds mid-mission, traces the route and
   performs a single demo tap — then backs off.
+- Six parked cars on the kerbs, and three more that wander the rings on their own
+  errands. They are scenery: silent, and bonked rather than blocked, so the truck
+  always carries on.
 - Parent settings behind a three-second hold on a small gear: sound, and the
   helper hand. No words, and nothing a child would stumble into.
 
@@ -102,8 +111,11 @@ The game vendors **Kenney CC0 kits** — Toy Car Kit, City Kit (Suburban), City
 Kit (Roads) and Car Kit. Provenance for every kit, and the packing pipeline that
 makes their models bundler-friendly, is in `src/assets/kits/README.md`.
 
-Two things are not straight from a kit, and both are documented:
+Three things are not straight from a kit, and all three are documented:
 
+- The **corner shop** on the junction corner is authored in this repository, in
+  Blender, against the kit's measured scale and palette — no Kenney kit has a
+  shopfront that fits the lot. Its recipe is `scripts/blender-corner-shop.py`.
 - The **ice-cream truck** is authored in this repository, in Blender, against the
   Car Kit's measured scale, axis convention and palette atlas. The reason is
   simple: no Kenney kit ships one. Its recipe is
@@ -124,9 +136,9 @@ The **code in this repository is MIT** — see [LICENSE](./LICENSE).
 
 The **art and sound are not covered by it.** The Kenney kits are CC0 (public
 domain, attribution not required, recorded here anyway); the engine loop is CC0
-from OpenGameArt; the authored ice-cream truck is original work released under
-the same MIT terms as the code. Each kit ships its own `LICENSE.txt` beside its
-models.
+from OpenGameArt; the authored ice-cream truck and corner shop are original work
+released under the same MIT terms as the code. Each kit ships its own
+`LICENSE.txt` beside its models.
 
 ## Deploying
 
@@ -138,6 +150,7 @@ knowing.
 
 `conductor/` holds how this was built rather than only what: the product
 definition, the tech stack with every deviation dated and explained, the
-workflow, and one track — `conductor/tracks/v1-playtest-slice_20260921/` — whose
-specification, implementation plan and git notes carry the phase-by-phase
-verification reports, including the bugs the verifications caught.
+workflow, and one archive of finished tracks under
+`conductor/archive/` — each keeping its specification, implementation plan and
+git notes, which carry the phase-by-phase verification reports, including the
+bugs the verifications caught.
