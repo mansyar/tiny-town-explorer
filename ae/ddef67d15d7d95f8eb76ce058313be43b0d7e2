@@ -1,0 +1,1 @@
+Task 1: Added test-only deferred actor and mission-tap controls. Reset the actor mock per test, preserved distinct actor identities, and added a hold/release harness contract. Verified with pnpm check, pnpm typecheck, and CI=true pnpm test -- src/game/game.test.ts (50 passing).
