@@ -1476,7 +1476,8 @@ export function createGame(deps: GameDeps): Game {
     world.pondDucks = ducks;
     town.group.add(ducks.group);
 
-    // Three of the town's own cars wander the rings on their own errands:
+    // Six ambient actors wander the rings on their own errands: four cars and
+    // two small creatures.
     // silent, seeded and sealed — the system says update/poses/footprints and
     // knows nothing of the camera, the engine note or the taps.
     const wanderers = createTrafficSystem({

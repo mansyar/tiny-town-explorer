@@ -9,14 +9,14 @@ import { createVehicleMotor } from '../vehicle/vehicleMotor';
 import { createTrafficBrain, type TrafficBrain } from './trafficBrain';
 
 /**
- * Light wandering traffic: two ambient cars that make the town feel alive.
+ * Light ambient traffic and creature life: six sealed road actors that make the
+ * town feel alive.
  *
- * The system owns both wanderers outright — their motors, their brains, their
- * lanes — and says only what the town needs: `update` to tick them, `poses` to
- * show them, `footprints` to publish where they stand. No camera target, no
- * engine voice, no tap handler (product.md: the hero car is the only character
- * the child drives). A mover is not a mission; it is the town's natural reason
- * for a car to ever move.
+ * The system owns every actor outright — its motor, brain, and lane — and says
+ * only what the town needs: `update` to tick them, `poses` to show them, and
+ * `footprints` to publish where they stand. No camera target, engine voice, or
+ * tap handler (product.md: the hero car is the only character the child drives).
+ * An ambient actor is not a mission; it is the town's natural reason for motion.
  *
  * Deterministic on purpose: `seed` decides the whole wander — starts, routes,
  * the lot — so one launch replays exactly like the next.
@@ -110,8 +110,8 @@ export interface TrafficSystem {
   /** Advance every wanderer one frame. */
   update(deltaSeconds: number): void;
   /**
-   * Every live box under its stable ids — crashable like every other car
-   * in the town (FR4), for the kid's and each other's sweeps (FR5).
+   * Every live box under its stable ids — crashable like every other ambient
+   * actor in the town (FR4), for the kid's and each other's sweeps (FR5).
    */
   footprints(): readonly Obstacle[];
   /** Read-only poses to mount models on (FR1) — mirrors, never the motors. */
