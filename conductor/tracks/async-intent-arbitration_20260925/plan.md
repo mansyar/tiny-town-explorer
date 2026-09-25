@@ -2,7 +2,7 @@
 
 ## Phase 1 — Reproduce and pin the race (TDD)
 
-- [ ] **Task: Add deterministic deferred async test controls**
+- [~] **Task: Add deterministic deferred async test controls**
   - [ ] Extend the existing `game.test.ts` mocks with controllable `createVehicleActor` promises and a controllable mission-tap boundary.
   - [ ] Reset deferred mocks and call counts between tests so one race test cannot contaminate another.
   - [ ] Keep all controls test-only; do not add runtime configuration or production hooks.
