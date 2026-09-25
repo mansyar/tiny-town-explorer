@@ -1,0 +1,17 @@
+Post-review correction record
+
+Commit: c8aa786
+Scope: development-only render-probe diagnostics; no shipped rendering or gameplay behavior changed.
+
+Corrections:
+- Renamed the shadow experiment group from `hero` to `vehicles` so its name matches the actual shared `vehicle` actor wrapper; traffic actors remain blob-shadow/non-casting.
+- Added `viewportAspect` to `RenderContext` and included it in `sameContext()`, causing windows spanning resize or rotation to be reported as context-inconsistent.
+- Added a focused regression test for mixed viewport aspect ratios.
+- Merged the adjacent probe JSDoc comments while touching the module.
+
+Verification:
+`pnpm check; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pnpm typecheck; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; $env:CI="true"; pnpm test; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pnpm build`
+
+Results: Biome checked 154 files; TypeScript passed; 852 tests across 67 files passed; production build passed; PWA generated 49 precache entries / 4,238.99 KiB. The existing JavaScript chunk-size warning is unchanged. Production output still contains no dev-probe identifiers.
+
+No controlled triangle/draw-call measurements changed; the recorded render-budget figures remain 48,463/180 fresh spawn, 46,477/176 transit, 45,797/154 settled junction, and 49,080/203 dev-paced mission.
