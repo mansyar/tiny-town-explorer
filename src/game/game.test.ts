@@ -6,6 +6,7 @@ import { createTownGrid } from './town/townGrid';
 import { mountTown } from './town/townRenderer';
 import { mountTrafficShadows } from './traffic/trafficShadows';
 import { createVehicleActor } from './vehicle/vehicleActor';
+import { createVehicleMotor, facingOf } from './vehicle/vehicleMotor';
 
 // The async model pipeline never runs in unit tests: the town, the traffic
 // actors and the car actor resolve from fakes while everything else stays
@@ -297,6 +298,171 @@ describe('createGame controller seam (Phase 2)', () => {
     await game.ready;
 
     expect(game.world.spawn).toEqual({ x: 0, z: 0 });
+  });
+});
+
+describe('living town interaction (Phase 4)', () => {
+  const expectedIds = [
+    'traffic-0',
+    'traffic-1',
+    'traffic-2',
+    'traffic-3',
+    'creature-cat-0',
+    'creature-rabbit-0',
+  ];
+
+  function run(motor: ReturnType<typeof createVehicleMotor>, frames: number): void {
+    for (let frame = 0; frame < frames; frame += 1) {
+      motor.update(1 / 60);
+    }
+  }
+
+  it('bonks each new actor profile once and keeps the hero moving', async () => {
+    const { game } = await booted();
+    const traffic = game.world.traffic;
+    if (traffic === undefined) {
+      throw new Error('The traffic system did not mount');
+    }
+
+    for (const kind of ['parkedSuv', 'cat', 'rabbit'] as const) {
+      const index = traffic.poses().findIndex((pose) => pose.kind === kind);
+      const pose = traffic.poses()[index];
+      const obstacle = traffic.footprints()[index];
+      if (pose === undefined || obstacle?.shape.kind !== 'box') {
+        throw new Error(`The ${kind} profile did not publish a footprint`);
+      }
+      const facing = facingOf(pose.heading());
+      const start = {
+        x: pose.position.x - facing.x * 0.85,
+        z: pose.position.z - facing.z * 0.85,
+      };
+      const destination = {
+        x: pose.position.x + facing.x * 0.85,
+        z: pose.position.z + facing.z * 0.85,
+      };
+      const motor = createVehicleMotor({
+        position: start,
+        heading: pose.heading(),
+        dynamicObstacles: () => [obstacle],
+      });
+      motor.setPath({ waypoints: [], destination });
+
+      let bonkFrame = 0;
+      while (motor.bonkCount() === 0 && bonkFrame < 300) {
+        motor.update(1 / 60);
+        bonkFrame += 1;
+      }
+
+      expect(obstacle.solid).toBe(false);
+      expect(motor.bonkCount()).toBe(1);
+      expect(motor.isBouncing()).toBe(true);
+      run(motor, 300 - bonkFrame);
+      expect(motor.isDriving()).toBe(false);
+      expect(
+        Math.hypot(motor.position.x - destination.x, motor.position.z - destination.z),
+      ).toBeLessThan(0.4);
+    }
+  });
+
+  it('keeps ambient collisions harmless and routes alive through every mission', async () => {
+    type MissionCase = {
+      readonly name: string;
+      readonly activate: (game: ReturnType<typeof createGame>) => void;
+    };
+    const cases: readonly MissionCase[] = [
+      { name: 'free play', activate: () => undefined },
+      {
+        name: 'fire',
+        activate: (game) => {
+          const house = game.world.grid.houses[0];
+          if (house === undefined || !game.lightFire(house.id)) {
+            throw new Error('The fire mission did not start');
+          }
+        },
+      },
+      {
+        name: 'ice cream',
+        activate: (game) => {
+          const house = game.world.grid.houses[0];
+          if (house === undefined || !game.lightOrder(house.id)) {
+            throw new Error('The ice-cream mission did not start');
+          }
+        },
+      },
+      { name: 'park', activate: (game) => game.startPark() },
+      { name: 'puppy', activate: (game) => game.startPuppy() },
+    ];
+
+    for (const missionCase of cases) {
+      const { game, attached } = await booted();
+      missionCase.activate(game);
+      const traffic = game.world.traffic;
+      const motor = game.world.motor;
+      if (traffic === undefined || motor === undefined) {
+        throw new Error(`The ${missionCase.name} world did not mount`);
+      }
+      const targetIndex = traffic.poses().findIndex((pose) => pose.kind === 'cat');
+      const target = traffic.poses()[targetIndex];
+      const targetObstacle = traffic.footprints()[targetIndex];
+      if (target === undefined || targetObstacle?.shape.kind !== 'box') {
+        throw new Error(`The ${missionCase.name} cat did not publish a footprint`);
+      }
+      const facing = facingOf(target.heading());
+      const start = {
+        x: target.position.x - facing.x * 0.85,
+        z: target.position.z - facing.z * 0.85,
+      };
+      const destination = {
+        x: target.position.x + facing.x * 0.85,
+        z: target.position.z + facing.z * 0.85,
+      };
+      motor.snapTo(start, target.heading());
+      motor.setPath({ waypoints: [], destination });
+
+      for (let frame = 0; frame < 240; frame += 1) {
+        game.advance(1 / 60);
+      }
+
+      expect(traffic.poses().map((pose) => pose.id)).toEqual(expectedIds);
+      expect(motor.bonkCount()).toBeGreaterThan(0);
+      expect(motor.isDriving()).toBe(false);
+      expect(
+        Math.hypot(motor.position.x - destination.x, motor.position.z - destination.z),
+      ).toBeLessThan(0.4);
+      expect(attached.audio.play).toHaveBeenCalledWith('bonk');
+    }
+  });
+
+  it('does not let traffic updates mutate mission, route, or helper state', async () => {
+    const { game } = await booted();
+    const house = game.world.grid.houses[0];
+    const traffic = game.world.traffic;
+    const motor = game.world.motor;
+    if (house === undefined || traffic === undefined || motor === undefined) {
+      throw new Error('The coexistence fixture did not mount');
+    }
+    if (!game.lightFire(house.id)) {
+      throw new Error('The fire mission did not start');
+    }
+    const destination = { x: game.world.spawn.x + 0.9, z: game.world.spawn.z };
+    motor.setPath({ waypoints: [], destination });
+    const setPath = vi.spyOn(motor, 'setPath');
+    const before = {
+      mission: game.world.mission.snapshot(),
+      idle: game.world.hand.secondsIdle(),
+      position: { ...motor.position },
+      driving: motor.isDriving(),
+    };
+
+    for (let frame = 0; frame < 120; frame += 1) {
+      traffic.update(1 / 60);
+    }
+
+    expect(game.world.mission.snapshot()).toEqual(before.mission);
+    expect(game.world.hand.secondsIdle()).toBe(before.idle);
+    expect({ ...motor.position }).toEqual(before.position);
+    expect(motor.isDriving()).toBe(before.driving);
+    expect(setPath).not.toHaveBeenCalled();
   });
 });
 
