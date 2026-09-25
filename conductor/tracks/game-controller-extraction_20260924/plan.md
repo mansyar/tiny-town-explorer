@@ -59,9 +59,9 @@
 - [x] Task: Thin `main.ts` and move env reads to the edge (FR8, FR9) `8dc889c`
   - [x] Leave only container lookup, renderer creation, `createScene()`, `createTownGrid()`, camera rig and ResizeObserver, parent panel, hold gate and install hint, input router and DOM listeners, audio construction and first-gesture unlock, and the wiring between them. `import.meta.env.DEV` and `window.location.search` stay here, with `calmGapOverride()` resolved and passed in as data (manual-verify at the phase checkpoint: `?calmGap=2` still shortens the gap in dev)
   - [x] Confirm `main.ts` lands at roughly 200 lines or fewer and that a search in it for `absorb`, `serveArmedNow`, `deliverPuppy`, `onSirenCast`, `swapVehicle`, `tickPacers`, `tickMissions` returns nothing (AC1) — the grep returns nothing at 236 lines, and the overage against "roughly 200" is documentation, not logic: the file is exactly the FR8 inventory
-- [ ] Task: Freeze proof and docs sweep (NFR1, NFR5, AC6, AC8)
-  - [ ] Confirm the five frozen suites are green and unmodified beyond forced renames, diff-reviewable (AC6)
-  - [ ] Run `game.test.ts` and confirm every case still passes with no edit — the contract is unchanged by the move (AC3)
-  - [ ] Confirm `?calmGap=2` works in dev and a production build carries no trace of it — grep `dist` (AC8)
-  - [ ] Update live docs (`README.md`, live `tech-stack.md` prose) to the new shape; leave `docs/playtest.md` and `conductor/archive/*` as written (NFR5)
+- [x] Task: Freeze proof and docs sweep (NFR1, NFR5, AC6, AC8) `4cde835`
+  - [x] Confirm the five frozen suites are green and unmodified beyond forced renames, diff-reviewable (AC6) — `git diff 2d7951f..HEAD` over the five files is empty: not one line changed, so no rename was even forced
+  - [x] Run `game.test.ts` and confirm every case still passes with no edit — the contract is unchanged by the move (AC3) — the 43 Phase 3 cases went through the frame move untouched; only the camera port's own fake grew, as that task's red phase required
+  - [x] Confirm `?calmGap=2` works in dev and a production build carries no trace of it — grep `dist` (AC8) — `pnpm build` emits a 49-entry / 4,238.80 KiB precache; the bundle contains no `URLSearchParams`, no `calmGapOverride` and no `devCalmGap`, so the override parser is tree-shaken out. The only surviving `calmGap` is the deps property name, which is FR9's data channel
+  - [x] Update live docs (`README.md`, live `tech-stack.md` prose) to the new shape; leave `docs/playtest.md` and `conductor/archive/*` as written (NFR5) — the README's module map gained `game.ts` with a paragraph on the controller/edge split, and the tech stack gained a dated entry naming the moved identifiers; both historical paths are byte-identical
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
