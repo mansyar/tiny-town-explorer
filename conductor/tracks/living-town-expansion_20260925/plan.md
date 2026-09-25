@@ -109,16 +109,18 @@
 
 ## Phase 4 — Harmless interaction and mission coexistence
 
-- [ ] **Task: Add integration tests for child interaction**
-  - [ ] Test that the hero vehicle can bump each new actor category and continue moving.
-  - [ ] Test that an actor never publishes a solid obstacle.
-  - [ ] Test that traffic updates do not mutate mission state, route commitments, or helper pacing.
-  - [ ] Test that all actors remain active during free play and during each mission without blocking the active route.
+- [x] **Task: Add integration tests for child interaction**
+  - [x] Test that the hero vehicle can bump each new actor category and continue moving.
+  - [x] Test that an actor never publishes a solid obstacle.
+  - [x] Test that traffic updates do not mutate mission state, route commitments, or helper pacing.
+  - [x] Test that all actors remain active during free play and during each mission without blocking the active route.
+  - **Test result:** `game.test.ts` now covers SUV/cat/rabbit bump-and-pass behavior, non-solid live footprints, all four mission contexts plus free play, audio/visual bonk feedback, and traffic isolation from mission, route, and helper state.
 
-- [ ] **Task: Verify feedback behavior**
-  - [ ] Reuse the existing bonk/feedback language for creature contact.
-  - [ ] Confirm any sound cue has a simultaneous visual response.
-  - [ ] Confirm actors do not become snap targets, mission targets, or required interactions.
+- [x] **Task: Verify feedback behavior**
+  - [x] Reuse the existing bonk/feedback language for creature contact.
+  - [x] Confirm any sound cue has a simultaneous visual response.
+  - [x] Confirm actors do not become snap targets, mission targets, or required interactions.
+  - **Feedback result:** The motor's existing bounce is asserted at contact, `game.ts` emits the existing `bonk` cue, and the input-parity suite confirms all six IDs remain non-snappable and outside the mission ID set.
 
 - [ ] **Task: Run the full logic regression suite**
   - [ ] Announce the exact command: `CI=true pnpm test`.
