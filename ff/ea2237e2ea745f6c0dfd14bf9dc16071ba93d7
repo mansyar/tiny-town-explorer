@@ -9,3 +9,48 @@ Red/green: 8 tests written first and failing (the per-vehicle casts, the hose in
 Four of my first assertions were wrong, not the code: the ability event carries seconds, the fire and order FSMs need their respond() before proximity arms them, serve additionally needs the jingle, and the demo tap is fire-and-forget so it settles across microtasks.
 
 Coverage game.ts: 97.1% stmts / 87.06% branches / 96.66% funcs / 97.05% lines. Gates: biome 150 files clean, tsc clean, 837/837 tests (66 files).
+
+Phase Verification & Checkpoint Report — Phase 3: The session rules move in (TDD)
+Track: game-controller-extraction_20260924
+
+SCOPE (workflow step 2)
+Target functional commits: d198848 (pickup, spawn and the mission frame) and ffea223 (ability, siren, helper hand and the tap surface).
+Changed files in phase: src/game/game.ts, src/game/game.test.ts, src/main.ts, conductor/tracks/.../plan.md.
+Previous checkpoint: 623e5ce (Phase 2).
+
+TEST-FILE COVERAGE PER CHANGED CODE FILE (workflow step 2.3)
+- game.ts -> game.test.ts (43 tests; the phase's contract suite).
+- main.ts -> no unit-test twin, by the exemption documented in plan.md ("main.ts carries no unit-test twin at any checkpoint — workflow-exempt UI glue, Guiding Principle 3"). Its behaviour is now reachable through game.test.ts, which drives every rule that used to live there.
+- plan.md is not code.
+
+AUTOMATED TESTS (workflow step 3)
+Commands: pnpm check && pnpm typecheck && $env:CI='true'; pnpm test
+(Note: "CI=true pnpm test" is sh syntax; on this Windows/pwsh machine the env var is set via $env:CI='true' before pnpm test.)
+Results (2026-09-25):
+- Biome: 150 files checked, no fixes applied.
+- tsc --noEmit: clean.
+- Vitest v5.0.1: 837/837 tests passing across 66 files, including the 43 game.test.ts cases and the five frozen suites (missionStateMatrix, missionAbortParity, missionBusy, missionFocus, missionMarkers) — green and unmodified.
+- Coverage on game.ts: 97.1% statements, 87.06% branches, 96.66% functions, 97.05% lines (AC7 requires >80% statements and branches).
+
+RED/GREEN EVIDENCE (NFR3)
+Task 1 red: 14 tests written first and failing (absorb respond/morph, sweep vs drive-over gulp, completion once, atomic park/puppy/fire/order starts, registry tick order, pacer routing, busy pause, activate, swapVehicle build-before-remove, serveArmedNow, the pup door run). Task 2 red: 8 tests written first and failing, then a second block for the tap surface and round edges. Four of my first assertions were wrong, not the code (the ability event carries seconds; the fire and order FSMs need respond() before proximity arms them; serve also needs the jingle; the demo tap is fire-and-forget).
+
+BEHAVIOUR NOTES (NFR1)
+- Frame order: game.advance owns wanderers -> motor -> actor -> feedback stack -> fleet clock -> HUD ability-busy edge; the DOM chrome (hold gate, parent panel, install hint) runs immediately after it rather than immediately before the fleet clock. It shares no state with either, so nothing child-visible moves. Camera order is untouched: rig.setTarget and followSun stay inside the vehicle frame and rig.update still runs last.
+- Boot order: Game.driven resolves when the motor exists, so main.ts wires the input router on exactly the edge it did inline (car model still loading); Game.ready waits for the car model and then the HUD is created, as before.
+- The four port interfaces stayed narrow and grew only with the rules that call them: GameHud gained setActive/setAbility/setAbilityVisible/setPolicePulse alongside setAbilityBusy. main.ts supplies them as late-bound closures over the real VehicleHud, which is what the old `hud?.` guards were.
+
+MANUAL VERIFICATION STEPS (workflow step 4, presented to owner)
+1. pnpm dev; open the printed URL.
+2. Confirm the boot is unchanged: sky immediately, town fading in, HUD where it always was.
+3. Confirm driving: tap the road (ring, turn, drive), tap the car (honk), two quick taps (newest wins).
+4. Confirm a morph is seamless: switch vehicles, the car is never missing mid-swap and the poof plays.
+5. Run one park mission: litter spawns and bounces, drive-over gulps, the ability sweeps a cluster; run a second round and confirm identical behaviour.
+6. Run one lost-puppy mission: police pulse, siren answers, paw points, pup rides, door run and celebration once.
+7. Optional: open /?calmGap=2 and confirm the dev calm-gap override still shortens the gap.
+
+OWNER CONFIRMATION (workflow step 5)
+"Yes, it meets expectations" — confirmed 2026-09-25.
+
+CHECKPOINT ANCHOR (workflow steps 6-8)
+Per step 6 no empty commit was created; the checkpoint is anchored to the phase's last functional commit, ffea223, recorded in plan.md as [checkpoint: ffea223].
