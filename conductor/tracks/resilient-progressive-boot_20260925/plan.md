@@ -103,15 +103,15 @@
 
 ## Phase 4 — Wire the browser edge and failure recovery
 
-- [ ] **Task: Add the zero-text boot overlay to the page edge**
-  - [ ] Add the calm icon-only loading presentation and the icon-only retry presentation using the existing inline `index.html` styling model.
-  - [ ] Create/append the overlay before asynchronous model work begins.
-  - [ ] Keep the render loop active while the progressive world loads.
-  - [ ] Attach first-gesture audio unlocking so a touch on the loading overlay still unlocks the audio context.
-  - [ ] Ensure the overlay does not create a blocking browser dialog or visible text.
-  - [ ] **Commit:** `feat(boot): add zero-text loading and retry presentation`
+- [x] **Task: Add the zero-text boot overlay to the page edge** [3ed8a8f]
+  - [x] Add the calm icon-only loading presentation and the icon-only retry presentation using the existing inline `index.html` styling model.
+  - [x] Create/append the overlay before asynchronous model work begins.
+  - [x] Keep the render loop active while the progressive world loads.
+  - [x] Attach first-gesture audio unlocking so a touch on the loading overlay still unlocks the audio context.
+  - [x] Ensure the overlay does not create a blocking browser dialog or visible text.
+  - [x] **Commit:** `feat(boot): add zero-text loading and retry presentation` (`3ed8a8f`)
 
-- [ ] **Task: Gate gameplay input and HUD readiness**
+- [~] **Task: Gate gameplay input and HUD readiness**
   - [ ] Await both `game.driven` and `game.ready` through one settled error boundary.
   - [ ] Keep gameplay pointer routing and vehicle-HUD activation unavailable until `game.ready` resolves.
   - [ ] Ensure taps received while loading are not queued as routes, honks, mission claims, or vehicle selections.
