@@ -207,14 +207,15 @@ was created.
   - [x] **Run:** `fb498b2`. The `tech-stack.md` note records the three additions, the `position: relative` trap, the 1.31 KiB / 49-entries cost, and two limitations stated plainly: the steady ring is imperceptible on a warm cache by design, and the "no second network request" guarantee belongs to `ModelLibrary`'s fetch-once-and-cache path (already pinned by `modelLibrary.test.ts`) rather than to anything observable from `game.test.ts`, where `createVehicleActor` is mocked. The `playtest.md` section separates **what was done** (automated gates, the browser check of the computed pseudo-element, the containing-block fault) from **what is outstanding** (all manual steps, the iPad pass), and names no out-of-scope item as shipped. `README.md` needed no change: it describes the HUD by role and never enumerated the `GameHud` members.
   - [x] **Commit:** `docs(conductor): document instant-switch verification`
 
-- [ ] **Task: Perform browser and target-device verification** []
-  - [ ] Cold cache: confirm a vehicle tap answers within the frame, before the model resolves, with the ability icon already switched.
-  - [ ] Warm cache: confirm switching to each of the four vehicles commits with no network request.
-  - [ ] Failure: block one vehicle GLB, confirm the previous vehicle stays active, no button is left ringed, the boot itself still succeeds, and a retry mounts it.
-  - [ ] Supersession: tap three vehicles in rapid succession and confirm the final vehicle wins and no stale ring is left behind.
-  - [ ] Confirm every HUD control stays in-viewport at full touch size in portrait and landscape.
+- [~] **Task: Perform browser and target-device verification** [fb498b2]
+  - [x] Cold cache: confirm a vehicle tap answers within the frame, before the model resolves, with the ability icon already switched.
+  - [x] Warm cache: confirm switching to each of the four vehicles commits with no network request.
+  - [x] Failure: block one vehicle GLB, confirm the previous vehicle stays active, no button is left ringed, the boot itself still succeeds, and a retry mounts it.
+  - [x] Supersession: tap three vehicles in rapid succession and confirm the final vehicle wins and no stale ring is left behind.
+  - [x] Confirm every HUD control stays in-viewport at full touch size in portrait and landscape.
   - [ ] Run the physical iPad 9th-generation check.
-  - [ ] **Commit:** `chore(conductor): document instant-switch verification`
+  - [x] **Run:** the owner ran the seven-step throttled-network plan on a desktop browser against the dev server on 2026-09-26 and **reported it passing**. Per-step observations were not captured, so the record claims the plan as a whole, not each step; the structural half of the cold-switch case (computed pseudo-element, ability icon following the pending vehicle) was independently confirmed in an automated browser session beforehand. A screenshot could not be captured in the automated environment, so the ring's appearance rests on the owner's eyes plus the computed-style check. **The iPad pass is not performed**, and the stop conditions below say an unavailable device step leaves the phase incomplete rather than marked by proxy, so this task stays `[~]` and the phase stays open.
+  - [x] **Commit:** `chore(conductor): document instant-switch verification`
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
   - [ ] Present the complete automated and manual verification report.

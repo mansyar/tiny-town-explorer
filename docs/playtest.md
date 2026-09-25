@@ -798,18 +798,29 @@ holding 20px plus its safe-area inset — was checked separately and was never a
 risk; the containing block was the actual defect, and only running the page
 surfaced it.
 
-### Manual verification - OUTSTANDING
+### Manual verification - 2026-09-26
 
-No manual or device result is claimed. The seven-step plan below was approved by
-the owner on 2026-09-26 and **has not been reported as performed**. A screenshot
-could not be captured in the automated environment (the headless browser refuses
-capture without a visible desktop window), so the ring's appearance is confirmed
-structurally and geometrically, not visually.
+The seven-step plan below was put to the owner and **reported passing**. What
+that claim rests on, stated precisely so a later reader can weigh it:
 
-Throttling is required, and this is not a workaround. The ring is steady rather
+- Steps 1-7 were run **on a desktop browser against the dev server**, throttled
+  to Slow 3G for the cold-switch and supersession cases, with one vehicle GLB
+  blocked for the failure case. The owner reported the plan as a whole
+  completing as specified; per-step observations were not captured, so this
+  record does not claim a per-step result.
+- Step 3's structural half — the pending ring's computed `content`, `position`,
+  `inset`, colour and mask, and the ability button following the pending
+  vehicle — was independently confirmed in an automated browser session before
+  the plan was put to the owner, and is the evidence above rather than a
+  restatement of the owner's report.
+- A screenshot still could not be captured in the automated environment (the
+  headless browser refuses capture without a visible desktop window), so the
+  ring's appearance rests on the owner's eyes plus the computed-style check.
+
+Throttling was required, and that is not a workaround. The ring is steady rather
 than filling, so on a warm cache a switch lands within a few milliseconds and
-there is nothing to see — which is the intended result of the fleet warm, not a
-missing visual. The ring exists for the cold, blocked or slow-network case.
+there is nothing to see — the intended result of the fleet warm, not a missing
+visual. The ring exists for the cold, blocked or slow-network case.
 
 1. Open the dev server, wait for the loading toy and then the town.
 2. DevTools → Network → Slow 3G, then hard-reload, so the fleet is cold.
@@ -829,9 +840,19 @@ missing visual. The ring exists for the cold, blocked or slow-network case.
 
 ### Physical iPad 9th-generation pass - OUTSTANDING
 
-Not performed. This is the performance floor named in `product.md` and the
-device a shared family tablet actually means, and the switch is the interaction
-most likely to expose a slow decode on it.
+**Not performed.** This is the performance floor named in `product.md` and the
+device a shared family tablet actually means. It matters more for this track
+than for most, because the track's whole subject is decode latency: a fleet warm
+that is free on a desktop can be the difference between an instant switch and a
+visible ring on the floor device. The track's own stop conditions say an
+unavailable device verification step leaves the phase incomplete rather than
+being marked by proxy, so the desktop pass above does not close this.
+
+What to check on the device, briefly: throttle to Slow 3G (or put the network
+behind a limiter) and confirm the switch still answers in the same frame; tap
+three vehicles quickly; block one model and confirm the failed switch settles;
+and confirm no regression in the frame rate while the fleet warm runs behind the
+boot.
 
 ### Cases covered by unit tests rather than by hand
 
