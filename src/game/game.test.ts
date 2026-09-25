@@ -199,12 +199,12 @@ describe('createGame controller seam (Phase 2)', () => {
     const group = { add: vi.fn() };
     const townMount = deferred<{
       group: typeof group;
-      houseFootprints: Map<string, never>;
+      houseFootprints: Map<string, { halfX: number; halfZ: number }>;
       dispose: () => void;
     }>();
-    const progressiveMount = mountTown as unknown as (...args: unknown[]) => Promise<
-      typeof townMount extends Deferred<infer T> ? T : never
-    >;
+    const progressiveMount = mountTown as unknown as (
+      ...args: unknown[]
+    ) => Promise<typeof townMount extends Deferred<infer T> ? T : never>;
     vi.mocked(progressiveMount).mockImplementationOnce(async (...args) => {
       const options = args[3] as
         | { readonly onBaseReady?: (value: typeof group) => void }
@@ -220,7 +220,7 @@ describe('createGame controller seam (Phase 2)', () => {
     } finally {
       townMount.resolve({
         group,
-        houseFootprints: new Map(),
+        houseFootprints: new Map<string, { halfX: number; halfZ: number }>(),
         dispose: vi.fn(),
       });
       await game.ready;
