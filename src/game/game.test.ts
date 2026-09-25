@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGame, type GameDeps } from './game';
 import { findPath } from './path/pathfinder';
 import { mountParkedShadows } from './town/parkedShadows';
@@ -130,6 +130,18 @@ describe('createGame controller seam (Phase 2)', () => {
       expect(game.world.traffic).toBeDefined();
       expect(() => game.advance(0.016)).not.toThrow();
     });
+  });
+
+  it('holds and releases the mission tap boundary for async ordering tests', async () => {
+    const { game } = await booted();
+    const pending = holdMissionTap(game);
+    const tap = game.tapAt({ x: 1, z: 1 });
+
+    await Promise.resolve();
+    expect(game.world.missions.tap).toHaveBeenCalledWith({ x: 1, z: 1 });
+
+    pending.resolve(false);
+    await tap;
   });
 
   it('ticks the mounted systems once they land', async () => {
@@ -302,6 +314,48 @@ async function settle(): Promise<void> {
     setTimeout(resolve, 0);
   });
 }
+
+type TestVehicleActor = Awaited<ReturnType<typeof createVehicleActor>>;
+
+type Deferred<T> = {
+  readonly promise: Promise<T>;
+  resolve(value: T | PromiseLike<T>): void;
+  reject(reason?: unknown): void;
+};
+
+/** A hand-controlled promise for deterministic async ordering tests. */
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, resolve, reject };
+}
+
+/** Gives each mocked actor a distinct object identity for scene assertions. */
+function testActor(label = 'vehicle'): TestVehicleActor {
+  return {
+    object: { label } as unknown as TestVehicleActor['object'],
+    sync: vi.fn(),
+  };
+}
+
+/** Holds the registry boundary so a test can release a tap in a chosen order. */
+function holdMissionTap(game: ReturnType<typeof createGame>): Deferred<boolean> {
+  const pending = deferred<boolean>();
+  vi.spyOn(game.world.missions, 'tap').mockReturnValueOnce(pending.promise);
+  return pending;
+}
+
+// The async model pipeline is faked at the actor boundary. Reset only that
+// boundary per test: the production code must still receive a fresh actor for
+// each mount, while a test can replace one call with a deferred promise.
+beforeEach(() => {
+  vi.mocked(createVehicleActor).mockReset();
+  vi.mocked(createVehicleActor).mockImplementation(async () => testActor());
+});
 
 describe('session rules: pickup, spawn and the mission frame (Phase 3)', () => {
   it('answers the park errand on the first drive-over and morphs to the truck', async () => {

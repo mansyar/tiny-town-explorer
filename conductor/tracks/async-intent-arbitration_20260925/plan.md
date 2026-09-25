@@ -2,13 +2,13 @@
 
 ## Phase 1 — Reproduce and pin the race (TDD)
 
-- [~] **Task: Add deterministic deferred async test controls**
-  - [ ] Extend the existing `game.test.ts` mocks with controllable `createVehicleActor` promises and a controllable mission-tap boundary.
-  - [ ] Reset deferred mocks and call counts between tests so one race test cannot contaminate another.
-  - [ ] Keep all controls test-only; do not add runtime configuration or production hooks.
-  - [ ] **Commit:** `test(game): add async intent race harness`
+- [x] **Task: Add deterministic deferred async test controls**
+  - [x] Extend the existing `game.test.ts` mocks with controllable `createVehicleActor` promises and a controllable mission-tap boundary.
+  - [x] Reset deferred mocks and call counts between tests so one race test cannot contaminate another.
+  - [x] Keep all controls test-only; do not add runtime configuration or production hooks.
+  - [x] **Commit:** `test(game): add async intent race harness`
 
-- [ ] **Task: Write red tests for stale destination commits**
+- [~] **Task: Write red tests for stale destination commits**
   - [ ] Hold a mission/vehicle promise, issue destination A, then destination B, and assert that only B calls `motor.setPath` after resolution.
   - [ ] Assert that both taps retain their immediate ring/audio feedback.
   - [ ] Assert that an unreachable/stale route is not committed after a newer tap supersedes it.
