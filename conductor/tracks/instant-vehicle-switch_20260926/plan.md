@@ -5,7 +5,7 @@ red first, confirmed failing, then the minimum code to pass. Phase 3 is DOM
 glue and styling, which `workflow.md` exempts from red/green and verifies by
 hand instead. Phase 4 runs the gates and the device check.
 
-## Phase 1 — Give the controller a pending-answer state
+## Phase 1 — Give the controller a pending-answer state [checkpoint: b95d977]
 
 - [x] **Task: Add red tests for the pending-answer contract** [3ad937a]
   - [ ] Assert that a `selection` request raises the pending state synchronously, before any `await` resolves.
@@ -30,10 +30,44 @@ hand instead. Phase 4 runs the gates and the device check.
   - [x] **Deviation (recorded per the in-flight refinement clause):** the plan put "Render the pending state in the vehicle HUD" in Phase 3 Task 1, but the edge cannot typecheck until `VehicleHud` declares `setPending`, and a declared-but-unimplemented member is dead code. The rendering therefore lands here, where it is required, and Phase 3 keeps the CSS ring styling and the hand verification.
   - [x] **Commit:** `feat(hud): render the pending answer in the vehicle switcher` (`b95d977`)
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
-  - [ ] Identify the changed production and test files and their corresponding tests.
-  - [ ] Run the exact targeted test and quality commands.
-  - [ ] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** [b95d977]
+  - [x] Identify the changed production and test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
+  - [x] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 1 implementation record (2026-09-26)
+
+Three tasks, three functional commits: `3ad937a` red tests, `f995d39` the
+controller state, `b95d977` the HUD and edge. `pnpm check`, `pnpm typecheck`
+and the full suite at 887 tests across 69 files all pass; overall coverage is
+91.55% statements / 87.5% branches, and `src/game/game.ts` measures 94.86% /
+86.66%, up from the 94.5 / 86.6 on record for the game-controller-extraction
+track.
+
+The design decision worth keeping: the pending answer reuses the generation
+counter the arbitration already stamps, rather than introducing a second one.
+That makes it structurally impossible for the answer and the intent that
+supersedes it to disagree about who is newest, and it is why
+`settlePendingSelection` can compare a single integer.
+
+`src/game/hud/vehicleHud.ts` has no test file. That is a recorded project
+decision, not an oversight — `vitest.config.ts` excludes it alongside
+`parentPanel.ts` and `bootOverlay.ts` as DOM glue, manual-verified by design.
+The contract is pinned one layer up at the `GameHud` port in `game.test.ts`.
+Overriding the exclusion is available on request.
+
+**Deliberately not done in this phase:** the CSS ring. `is-pending` is applied
+but not yet styled, so the ring half of FR1 is not visible in a browser until
+Phase 3 Task 2. Doing it in Phase 1 would have pulled styling into a
+logic-bearing phase and made its TDD discipline a lie.
+
+The owner approved the six-step browser verification plan on 2026-09-26; the
+steps are reproduced in the note on `b95d977`. No browser result is claimed
+here, because none has been reported. Physical iPad verification is a Phase 4
+item and remains outstanding.
+
+Checkpoint: `b95d977`, the last functional commit of the phase. No empty commit
+was created.
 
 ## Phase 2 — Warm the fleet during the boot window
 
