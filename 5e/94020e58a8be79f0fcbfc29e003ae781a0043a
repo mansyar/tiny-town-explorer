@@ -95,3 +95,25 @@ Measured shipped-path evidence in Chromium at 1280x720 / DPR 1:
 The worst representative fresh-spawn window is below the 50,000-triangle target, and draw calls do not increase versus the recorded baseline. No road, prop, vehicle, traffic, mission, marker, pond, or visible town content was removed. An unrelated headless-browser audio decode message was observed and did not affect WebGL rendering or measurements.
 
 Verdict: Phase 2 accepted; proceed to Phase 3 automated, production/offline, desktop, and iPad verification.
+
+Phase 3 automated quality-gates task report
+
+Automated command:
+pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build
+
+Results:
+- pnpm check passed (154 files checked, no fixes).
+- pnpm typecheck passed.
+- CI test run passed: 851 tests across 67 files.
+- pnpm build passed: 112 modules transformed; PWA generateSW completed with 49 precache entries / 4238.99 KiB.
+- The existing >500 KiB JavaScript chunk warning remains unchanged and is outside this track.
+
+Production/offline verification:
+- Served dist at http://127.0.0.1:4173/ with the Vite preview server.
+- Preview loaded the game with a canvas and no console errors.
+- /sw.js and /manifest.webmanifest returned 200; the service worker registered, activated, and controlled the page.
+- The workbox precache contained 46 runtime-observed entries, including the hashed production JS, registerSW.js, and manifest; requested document, audio, road, building, prop, and vehicle assets completed successfully.
+- After stopping the preview server, a reload of the same origin still loaded the complete app from the service-worker cache, with a canvas, ten HUD/panel buttons, and no console errors. The development-only render probe was absent in production as intended.
+- The browser bridge exposes no offline toggle, so the cache-backed startup was verified by stopping the origin server and reloading rather than by a network-emulation switch.
+
+Verdict: automated quality gates and production/offline-capable output pass; proceed to the desktop and device verification tasks.
