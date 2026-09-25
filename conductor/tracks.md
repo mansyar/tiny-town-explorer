@@ -10,4 +10,4 @@
 
 ---
 
-- [x] **Track: Resilient Progressive Boot** *Link: [conductor/tracks/resilient-progressive-boot_20260925/index.md](./resilient-progressive-boot_20260925/index.md)*
+- [x] **Track: Resilient Progressive Boot** *Link: [conductor/archive/resilient-progressive-boot_20260925/index.md](./archive/resilient-progressive-boot_20260925/index.md)*
