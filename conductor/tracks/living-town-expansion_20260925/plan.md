@@ -30,10 +30,12 @@
   - **Collision contract:** Every new actor publishes a live non-solid footprint; a contact uses the existing crashable bump-once-then-pass path, briefly recoils, never blocks a route, and never creates a failure state.
   - **Commit:** `898c42c` — `chore(track): define living town ambient roster`
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Review the baseline and roster against the approved specification.
-  - [ ] Announce the exact automated command before running it.
-  - [ ] Record the checkpoint SHA in `plan.md` after user verification.
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Review the baseline and roster against the approved specification.
+  - [x] Announce the exact automated command before running it.
+  - [x] Record the checkpoint SHA in `plan.md` after user verification.
+  - **Checkpoint:** `5f1b157` — user-approved baseline, roster, scope, and `pnpm check` result.
+  - **Verification note:** `git notes show 5f1b157`
 
 ## Phase 2 — Deterministic ambient movement and collision contracts
 
