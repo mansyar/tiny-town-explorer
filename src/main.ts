@@ -129,6 +129,7 @@ async function main(): Promise<void> {
     setAbilityBusy: (busy) => hud?.setAbilityBusy(busy),
     setAbilityVisible: (visible) => hud?.setAbilityVisible(visible),
     setPolicePulse: (pulsing) => hud?.setPolicePulse(pulsing),
+    setPending: (id) => hud?.setPending(id),
   };
 
   // Dev-only, and dropped from production builds: `?calmGap=2` shortens the

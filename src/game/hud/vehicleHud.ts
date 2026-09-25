@@ -61,6 +61,13 @@ export interface VehicleHud {
   setAbilityVisible(visible: boolean): void;
   /** FR6: pulse the police button while the town waits for the siren. */
   setPolicePulse(pulsing: boolean): void;
+  /**
+   * Answer a switch tap before its model has loaded: ring the tapped button in
+   * its own colour and point the ability button at the same vehicle, so the HUD
+   * never advertises the old trick while the child is choosing. `undefined`
+   * withdraws the answer.
+   */
+  setPending(id: VehicleId | undefined): void;
   setMuted(muted: boolean): void;
   dispose(): void;
 }
@@ -121,6 +128,15 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
     options.onMute(muted);
   });
 
+  /** Points the ability button at one vehicle's trick. Shared by the committed
+   * state and by the pending answer, which must agree on what is being offered. */
+  const setAbility = (id: VehicleId): void => {
+    for (const vehicle of VEHICLE_IDS) {
+      abilityButton.classList.toggle(`hud-button--${vehicle}`, vehicle === id);
+    }
+    abilityButton.replaceChildren(icon(ABILITY_ICONS[id]));
+  };
+
   return {
     element,
     setActive(id): void {
@@ -129,12 +145,7 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
         button.setAttribute('aria-pressed', String(vehicle === id));
       }
     },
-    setAbility(id): void {
-      for (const vehicle of VEHICLE_IDS) {
-        abilityButton.classList.toggle(`hud-button--${vehicle}`, vehicle === id);
-      }
-      abilityButton.replaceChildren(icon(ABILITY_ICONS[id]));
-    },
+    setAbility,
     setAbilityBusy(busy): void {
       abilityButton.classList.toggle('is-busy', busy);
     },
@@ -143,6 +154,23 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
     },
     setPolicePulse(pulsing): void {
       buttons.get('police')?.classList.toggle('is-pulsing', pulsing);
+    },
+    setPending(id): void {
+      for (const [vehicle, button] of buttons) {
+        const pending = vehicle === id;
+        button.classList.toggle('is-pending', pending);
+        // Not visible text, and not the active state: this only tells assistive
+        // tech the button is answering a tap that has not committed yet.
+        button.setAttribute('aria-busy', String(pending));
+      }
+      // The ability button follows the pending vehicle, not the committed one.
+      // Otherwise a child choosing the fire truck watches the hose button keep
+      // offering the previous truck's trick until the model lands. It is not
+      // rewound on withdrawal: the commit that follows sets it again, and a
+      // failed switch leaves the previous vehicle's trick, which is the truth.
+      if (id !== undefined) {
+        setAbility(id);
+      }
     },
     setMuted(next): void {
       muted = next;
