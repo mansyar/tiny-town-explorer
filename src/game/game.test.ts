@@ -1408,6 +1408,8 @@ describe('async intent arbitration (TDD red)', () => {
 
     game.activate('police');
     const activeBefore = game.world.fleet.activeId();
+    const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onHudActive.mockClear();
     const onRemove = vi.spyOn(attached.scene, 'remove');
     const onSetPath = vi.spyOn(motor, 'setPath');
     const actor = deferred<TestVehicleActor>();
@@ -1421,6 +1423,7 @@ describe('async intent arbitration (TDD red)', () => {
     await expect(failedTap).resolves.toBeUndefined();
     expect(game.world.actor).toBe(beforeActor);
     expect(game.world.fleet.activeId()).toBe(activeBefore);
+    expect(onHudActive).toHaveBeenLastCalledWith(activeBefore);
     expect(onSetPath).not.toHaveBeenCalled();
     expect(onRemove).not.toHaveBeenCalledWith(beforeActor.object);
 
@@ -1430,5 +1433,122 @@ describe('async intent arbitration (TDD red)', () => {
 
     expect(game.world.actor).toBe(retryActor);
     expect(game.world.fleet.activeId()).toBe('fire');
+  });
+
+  it('serializes A-then-B vehicle selection and removes the superseded actor', async () => {
+    const { game, attached } = await booted();
+    const onAdd = attached.scene.add as ReturnType<typeof vi.fn>;
+    const onRemove = attached.scene.remove as ReturnType<typeof vi.fn>;
+    const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onAdd.mockClear();
+    onRemove.mockClear();
+    onHudActive.mockClear();
+    vi.mocked(createVehicleActor).mockClear();
+
+    const firstActor = deferred<TestVehicleActor>();
+    const secondActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor)
+      .mockReturnValueOnce(firstActor.promise)
+      .mockReturnValueOnce(secondActor.promise);
+
+    const firstRequest = game.selectVehicle('police');
+    const secondRequest = game.selectVehicle('iceCream');
+    await Promise.resolve();
+
+    // The second selection must wait rather than start a concurrent swap.
+    expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(1);
+
+    const policeActor = testActor('police');
+    firstActor.resolve(policeActor);
+    await firstRequest;
+    await Promise.resolve();
+    expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(2);
+
+    const iceCreamActor = testActor('iceCream');
+    secondActor.resolve(iceCreamActor);
+    await secondRequest;
+
+    expect(game.world.actor).toBe(iceCreamActor);
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+    expect(onHudActive).toHaveBeenLastCalledWith('iceCream');
+    expect(onAdd).toHaveBeenCalledWith(policeActor.object);
+    expect(onAdd).toHaveBeenCalledWith(iceCreamActor.object);
+    expect(onRemove).toHaveBeenCalledWith(policeActor.object);
+    expect(onRemove).toHaveBeenCalledTimes(2);
+  });
+
+  it('serializes a mission-required morph before the latest HUD selection', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const fireActor = deferred<TestVehicleActor>();
+    const hudActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor)
+      .mockReturnValueOnce(fireActor.promise)
+      .mockReturnValueOnce(hudActor.promise);
+    const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onHudActive.mockClear();
+    vi.mocked(createVehicleActor).mockClear();
+
+    const missionTap = game.tapAt(house.position, house.position);
+    await settle();
+    const selection = game.selectVehicle('iceCream');
+    await Promise.resolve();
+
+    // The mission-required fire morph owns the in-flight slot first.
+    expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(1);
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+
+    const fireVehicle = testActor('fire');
+    fireActor.resolve(fireVehicle);
+    await missionTap;
+    await Promise.resolve();
+    expect(game.world.actor).toBe(fireVehicle);
+    expect(onHudActive).toHaveBeenLastCalledWith('fire');
+
+    const iceCreamVehicle = testActor('iceCream');
+    hudActor.resolve(iceCreamVehicle);
+    await selection;
+
+    expect(game.world.actor).toBe(iceCreamVehicle);
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+    expect(onHudActive).toHaveBeenLastCalledWith('iceCream');
+  });
+
+  it('keeps a helper-hand demo from overwriting a newer child tap', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [childPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || childPoint === undefined) {
+      throw new Error('The town, car, or spawn point is missing');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockClear();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    game.tickHelperHand(11, game.world.spawn);
+    vi.spyOn(game.world.helperTrace, 'isDone').mockReturnValue(true);
+    game.tickHelperHand(0.016, game.world.spawn);
+    await settle();
+
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const childTap = game.tapAt(childPoint, childPoint);
+    await childTap;
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);
+
+    actor.resolve(testActor('fire'));
+    await settle();
+
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);
   });
 });

@@ -20,26 +20,33 @@
   - [x] Failed mission morph: assert the old actor remains and no route is committed until a later retry can mount the required vehicle.
   - [x] **Commit:** include the atomic-mission red tests in the test commit.
 
-- [~] **Task: Write red tests for serialized vehicle selection**
-  - [ ] Select A then B while actor creation is delayed; assert final fleet ID, HUD active ID, and mounted actor are all B.
-  - [ ] Assert only one swap is in flight at a time.
-  - [ ] Assert no superseded actor remains mounted in the scene.
-  - [ ] Add a mixed mission-required/HUD-selection case to lock the agreed precedence.
-  - [ ] **Commit:** include the vehicle-selection red tests in the test commit.
+- [x] **Task: Write red tests for serialized vehicle selection**
+  - [x] Select A then B while actor creation is delayed; assert final fleet ID, HUD active ID, and mounted actor are all B.
+  - [x] Assert only one swap is in flight at a time.
+  - [x] Assert no superseded actor remains mounted in the scene.
+  - [x] Add a mixed mission-required/HUD-selection case to lock the agreed precedence.
+  - [x] **Commit:** include the vehicle-selection red tests in the test commit.
 
-- [ ] **Task: Write red tests for rollback and helper parity**
-  - [ ] Reject a replacement actor and assert the previous actor, active ID, and HUD state remain intact; assert a later request succeeds.
-  - [ ] Assert helper-hand demo input uses the same latest-intent rules and cannot overwrite a newer child tap.
-  - [ ] **Commit:** include the rollback/helper red tests in the test commit.
+- [x] **Task: Write red tests for rollback and helper parity**
+  - [x] Reject a replacement actor and assert the previous actor, active ID, and HUD state remain intact; assert a later request succeeds.
+  - [x] Assert helper-hand demo input uses the same latest-intent rules and cannot overwrite a newer child tap.
+  - [x] **Commit:** include the rollback/helper red tests in the test commit.
 
-- [ ] **Task: Run and record the red baseline**
-  - [ ] Run `CI=true pnpm test -- src/game/game.test.ts` and confirm each new test fails for the expected missing arbitration behavior, not because of a broken fixture.
-  - [ ] Record the failing test names and any fixture corrections in the phase checkpoint.
-  - [ ] **Commit:** `test(game): characterize async intent races`
+- [x] **Task: Run and record the red baseline**
+  - [x] Run `CI=true pnpm test -- src/game/game.test.ts` and confirm each new test fails for the expected missing arbitration behavior, not because of a broken fixture.
+  - [x] Record the failing test names and any fixture corrections in the phase checkpoint.
+  - [x] **Commit:** `test(game): characterize async intent races`
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Identify the changed test files and run the exact targeted test command.
-  - [ ] Present the red-baseline results and stop if a test is failing for an unrelated reason.
+- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Identify the changed test files and run the exact targeted test command.
+  - [x] Present the red-baseline results and stop if a test is failing for an unrelated reason.
+
+### Phase 1 red baseline (2026-09-25)
+
+- Command: `CI=true pnpm test -- src/game/game.test.ts` (PowerShell: `$env:CI='true'; pnpm test -- src/game/game.test.ts`)
+- Result: **59 tests, 50 passing; 9 intentional red regressions**. The failures are limited to the new arbitration tests: two stale destination commits, fire/ice-cream/park atomic morph precedence, failed-morph rejection/rollback, concurrent HUD selections (including mission precedence), and helper-demo route overwrite.
+- Fixture corrections made before recording the baseline: park litter is sampled only after `startPark()`; the helper test starts from police so the fire morph is genuinely deferred; actor call counts are cleared after boot.
+- Supporting gates: `pnpm check` and `pnpm typecheck` pass. No unrelated fixture or existing-suite failure remains.
 
 ## Phase 2 — Implement controller-level arbitration (TDD green)
 
