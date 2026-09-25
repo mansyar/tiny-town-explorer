@@ -147,14 +147,24 @@
 
 ## Phase 5 — Integration, documentation, and device verification
 
-- [ ] **Task: Run the full automated quality gates**
-  - [ ] Run `pnpm check`.
-  - [ ] Run `pnpm typecheck`.
-  - [ ] Run `CI=true pnpm test`.
-  - [ ] Run `CI=true pnpm test:coverage` and confirm new logic remains above 80%.
-  - [ ] Run `pnpm build`.
-  - [ ] Confirm the PWA precache still contains the required assets and record the current entry count/size.
-  - [ ] **Commit:** `chore(conductor): record resilient boot quality gates`
+- [x] **Task: Run the full automated quality gates** [670a379]
+  - [x] Run `pnpm check`.
+  - [x] Run `pnpm typecheck`.
+  - [x] Run `CI=true pnpm test`.
+  - [x] Run `CI=true pnpm test:coverage` and confirm new logic remains above 80%.
+  - [x] Run `pnpm build`.
+  - [x] Confirm the PWA precache still contains the required assets and record the current entry count/size.
+  - [x] **Commit:** `chore(conductor): record resilient boot quality gates` (`670a379`)
+
+### Phase 5 automated quality-gate record (2026-09-25)
+
+- `pnpm check` — passed, 162 files, no fixes applied.
+- `pnpm typecheck` — passed.
+- `$env:CI='true'; pnpm test` — **882 tests across 69 files passed** (exit 0).
+- `$env:CI='true'; pnpm test:coverage` — **All files 91.4% statements / 87.39% branches / 93.19% functions / 91.26% lines**, comfortably above the 80% logic target. New and changed logic modules: `sampleLoader.ts` **100 / 100 / 100 / 100**; `townRenderer.ts` **100 / 100 / 100 / 100**; `bootStatus.ts` 94.44 / 88.88 / 85.71 / 94.44; `game.ts` 94.01 / 86.16 / 90.36 / 93.92. `main.ts` and `bootOverlay.ts` remain excluded DOM glue per `workflow.md`.
+- `pnpm build` — succeeded in 1.23s. The main JS chunk is 707.40 kB (185.90 kB gzip); the known Vite chunk-size warning persists and stays out of scope for this track.
+- PWA precache: **49 entries, 4,249.03 KiB** — the same 49 entries as before, about 2.4 KiB larger from the boot overlay. This supersedes the stale "42 entries / 3.3 MiB" figure in `docs/cloudflare-pages.md`.
+- Only the pre-existing recurring Vitest transform-cache reminder was printed; it is advisory and not a failure.
 
 - [ ] **Task: Update affected documentation**
   - [ ] Correct the stale precache figures in `docs/cloudflare-pages.md` to the current measured values.
