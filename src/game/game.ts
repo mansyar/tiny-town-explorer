@@ -5,25 +5,51 @@ import { createAbilityFx } from './feedback/abilityFx';
 import { createPondWatcher } from './feedback/pondSplash';
 import { createTargetRing } from './feedback/targetRing';
 import { createFireFx } from './mission/fireFx';
-import { createFireMission } from './mission/fireMission';
+import {
+  createFireMission,
+  distanceBetween,
+  FIRE_FLAME,
+  fireAwaitsKid,
+} from './mission/fireMission';
 import { createFirePacer } from './mission/firePacer';
 import { createHelperHand } from './mission/helperHand';
 import { createHelperTrace } from './mission/helperTrace';
-import { createIceCreamMission } from './mission/iceCreamMission';
+import { createIceCreamMission, ORDER_CONE } from './mission/iceCreamMission';
 import { createIceCreamPacer } from './mission/iceCreamPacer';
 import {
   createCelebration,
   type MissionCelebrationDeps,
 } from './mission/missionCelebration';
+import { missionFocus } from './mission/missionFocus';
+import {
+  markerArmed,
+  markerTap,
+  markerVisible,
+  syncMarker,
+} from './mission/missionMarkers';
+import { createMissionRegistry } from './mission/missionRegistry';
 import { createMissionRotation } from './mission/missionRotation';
-import { createOrderBeats } from './mission/orderFlow';
+import {
+  createOrderBeats,
+  isTapOnHouse,
+  MISSION_SNAP_RADIUS,
+  orderIsOpen,
+  resolveOrderTap,
+} from './mission/orderFlow';
 import { createOrderMarker } from './mission/orderMarker';
-import { createParkMission } from './mission/parkMission';
-import { createParkPickup } from './mission/parkPickup';
+import { type LitterPiece, spawnParkLitter } from './mission/parkLitter';
+import { createLitterField, type LitterField } from './mission/parkLitterFx';
+import { createParkMission, PARK_FIELD, resolveParkTap } from './mission/parkMission';
+import { createParkPickup, type PickupResult } from './mission/parkPickup';
 import { createPuppy } from './mission/puppyFx';
 import { createHeartMarker, createPawMarker } from './mission/puppyMarker';
-import { createPuppyMission } from './mission/puppyMission';
-import { createPuppySpots } from './mission/puppySpots';
+import {
+  createPuppyMission,
+  PUPPY_HEART,
+  PUPPY_PAW,
+  resolvePuppyTap,
+} from './mission/puppyMission';
+import { createPuppySpots, type PuppySpot } from './mission/puppySpots';
 import { createServeGate } from './mission/serveGate';
 import { createSunFx, type SunFacing } from './mission/sunFx';
 import { mountParkedShadows } from './town/parkedShadows';
@@ -36,7 +62,12 @@ import { mountTrafficShadows } from './traffic/trafficShadows';
 import { createTrafficSystem } from './traffic/trafficSystem';
 import { createVehicleActor } from './vehicle/vehicleActor';
 import { createVehicleMotor } from './vehicle/vehicleMotor';
-import { createVehicleSystem } from './vehicle/vehicleSystem';
+import { createVehicleSystem, type VehicleId } from './vehicle/vehicleSystem';
+
+/** How high the carried pup rides, on the roof of whichever car drives. */
+const RIDE_HEIGHT = 0.28;
+/** Seconds for the hop-out run to the owner's door (FR10). */
+const DOOR_RUN_SECONDS = 0.7;
 
 /**
  * The slice of the audio engine the controller calls. The engine itself is
@@ -62,8 +93,16 @@ export interface GameAudio {
  * dispatch, mute) is DOM wiring owned by `main.ts`.
  */
 export interface GameHud {
+  /** Light up the vehicle the kid is driving. */
+  setActive(id: VehicleId): void;
+  /** Point the ability button at the active vehicle's trick. */
+  setAbility(id: VehicleId): void;
   /** Dim the ability button while its one-shot is running. */
   setAbilityBusy(busy: boolean): void;
+  /** Show or hide the ability button; it doubles as the hose button. */
+  setAbilityVisible(visible: boolean): void;
+  /** Pulse the police button while the town waits for the siren. */
+  setPolicePulse(pulsing: boolean): void;
 }
 
 /**
@@ -111,6 +150,8 @@ export interface GameDeps {
  * this handle and closes the API to `{ advance, tapAt, honk, noteActivity }`.
  */
 export interface GameWorld {
+  /** The town data every placement and route is measured against. */
+  readonly grid: TownGrid;
   /** Where the car spawns: grid data, known before a single model loads. */
   readonly spawn: Vec2;
   readonly fleet: ReturnType<typeof createVehicleSystem>;
@@ -140,6 +181,18 @@ export interface GameWorld {
   readonly heartMarker: ReturnType<typeof createHeartMarker>;
   readonly spotPup: ReturnType<typeof createPuppy>;
   readonly riderPup: ReturnType<typeof createPuppy>;
+  /** The registry that owns tick/tap ordering and the town-wide focus. */
+  readonly missions: ReturnType<typeof createMissionRegistry>;
+  /** The live litter field, the pup's drawn round and the door run. */
+  litter: readonly LitterPiece[];
+  litterField: LitterField | undefined;
+  puppyPending: boolean;
+  puppySpot: PuppySpot | undefined;
+  puppyOwnerHouseId: string | undefined;
+  doorRun: { readonly from: Vec2; readonly to: Vec2; t: number } | undefined;
+  /** The car's position for this frame's mission pass, set in `missionsTick`. */
+  frameCarPosition: Vec2;
+  library: ReturnType<typeof createModelLibrary> | undefined;
   town: Awaited<ReturnType<typeof mountTown>> | undefined;
   pondWatcher: ReturnType<typeof createPondWatcher> | undefined;
   pondDucks: ReturnType<typeof createPondDucks> | undefined;
@@ -155,8 +208,44 @@ export interface Game {
   readonly world: GameWorld;
   /** Resolves once the async mount (town, traffic, motor, actors) lands. */
   readonly ready: Promise<void>;
+  /**
+   * Resolves once the motor exists, before the car's first model has loaded.
+   * The tap router is wired on this edge, exactly as it was inline in
+   * `main.ts`; `ready` is the heavier "everything is on screen" signal.
+   */
+  readonly driven: Promise<void>;
   /** One frame of the world-owned systems; safe to call before `ready`. */
   advance(deltaSeconds: number): void;
+  /**
+   * The registry pass for one frame: it records the car's position and gives
+   * every mission its turn in registration order. Phase 4 folds this into
+   * `advance` together with the pacers and the helper hand.
+   */
+  missionsTick(deltaSeconds: number, carPosition: Vec2): void;
+  /** Lets the shared calm gap decide whose turn it is, one spawn per frame. */
+  tickPacers(deltaSeconds: number): void;
+  /** Applies one pickup or sweep to the field, the mission and the show. */
+  absorb(result: PickupResult, voiceGulp: boolean): void;
+  /** How far the car is from whatever is burning; infinity if nothing is. */
+  distanceToFire(from: Vec2): number;
+  /** Opens a clean-up: a fresh field, a reset collector, the town's chime. */
+  startPark(): void;
+  /** Draws the pup's round: hiding spot, owner house, whine and police ask. */
+  startPuppy(): void;
+  /** Puts a fire on a lot: mission state, visual and alarm in one step. */
+  lightFire(houseId: string): boolean;
+  /** Opens an order at a lot: mission state and cone icon in one step. */
+  lightOrder(houseId: string): boolean;
+  /** Morphs the fleet, telling the serve latch which truck now drives. */
+  activate(id: VehicleId): void;
+  /** Builds the replacement car, then swaps it in (never an empty frame). */
+  swapVehicle(id: VehicleId): Promise<void>;
+  /** The respond gesture for the park errand: become the truck, head over. */
+  headToGarbageTruck(): Promise<boolean>;
+  /** Whether serve is armed right now, read from the live car. */
+  serveArmedNow(): boolean;
+  /** FR10: hop out at the car, run to the door, then the town applauds. */
+  deliverPuppy(ownerAt: Vec2): void;
 }
 
 /**
@@ -285,10 +374,144 @@ export function createGame(deps: GameDeps): Game {
   // loop meets them as undefined too. The watcher only fires inside the
   // vehicle frame (Phase 4); until then it lives on the world handle.
   let pondDucks: GameWorld['pondDucks'];
+  // The model library is the source every car actor is instantiated from, so
+  // `swapVehicle` needs it long after the mount that created it.
+  let library: GameWorld['library'];
 
   let abilityBusy = false;
+  // The tap router is wired the moment the motor exists, which is the same edge
+  // `main.ts` used to build it on; `ready` waits for the car model as well.
+  let signalDriven: () => void = () => {};
+  const driven = new Promise<void>((resolve) => {
+    signalDriven = resolve;
+  });
+  // Session state the moved rules close over: the fire's burst total, whether
+  // the ability and serve affordances are currently showing, and the park and
+  // puppy rounds in flight.
+  let fireTotal = 0;
+  let abilityVisible = true;
+  let serveArmed = false;
 
+  // The seam that lets new missions join without a new tick/tap block here
+  // (spec FR13): every mission contributes, the registry owns order, and
+  // FR12's `missionFocus` is handed in as the one town-wide focus resolver —
+  // a single four-mission answer for the hand, siren marker included. Every
+  // contribution reads session state off `world` at call time, so the registry
+  // is safe to build before the handle that carries it.
+  const missions = createMissionRegistry(
+    [
+      {
+        id: 'fire',
+        tick: (delta) => {
+          mission.update(delta, distanceToFire(world.frameCarPosition));
+          tickFireMission(world.frameCarPosition);
+        },
+        tap: async (aim) => {
+          const burning = firePoint();
+          const claimed =
+            markerTap(FIRE_FLAME, {
+              state: mission.snapshot().state,
+              onTarget:
+                burning !== undefined &&
+                distanceBetween(aim, burning) <= MISSION_SNAP_RADIUS,
+            }) === 'respond';
+          if (!claimed) {
+            return false;
+          }
+          mission.respond();
+          if (fleet.activeId() !== 'fire') {
+            activate('fire');
+            await swapVehicle('fire');
+          }
+          return true;
+        },
+        isIdle: () => mission.snapshot().state === 'idle',
+      },
+      {
+        id: 'iceCream',
+        tick: (delta) => {
+          orders.update(delta, distanceToOrder(world.frameCarPosition));
+          tickOrderMission(world.frameCarPosition);
+        },
+        tap: async (aim) => {
+          const waiting = orderPoint();
+          const action =
+            waiting === undefined
+              ? 'ignore'
+              : resolveOrderTap({
+                  state: orders.snapshot().state,
+                  onOrderHouse: isTapOnHouse(aim, waiting),
+                  armed: serveArmedNow(),
+                });
+          if (action === 'respond') {
+            orders.respond();
+            if (fleet.activeId() !== 'iceCream') {
+              activate('iceCream');
+              await swapVehicle('iceCream');
+            }
+            return true;
+          }
+          if (action === 'serve') {
+            orders.serve();
+            return true;
+          }
+          return false;
+        },
+        isIdle: () => orders.snapshot().state === 'idle',
+      },
+      {
+        id: 'park',
+        tick: (delta) => tickParkMission(delta, world.frameCarPosition),
+        tap: async (aim) => {
+          const onPiece = world.litter.some(
+            (piece) => distanceBetween(aim, piece.position) <= MISSION_SNAP_RADIUS,
+          );
+          if (resolveParkTap({ state: park.snapshot().state, onPiece }) !== 'respond') {
+            return false;
+          }
+          await headToGarbageTruck();
+          return true;
+        },
+        isIdle: () => park.snapshot().state === 'idle',
+      },
+      {
+        id: 'puppy',
+        tick: (delta) => tickPuppyMission(delta, world.frameCarPosition),
+        tap: async (aim) => {
+          const ownerAt = ownerPoint();
+          const action = resolvePuppyTap({
+            state: puppy.snapshot().state,
+            onOwnerHouse: ownerAt !== undefined && isTapOnHouse(aim, ownerAt),
+            armed: puppy.isDeliverReady(),
+          });
+          if (action !== 'deliver' || ownerAt === undefined) {
+            return false;
+          }
+          deliverPuppy(ownerAt);
+          return true;
+        },
+        // The pending whine is half an errand with nowhere else to go: busy
+        // until the siren answers it (FR6), or until it is carried home.
+        isIdle: () => !world.puppyPending && puppy.snapshot().state === 'idle',
+      },
+    ],
+    (carPosition) =>
+      missionFocus({
+        fireState: mission.snapshot().state,
+        fireAt: firePoint(),
+        orderState: orders.snapshot().state,
+        orderAt: orderPoint(),
+        parkState: park.snapshot().state,
+        parkAt: nearestLitterPoint(carPosition),
+        puppyPending: world.puppyPending,
+        puppyState: puppy.snapshot().state,
+        puppySpotAt: world.puppySpot?.position,
+        puppyOwnerAt: puppy.snapshot().state === 'carrying' ? ownerPoint() : undefined,
+        carPosition,
+      }),
+  );
   const world: GameWorld = {
+    grid,
     spawn,
     fleet,
     ring,
@@ -317,6 +540,15 @@ export function createGame(deps: GameDeps): Game {
     heartMarker,
     spotPup,
     riderPup,
+    missions,
+    litter: [],
+    litterField: undefined,
+    puppyPending: false,
+    puppySpot: undefined,
+    puppyOwnerHouseId: undefined,
+    doorRun: undefined,
+    frameCarPosition: spawn,
+    library: undefined,
     town: undefined,
     pondWatcher: undefined,
     pondDucks: undefined,
@@ -327,8 +559,457 @@ export function createGame(deps: GameDeps): Game {
     actor: undefined,
   };
 
+  /**
+   * Morphs the fleet by whichever route asked for it, and tells the serve
+   * latch on the way: a jingle only survives on the ice-cream truck, so
+   * leaving it abandons the serve and coming back needs a fresh one.
+   */
+  function activate(id: VehicleId): void {
+    fleet.setActive(id);
+    serveGate.noteActiveVehicle(id);
+    hud.setActive(id);
+    hud.setAbility(id);
+  }
+
+  /**
+   * The car's live position. Before the mount lands there is no motor, and the
+   * spawn is where the motor starts anyway — so a pre-mount read is still the
+   * car's own truth rather than a guess.
+   */
+  function carPosition(): Vec2 {
+    return motor?.position ?? spawn;
+  }
+
+  async function swapVehicle(id: VehicleId): Promise<void> {
+    // The cast is only reachable once the car is on the road: the HUD and the
+    // tap router are both wired after the mount.
+    if (library === undefined || motor === undefined) {
+      return;
+    }
+    const spec = fleet.spec(id);
+    const next = await createVehicleActor(library, spec.model, motor, {
+      facingYaw: spec.facingYaw,
+      fitLength: spec.fitLength,
+    });
+    // The replacement is built before the old one goes, so no frame is empty.
+    if (actor !== undefined) {
+      scene.remove(actor.object);
+    }
+    actor = next;
+    world.actor = next;
+    scene.add(next.object);
+    fx.burst('poof', motor.position, motor.heading());
+    audio.play('poof');
+  }
+
+  /** The respond gesture for the park errand: become the truck, head over. */
+  async function headToGarbageTruck(): Promise<boolean> {
+    if (!park.respond()) {
+      return false;
+    }
+    if (fleet.activeId() !== 'garbage') {
+      activate('garbage');
+      await swapVehicle('garbage');
+    }
+    return true;
+  }
+
+  /** Where the fire is burning, if one is. */
+  function firePoint(): Vec2 | undefined {
+    const id = mission.snapshot().fireHouseId;
+    const lot = id === undefined ? undefined : grid.houseById(id);
+    return lot?.position;
+  }
+
+  /** How far the car is from whatever is burning; infinity if nothing is. */
+  function distanceToFire(from: Vec2): number {
+    const burning = firePoint();
+    return burning === undefined
+      ? Number.POSITIVE_INFINITY
+      : distanceBetween(from, burning);
+  }
+
+  /** Where the ice-cream order is waiting, if one is. */
+  function orderPoint(): Vec2 | undefined {
+    const id = orders.snapshot().orderHouseId;
+    const lot = id === undefined ? undefined : grid.houseById(id);
+    return lot?.position;
+  }
+
+  /** How far the car is from the ordering house; infinity if nothing is. */
+  function distanceToOrder(from: Vec2): number {
+    const waiting = orderPoint();
+    return waiting === undefined
+      ? Number.POSITIVE_INFINITY
+      : distanceBetween(from, waiting);
+  }
+
+  /**
+   * Whether serve is armed right now, read from the live car: the ice-cream
+   * truck is driving, it has jingled since the order opened, and it is within
+   * `SERVE_RANGE` of the house. The same answer drives both the ring the kid
+   * sees and the serve tap itself, so what is shown and what is honoured can
+   * never disagree.
+   */
+  function serveArmedNow(): boolean {
+    const waiting = orderPoint();
+    if (waiting === undefined) {
+      return false;
+    }
+    return serveGate.canServe(
+      fleet.activeId(),
+      orders.isServeReady(distanceBetween(carPosition(), waiting)),
+    );
+  }
+
+  /**
+   * The fire's feedback: how the remaining bursts are drawn, whether the hose
+   * button belongs on screen, and its celebration.
+   */
+  function tickFireMission(carPosition: Vec2): void {
+    const snapshot = mission.snapshot();
+
+    // The hose arrives with proximity and leaves with it. While a fire is
+    // burning the ability button *is* the hose button, so it only exists once
+    // the car is close enough to use it. An open order keeps the button: its
+    // jingle is how the kid answers one, wherever the truck happens to be.
+    const showAbility = !fireAwaitsKid(snapshot.state);
+    if (showAbility !== abilityVisible) {
+      abilityVisible = showAbility;
+      hud.setAbilityVisible(showAbility);
+    }
+
+    if (snapshot.fireHouseId === undefined) {
+      fire.extinguish();
+    } else {
+      fire.setBursts(snapshot.burstsLeft, fireTotal);
+    }
+
+    if (snapshot.state === 'complete') {
+      fireCelebration.fire(firePoint() ?? carPosition);
+    }
+  }
+
+  /**
+   * The order's feedback: the cone icon over the house, the jingle cue that
+   * arrives with it, and the handoff celebration.
+   */
+  function tickOrderMission(carPosition: Vec2): void {
+    const snapshot = orders.snapshot();
+
+    // The serve affordance: the ring blooms on the house on the frame serve is
+    // first armed, so "you are close enough, on the right truck, and it sang"
+    // reads as a place to tap rather than a state the kid has to deduce.
+    const armed = markerArmed(ORDER_CONE, snapshot.state, serveArmedNow());
+    if (armed && !serveArmed) {
+      const waiting = orderPoint();
+      if (waiting !== undefined) {
+        ring.show(waiting);
+      }
+    }
+    serveArmed = armed;
+
+    // The cone icon floats over the ordering house while the order is open, and
+    // the celebration clears it: one order, one beat of attention. Level-synced
+    // through the shared marker layer (FR2).
+    syncMarker(orderIsOpen(snapshot.state), orderMarker);
+
+    // Cues fire on the edge, never on the state: `spawned` lasts as long as the
+    // kid takes, but the jingle is owed once.
+    const beats = orderBeats(snapshot);
+    if (beats.orderOpened) {
+      // Sound and visual pair: the cone icon's other half is the truck's own
+      // jingle, which is exactly the hint about which vehicle delivers it.
+      audio.playAbility([{ kind: 'jingle' }]);
+    }
+    if (beats.served) {
+      // Two pairs, both complete: the cone handoff is the `cones` burst the
+      // free-play ability throws, with the same one-shot it sounds for `cones`
+      // there, and the win is the shared celebration plus the unified sparkle
+      // - nothing here is heard without being seen, or seen without a sound.
+      orderCelebration.fire(orderPoint() ?? carPosition);
+    }
+  }
+
+  /**
+   * One frame of the clean-up (FR1–FR5): the field bounces, the wheels
+   * collect whatever they pass, and the FSM learns how far the litter is. The
+   * pickup rules own *which* pieces and *when*; this owns the show around
+   * them — poofs, gulps, and the one celebration.
+   */
+  function tickParkMission(delta: number, carPosition: Vec2): void {
+    if (markerVisible(PARK_FIELD, park.snapshot().state)) {
+      world.litterField?.update(delta);
+    }
+    if (world.litter.length > 0) {
+      absorb(parkPickup.update(delta, carPosition, world.litter), true);
+    }
+    park.update(delta, distanceToLitter(carPosition));
+  }
+
+  /**
+   * Applies one pickup or sweep to the field, the mission and the show.
+   * `voiceGulp` is false for sweeps: the truck's cast already sounded the one
+   * gulp for the group (FR4), while each drive-over piece earns its own (FR3).
+   */
+  function absorb(result: PickupResult, voiceGulp: boolean): void {
+    if (result.collected.length === 0) {
+      return;
+    }
+    // Driving over the litter can *be* the answer (FR2's gesture, drive-first):
+    // the first piece taken while still `spawned` responds the mission — FSM
+    // synchronously, so `finish()` below always sees an answered errand — and
+    // morphs the fleet if the kid brought the wrong truck.
+    if (park.snapshot().state === 'spawned') {
+      void headToGarbageTruck();
+    }
+    const taken = new Set(result.collected.map((piece) => piece.id));
+    world.litter = world.litter.filter((piece) => !taken.has(piece.id));
+    for (const piece of result.collected) {
+      world.litterField?.remove(piece.id);
+      fx.burst('poof', piece.position, 0);
+    }
+    if (voiceGulp && result.gulp) {
+      audio.play('gulp');
+    }
+    const last = result.collected[result.collected.length - 1];
+    if (result.complete && park.finish() && last !== undefined) {
+      // `complete` only ever rides with a non-empty take (parkPickup's rule),
+      // so the last piece — and where it fell — is always here to celebrate.
+      parkCelebration.fire(last.position);
+    }
+  }
+
+  /**
+   * One frame of the errand (FR6–FR10): distances in, the edges that matter
+   * out — the scoop (paw clears, pup rides, heart blooms), the rider on the
+   * car, the run to the door, and the quiet stage reset after the cheer.
+   */
+  function tickPuppyMission(delta: number, carPosition: Vec2): void {
+    pawMarker.update(delta);
+    heartMarker.update(delta);
+
+    const spotAt = world.puppySpot?.position;
+    const ownerAt = ownerPoint();
+    const before = puppy.snapshot().state;
+    puppy.update(
+      delta,
+      spotAt === undefined
+        ? Number.POSITIVE_INFINITY
+        : distanceBetween(carPosition, spotAt),
+      ownerAt === undefined
+        ? Number.POSITIVE_INFINITY
+        : distanceBetween(carPosition, ownerAt),
+    );
+    const after = puppy.snapshot().state;
+
+    // One marker at a time, by state — the shared layer owns which (FR2):
+    // the paw while searching, the heart while carrying, neither otherwise.
+    syncMarker(markerVisible(PUPPY_PAW, after), pawMarker);
+    syncMarker(markerVisible(PUPPY_HEART, after), heartMarker, ownerAt);
+
+    if (before === 'searching' && after === 'carrying') {
+      // FR8/FR9: the paw was the last thing to point at; now the pup rides —
+      // the markers themselves followed the state rule above; this is the bark.
+      spotPup.visible = false;
+      riderPup.visible = true;
+      audio.play('bark');
+    }
+    if (after === 'carrying') {
+      // The little passenger stands on the roof, wherever the car is headed.
+      riderPup.position.set(carPosition.x, RIDE_HEIGHT, carPosition.z);
+    }
+
+    advanceDoorRun(delta);
+    if (before === 'complete' && after === 'idle') {
+      clearPuppyStage();
+    }
+  }
+
+  /** The hop-out glide: the spot pup closes from the car to the door (FR10). */
+  function advanceDoorRun(delta: number): void {
+    if (world.doorRun === undefined) {
+      return;
+    }
+    world.doorRun.t = Math.min(1, world.doorRun.t + delta / DOOR_RUN_SECONDS);
+    spotPup.position.x =
+      world.doorRun.from.x +
+      (world.doorRun.to.x - world.doorRun.from.x) * world.doorRun.t;
+    spotPup.position.z =
+      world.doorRun.from.z +
+      (world.doorRun.to.z - world.doorRun.from.z) * world.doorRun.t;
+    if (world.doorRun.t >= 1) {
+      world.doorRun = undefined;
+    }
+  }
+
+  /** The pup went inside; the street is clean for whatever is drawn next. */
+  function clearPuppyStage(): void {
+    spotPup.visible = false;
+    riderPup.visible = false;
+    pawMarker.hide();
+    heartMarker.hide();
+  }
+
+  /** FR10: hop out at the car, run to the door, then the town applauds. */
+  function deliverPuppy(ownerAt: Vec2): void {
+    if (!puppy.deliver()) {
+      return;
+    }
+    heartMarker.hide();
+    riderPup.visible = false;
+    spotPup.position.set(world.frameCarPosition.x, 0, world.frameCarPosition.z);
+    spotPup.visible = true;
+    world.doorRun = {
+      from: { ...world.frameCarPosition },
+      to: ownerAt,
+      t: 0,
+    };
+    puppyCelebration.fire(ownerAt);
+  }
+
+  /** Opens a clean-up: a fresh field, a reset collector, the town's chime. */
+  function startPark(): void {
+    if (!park.spawn()) {
+      return;
+    }
+    world.litter = spawnParkLitter({ grid });
+    parkPickup.reset();
+    if (world.litterField !== undefined) {
+      scene.remove(world.litterField.object);
+      world.litterField.dispose();
+    }
+    const field = createLitterField(world.litter);
+    world.litterField = field;
+    scene.add(field.object);
+    audio.play('chime');
+    parkCelebration.rearm();
+  }
+
+  /**
+   * Draws the pup's round (FR6): hiding spot, owner house ≥2 tiles away, the
+   * quiet whine, and the pending flag that makes the town busy and the hand
+   * point at the siren button until the kid answers.
+   */
+  function startPuppy(): void {
+    if (puppy.snapshot().state !== 'idle' || world.puppyPending) {
+      return;
+    }
+    const spot = puppySpots.drawSpot();
+    const ownerId = puppySpots.drawOwnerHouse(spot);
+    if (ownerId === undefined) {
+      return;
+    }
+    world.puppySpot = spot;
+    world.puppyOwnerHouseId = ownerId;
+    world.puppyPending = true;
+    spotPup.position.set(spot.position.x, 0, spot.position.z);
+    spotPup.visible = true;
+    riderPup.visible = false;
+    audio.play('bark');
+    // FR6: the pulse is the quiet town's ask; the siren's answer clears it.
+    hud.setPolicePulse(true);
+    puppyCelebration.rearm();
+  }
+
+  /** The nearest live piece of litter, for the hand's destination (FR12). */
+  function nearestLitterPoint(from: Vec2): Vec2 | undefined {
+    let bestDistance = Number.POSITIVE_INFINITY;
+    let best: Vec2 | undefined;
+    for (const piece of world.litter) {
+      const distance = distanceBetween(from, piece.position);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = piece.position;
+      }
+    }
+    return best;
+  }
+
+  /** How far the truck is from the nearest piece; infinity when none remain. */
+  function distanceToLitter(from: Vec2): number {
+    const nearest = nearestLitterPoint(from);
+    return nearest === undefined
+      ? Number.POSITIVE_INFINITY
+      : distanceBetween(from, nearest);
+  }
+
+  /** Where the owner's door is for this round, if the pup has been drawn. */
+  function ownerPoint(): Vec2 | undefined {
+    return world.puppyOwnerHouseId === undefined
+      ? undefined
+      : grid.houseById(world.puppyOwnerHouseId)?.position;
+  }
+
+  /** Puts a fire on a lot: mission state, visual and alarm in one step. */
+  function lightFire(houseId: string): boolean {
+    const lot = grid.houseById(houseId);
+    if (lot === undefined || !mission.spawn(houseId)) {
+      return false;
+    }
+    fire.place(lot.position);
+    fireTotal = mission.snapshot().burstsLeft;
+    fire.setBursts(fireTotal, fireTotal);
+    fireCelebration.rearm();
+    sun.hide();
+    audio.play('chime');
+    return true;
+  }
+
+  /** Opens an order at a lot: mission state and cone icon in one step. */
+  function lightOrder(houseId: string): boolean {
+    const lot = grid.houseById(houseId);
+    if (lot === undefined || !orders.spawn(houseId)) {
+      return false;
+    }
+    orderMarker.place(lot.position);
+    orderMarker.show();
+    // A fresh order starts with no jingle: the one that served the last cone
+    // must not carry over into this delivery.
+    serveGate.noteOrderOpened();
+    orderCelebration.rearm();
+    return true;
+  }
+
+  /**
+   * One shared calm gap for the town (spec FR11): the rotation says when the
+   * town is next due and, never the same mission twice, whose turn it is — so
+   * only one spawn can be considered per frame, and the chosen mission's own
+   * pacer picks where it lands.
+   */
+  function tickPacers(delta: number): void {
+    const due = rotation.update(delta, missions.isBusy());
+
+    if (due === 'fire') {
+      const house = pacer.pickHouse();
+      if (house !== undefined) {
+        lightFire(house);
+      }
+    } else if (due === 'iceCream') {
+      const house = orderPacer.pickHouse();
+      if (house !== undefined) {
+        lightOrder(house);
+      }
+    } else if (due === 'park') {
+      startPark();
+    } else if (due === 'puppy') {
+      startPuppy();
+    }
+  }
+
+  /**
+   * The registry's frame: it records the car's position and gives every
+   * mission its turn in order (FSM then feedback). The pacers and the helper
+   * hand follow in `tickMissions`, which stays at the edge until Phase 4.
+   */
+  function missionsTick(delta: number, carPosition: Vec2): void {
+    world.frameCarPosition = carPosition;
+    missions.tick(delta);
+  }
+
   async function mount(): Promise<void> {
-    const library = createModelLibrary();
+    library = createModelLibrary();
+    world.library = library;
     const town = await mountTown(grid, library);
     world.town = town;
     // The parked cars' faked shadows join the town's own graph: one static mesh
@@ -383,6 +1064,7 @@ export function createGame(deps: GameDeps): Game {
     motor = vehicle;
     world.motor = vehicle;
     vehicle.snapTo(spawn);
+    signalDriven();
 
     const spec = fleet.spec(fleet.activeId());
     const car = await createVehicleActor(library, spec.model, vehicle, {
@@ -426,5 +1108,23 @@ export function createGame(deps: GameDeps): Game {
 
   const ready = mount();
 
-  return { world, ready, advance };
+  return {
+    world,
+    ready,
+    driven,
+    advance,
+    missionsTick,
+    tickPacers,
+    absorb,
+    distanceToFire,
+    startPark,
+    startPuppy,
+    lightFire,
+    lightOrder,
+    activate,
+    swapVehicle,
+    headToGarbageTruck,
+    serveArmedNow,
+    deliverPuppy,
+  };
 }
