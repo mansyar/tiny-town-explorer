@@ -50,7 +50,7 @@
   - [x] Refactor + coverage (97.1% stmts / 87.06% branches / 96.66% funcs on `game.ts`; `main.ts` is 280 lines and rules-free)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `ffea223`
 
-## Phase 4 - Frame, thinning, freeze proof and docs (mixed)
+## Phase 4 - Frame, thinning, freeze proof and docs (mixed) [checkpoint: 4cde835]
 
 - [x] Task: The frame and the camera order (FR5, AC5) `8dc889c`
   - [x] Write failing tests in `game.test.ts`: the camera target is set inside the vehicle frame and the rig update runs *after* the game frame; `followSun` keeps its slot so the shadow map stays texel-still and the camera never lags a frame; the HUD ability-busy edge (the `fleet.isBursting()` comparison) fires exactly as today; the render loop starts before mounting resolves so the sky is on screen while the models stream in (red first)
@@ -64,4 +64,4 @@
   - [x] Run `game.test.ts` and confirm every case still passes with no edit — the contract is unchanged by the move (AC3) — the 43 Phase 3 cases went through the frame move untouched; only the camera port's own fake grew, as that task's red phase required
   - [x] Confirm `?calmGap=2` works in dev and a production build carries no trace of it — grep `dist` (AC8) — `pnpm build` emits a 49-entry / 4,238.80 KiB precache; the bundle contains no `URLSearchParams`, no `calmGapOverride` and no `devCalmGap`, so the override parser is tree-shaken out. The only surviving `calmGap` is the deps property name, which is FR9's data channel
   - [x] Update live docs (`README.md`, live `tech-stack.md` prose) to the new shape; leave `docs/playtest.md` and `conductor/archive/*` as written (NFR5) — the README's module map gained `game.ts` with a paragraph on the controller/edge split, and the tech stack gained a dated entry naming the moved identifiers; both historical paths are byte-identical
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `4cde835`
