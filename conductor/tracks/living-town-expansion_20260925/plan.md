@@ -155,11 +155,11 @@
   - [x] Verify ambient movement, harmless bonks, mission coexistence, and no route blockage. — Playwright pass at 1500×1050: all six actors moved, the hero took one bonk and still finished its route, no page or console errors, and a fire mission ran alongside traffic.
   - [x] Verify portrait and landscape camera behavior. — 750×1050 and 1050×750: the vertical extent stays 5.294 world units in both, the camera aspect tracks the canvas in both, the car stays framed, controls do not overlap play space, and no text appears.
   - [x] Verify offline reopen after the production build. — `pnpm preview` at 127.0.0.1:4173, 46 cached entries (30 GLB, 9 audio), then a full offline reload served by the service worker booted the town from cache with a 1500×1050 canvas, no page or console errors, and no visible text.
-  - [ ] Verify the iPad 9th-generation floor device where available. — awaiting the user's device.
-  - [~] Confirm frame rate remains at the established 60fps target. — Headless Chromium reports 4.14 ms average and 4.3 ms p95 per frame at 1500×1050 DPR 1 (uncapped `requestAnimationFrame`, so this is per-frame cost, not display rate) both settled and during a mission. That leaves roughly 12 ms of headroom per 16.7 ms frame, but the iPad 9th-generation floor device remains the deciding check.
+  - [x] Verify the iPad 9th-generation floor device where available. — The user ran the production build on the floor device over the LAN preview (`http://192.168.0.114:4173/`) and reported a pass on all five checks: frame smoothness, cat and rabbit visible on the roads alongside the SUV, harmless bonk that lets the car continue, fire mission coexistence, and portrait/landscape framing.
+  - [x] Confirm frame rate remains at the established 60fps target. — Headless Chromium reports 4.14 ms average and 4.3 ms p95 per frame at 1500×1050 DPR 1 (uncapped `requestAnimationFrame`, so this is per-frame cost, not display rate) both settled and during a mission, and the user confirmed the iPad 9th-generation floor device stayed smooth with the expanded roster.
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Present the complete automated and manual verification results.
+- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Present the complete automated and manual verification results.
   - [ ] Obtain explicit user confirmation.
   - [ ] Attach the final verification note and record the checkpoint SHA.
 
