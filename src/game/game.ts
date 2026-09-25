@@ -119,6 +119,11 @@ export interface GameHud {
   setAbilityVisible(visible: boolean): void;
   /** Pulse the police button while the town waits for the siren. */
   setPolicePulse(pulsing: boolean): void;
+  /**
+   * Answer a switch tap the moment it arrives, before the actor has loaded, and
+   * withdraw that answer when the request settles. `undefined` means none.
+   */
+  setPending(id: VehicleId | undefined): void;
 }
 
 /**
@@ -472,6 +477,10 @@ export function createGame(deps: GameDeps): Game {
   let latestDestinationGeneration = 0;
   let latestVehicleRequest = 0;
   let latestSelectionGeneration = 0;
+  // The generation of the switch tap the HUD is currently answering, if any. It
+  // is the same counter the arbitration already stamps, so the pending answer
+  // and the intent that supersedes it can never disagree about who is newest.
+  let pendingSelectionGeneration: number | undefined;
   let vehicleBusy = false;
   const vehicleQueue: PendingVehicleRequest[] = [];
   const vehicleReadyWaiters: Array<() => void> = [];
@@ -753,7 +762,25 @@ export function createGame(deps: GameDeps): Game {
     } catch {
       // Keep the queue alive even if a future port grows an unexpected throw.
       request.resolve(false);
+    } finally {
+      // Every accepted request ends in exactly one of commit or failure, so
+      // this is the one place the answer has to be withdrawn from. Arbitration
+      // still decides what became active; this only stops claiming otherwise.
+      settlePendingSelection(request);
     }
+  }
+
+  /**
+   * Withdraws the pending answer, but only from the request that raised it. A
+   * superseded request settling must leave the newest tap's answer standing, or
+   * a fast triple-tap would blink the ring off the vehicle the child last chose.
+   */
+  function settlePendingSelection(request: PendingVehicleRequest): void {
+    if (pendingSelectionGeneration !== request.generation) {
+      return;
+    }
+    pendingSelectionGeneration = undefined;
+    hud.setPending(undefined);
   }
 
   function waitForVehicleReady(): Promise<void> {
@@ -786,6 +813,9 @@ export function createGame(deps: GameDeps): Game {
       request.mode === 'selection' &&
       request.generation !== latestSelectionGeneration
     ) {
+      // Skipped as stale. It is still a terminal outcome for the answer, but
+      // only if it is the one holding it — a newer tap has already claimed it.
+      settlePendingSelection(request);
       request.resolve(false);
       drainVehicleQueue();
       return;
@@ -813,6 +843,12 @@ export function createGame(deps: GameDeps): Game {
     const generation = ++latestVehicleRequest;
     if (mode === 'selection') {
       latestSelectionGeneration = generation;
+      // Answer the tap here, in the same synchronous turn as the pointer event:
+      // everything below this line may await an actor load, and the button must
+      // not sit mute through it. Only a real tap answers — a mission's own morph
+      // and a direct swap are things the child did not ask for.
+      pendingSelectionGeneration = generation;
+      hud.setPending(id);
     }
 
     let resolveRequest!: (committed: boolean) => void;
