@@ -2,7 +2,6 @@
 
 ---
 
-- [x] **Track: Game Controller Extraction**
-  *Link: [./tracks/game-controller-extraction_20260924/index.md](./tracks/game-controller-extraction_20260924/index.md)*
-
-
+No tracks in progress. Finished tracks are archived under
+[`conductor/archive/`](./archive/), each keeping its specification, plan,
+checkpoints and git notes as the permanent record.
