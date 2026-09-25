@@ -1277,6 +1277,66 @@ describe('async intent arbitration (regression coverage)', () => {
     expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(secondPoint);
   });
 
+  it('keeps a pre-ready selection when the initial actor resolves', async () => {
+    const attached = deps();
+    const initialActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(initialActor.promise);
+    const game = createGame(attached);
+    await game.driven;
+    expect(game.world.actor).toBeUndefined();
+
+    const selectedActor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(selectedActor.promise);
+    const onAdd = attached.scene.add as ReturnType<typeof vi.fn>;
+    const onRemove = attached.scene.remove as ReturnType<typeof vi.fn>;
+    onAdd.mockClear();
+    onRemove.mockClear();
+
+    const selection = game.selectVehicle('police');
+    await settle();
+    const committedActor = testActor('selected-police');
+    selectedActor.resolve(committedActor);
+    await selection;
+
+    expect(game.world.actor).toBe(committedActor);
+    expect(onAdd).toHaveBeenCalledWith(committedActor.object);
+
+    const bootActor = testActor('initial');
+    initialActor.resolve(bootActor);
+    await game.ready;
+
+    expect(game.world.actor).toBe(committedActor);
+    expect(onAdd).not.toHaveBeenCalledWith(bootActor.object);
+    expect(onRemove).not.toHaveBeenCalledWith(committedActor.object);
+  });
+
+  it('waits for a claimed morph before committing a newer destination', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || newerPoint === undefined) {
+      throw new Error('The town, car, or spawn point is missing');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(house.position, house.position);
+    await Promise.resolve();
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await Promise.resolve();
+
+    expect(onSetPath).not.toHaveBeenCalled();
+
+    actor.resolve(testActor('fire'));
+    await Promise.all([newerTap, missionTap]);
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(newerPoint);
+  });
+
   it('does not resurrect an older route when the newest destination is unreachable', async () => {
     const { game, attached } = await booted();
     const motor = game.world.motor;
@@ -1327,9 +1387,9 @@ describe('async intent arbitration (regression coverage)', () => {
     expect(game.world.mission.snapshot().state).not.toBe('spawned');
 
     const newerTap = game.tapAt(newerPoint, newerPoint);
-    await newerTap;
+    await Promise.resolve();
     actor.resolve(testActor('fire'));
-    await missionTap;
+    await Promise.all([newerTap, missionTap]);
 
     expect(game.world.mission.snapshot().state).not.toBe('spawned');
     expect(game.world.fleet.activeId()).toBe('fire');
@@ -1357,9 +1417,9 @@ describe('async intent arbitration (regression coverage)', () => {
     expect(game.world.orders.snapshot().state).not.toBe('spawned');
 
     const newerTap = game.tapAt(newerPoint, newerPoint);
-    await newerTap;
+    await Promise.resolve();
     actor.resolve(testActor('iceCream'));
-    await missionTap;
+    await Promise.all([newerTap, missionTap]);
 
     expect(game.world.orders.snapshot().state).not.toBe('spawned');
     expect(game.world.fleet.activeId()).toBe('iceCream');
@@ -1390,9 +1450,9 @@ describe('async intent arbitration (regression coverage)', () => {
     expect(game.world.park.snapshot().state).not.toBe('spawned');
 
     const newerTap = game.tapAt(newerPoint, newerPoint);
-    await newerTap;
+    await Promise.resolve();
     actor.resolve(testActor('garbage'));
-    await missionTap;
+    await Promise.all([newerTap, missionTap]);
 
     expect(game.world.park.snapshot().state).not.toBe('spawned');
     expect(game.world.fleet.activeId()).toBe('garbage');
@@ -1509,14 +1569,13 @@ describe('async intent arbitration (regression coverage)', () => {
 
     const fireVehicle = testActor('fire');
     fireActor.resolve(fireVehicle);
-    await missionTap;
-    await Promise.resolve();
+    await settle();
     expect(game.world.actor).toBe(fireVehicle);
     expect(onHudActive).toHaveBeenLastCalledWith('fire');
 
     const iceCreamVehicle = testActor('iceCream');
     hudActor.resolve(iceCreamVehicle);
-    await selection;
+    await Promise.all([selection, missionTap]);
 
     expect(game.world.actor).toBe(iceCreamVehicle);
     expect(game.world.fleet.activeId()).toBe('iceCream');
@@ -1544,12 +1603,11 @@ describe('async intent arbitration (regression coverage)', () => {
 
     const onSetPath = vi.spyOn(motor, 'setPath');
     const childTap = game.tapAt(childPoint, childPoint);
-    await childTap;
-    expect(onSetPath).toHaveBeenCalledTimes(1);
-    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);
+    await Promise.resolve();
+    expect(onSetPath).not.toHaveBeenCalled();
 
     actor.resolve(testActor('fire'));
-    await settle();
+    await Promise.all([childTap, settle()]);
 
     expect(onSetPath).toHaveBeenCalledTimes(1);
     expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);

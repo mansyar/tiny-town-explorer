@@ -474,6 +474,7 @@ export function createGame(deps: GameDeps): Game {
   let latestSelectionGeneration = 0;
   let vehicleBusy = false;
   const vehicleQueue: PendingVehicleRequest[] = [];
+  const vehicleReadyWaiters: Array<() => void> = [];
 
   // The seam that lets new missions join without a new tick/tap block here
   // (spec FR13): every mission contributes, the registry owns order, and
@@ -755,12 +756,30 @@ export function createGame(deps: GameDeps): Game {
     }
   }
 
+  function waitForVehicleReady(): Promise<void> {
+    if (!vehicleBusy && vehicleQueue.length === 0) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => vehicleReadyWaiters.push(resolve));
+  }
+
+  function releaseVehicleReadyWaiters(): void {
+    if (vehicleBusy || vehicleQueue.length > 0) {
+      return;
+    }
+    const waiters = vehicleReadyWaiters.splice(0);
+    for (const resolve of waiters) {
+      resolve();
+    }
+  }
+
   function drainVehicleQueue(): void {
     if (vehicleBusy) {
       return;
     }
     const request = vehicleQueue.shift();
     if (request === undefined) {
+      releaseVehicleReadyWaiters();
       return;
     }
     if (
@@ -778,6 +797,7 @@ export function createGame(deps: GameDeps): Game {
     void runVehicleRequest(request).finally(() => {
       vehicleBusy = false;
       drainVehicleQueue();
+      releaseVehicleReadyWaiters();
     });
   }
 
@@ -1344,6 +1364,7 @@ export function createGame(deps: GameDeps): Game {
     audio.play('tap');
 
     await answerMissions(aim, context);
+    await waitForVehicleReady();
 
     // Mission claims are atomic, but their destination route is not. A newer
     // tap owns the route, and a failed required morph owns no route at all.
@@ -1498,6 +1519,12 @@ export function createGame(deps: GameDeps): Game {
       fitLength: spec.fitLength,
       castsShadow: false,
     });
+    // A mission or explicit selection may have committed while the first model
+    // was still loading. The boot actor is only the default; never overwrite a
+    // replacement that won during the driven-before-ready window.
+    if (actor !== undefined) {
+      return;
+    }
     scene.add(car.object);
     actor = car;
     world.actor = car;
