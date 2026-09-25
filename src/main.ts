@@ -1,6 +1,7 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createAudioEngine, type SampledSound } from './game/audio/audioEngine';
 import { SOUND_MODELS } from './game/audio/audioRegistry';
+import { loadSamples } from './game/audio/sampleLoader';
 import { createCameraRig } from './game/camera';
 import { createGame, type GameHud } from './game/game';
 import { createHoldGate } from './game/hud/holdGate';
@@ -81,12 +82,11 @@ async function main(): Promise<void> {
   // front so the very first tap has something to play; only `unlock` (below,
   // on the first pointerdown) makes any of it audible.
   const audio = createAudioEngine();
-  void Promise.all(
+  void loadSamples(
+    audio,
     // Object.entries widens every key to `string`; SOUND_MODELS keys are the
     // closed SampledSound union, so the assertion restores what the record knows.
-    (Object.entries(SOUND_MODELS) as [SampledSound, string][]).map(([id, url]) =>
-      audio.load(id, url),
-    ),
+    Object.entries(SOUND_MODELS) as [SampledSound, string][],
   );
 
   // The vehicle HUD only exists once the models are in, but the controller's

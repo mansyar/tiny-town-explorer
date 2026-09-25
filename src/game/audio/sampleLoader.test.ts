@@ -93,10 +93,11 @@ describe('optional sample loading', () => {
     const bark = deferred<void>();
     const load = vi.fn((id: SampledSound) => (id === 'tap' ? tap.promise : bark.promise));
     let settled = false;
-
-    void loadSamples({ load }, entries).then(() => {
+    const aggregate = loadSamples({ load }, entries);
+    void aggregate.then(() => {
       settled = true;
     });
+
     await Promise.resolve();
     expect(load.mock.calls.map(([id]) => id)).toEqual(['tap', 'bark']);
     expect(settled).toBe(false);
@@ -106,8 +107,7 @@ describe('optional sample loading', () => {
     expect(settled).toBe(false);
 
     tap.reject(new Error('decode failed'));
-    await Promise.resolve();
-    await Promise.resolve();
+    await aggregate;
     expect(settled).toBe(true);
   });
 
