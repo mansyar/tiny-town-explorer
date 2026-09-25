@@ -55,12 +55,12 @@
   - [x] Drive through all four missions with the existing traffic and parked cars.
   - [x] Confirm camera edges, markers, pond effects, target rings, bonks, shadows, and newest-tap behavior.
   - [x] Record before/after measurements and any visual differences.
-- [ ] Task: Complete the iPad 9th-generation pass
-  - [ ] Load the built/previewed app and check first-load behavior.
-  - [ ] Drive both districts and all four missions.
-  - [ ] Check the busiest spawn/transit moments for stutter and confirm the game remains calm and responsive.
-  - [ ] Rotate the device and confirm safe areas, HUD placement, and camera framing.
-  - [ ] Confirm the game still plays after going offline.
+- [x] Task: Complete the iPad 9th-generation pass
+  - [x] Load the built/previewed app and check first-load behavior.
+  - [x] Drive both districts and all four missions.
+  - [x] Check the busiest spawn/transit moments for stutter and confirm the game remains calm and responsive.
+  - [x] Rotate the device and confirm safe areas, HUD placement, and camera framing.
+  - [x] Confirm the game still plays after going offline.
 - [ ] Task: Finalize the technical record
   - [ ] Update `conductor/tech-stack.md` with the shipped before/after figures and the selected lever.
   - [ ] Update `docs/playtest.md` with desktop and device verdicts.
