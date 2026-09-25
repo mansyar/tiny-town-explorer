@@ -37,7 +37,7 @@
   - [x] Preserve camera follow/frame ordering, input routing, collision, traffic, mission, and audio behavior.
   - [x] Verify resource ownership, cloning, teardown, and disposal for any changed scene objects.
   - [x] Re-measure all representative windows; confirm the worst fresh-spawn window is at or below 50,000 triangles and draw calls do not increase.
-- [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
+- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] List changed code files and verify required test coverage for each.
   - [ ] Announce and run the exact automated test command.
   - [ ] Present the detailed desktop manual-verification plan and wait for explicit user feedback.
