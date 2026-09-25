@@ -126,7 +126,9 @@ function buildCreature(name: string, parts: readonly CreaturePart[]): Group {
     transform.updateMatrix();
 
     const bucket = byMaterial.get(part.material);
-    const geometry = part.geometry.clone().applyMatrix4(transform.matrix);
+    // Every part owns a uniquely built geometry, so it can be transformed in
+    // place instead of cloned first.
+    const geometry = part.geometry.applyMatrix4(transform.matrix);
     if (bucket) {
       bucket.geometries.push(geometry);
       continue;
@@ -271,6 +273,7 @@ function createRabbit(): Group {
 /** Creates a visual-only primitive actor and keeps its pose in sync. */
 function createCreatureActor(kind: CreatureKind, pose: TrafficPose): MountedActor {
   const object = kind === 'cat' ? createCat() : createRabbit();
+  disableRealShadows(object);
   const phase = kind === 'cat' ? 0 : 1.4;
   let time = 0;
 

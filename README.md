@@ -39,9 +39,10 @@ Four design pillars, held absolutely rather than aspired to:
   Every one ends the same way — confetti, the smiling sun, a cheer, a sparkle.
 - A helper hand that, after ten quiet seconds mid-mission, traces the route and
   performs a single demo tap — then backs off.
-- Six parked cars on the kerbs, and three more that wander the rings on their own
-  errands. They are scenery: silent, and bonked rather than blocked, so the truck
-  always carries on.
+- Six parked cars on the kerbs, four more that wander the rings on their own
+  errands, and a cat and a rabbit that potter along beside them. They are
+  scenery: silent, and bonked rather than blocked, so the truck always carries
+  on.
 - Parent settings behind a three-second hold on a small gear: sound, and the
   helper hand. No words, and nothing a child would stumble into.
 

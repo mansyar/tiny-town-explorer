@@ -221,6 +221,27 @@
   Physical iPad 9th-generation verification and cache-backed offline reopen
   were confirmed by the owner on 2026-09-25.
 
+- **Living town expansion (added 2026-09-25; verified 2026-09-25):** the ambient
+  roster grew from three cars to **four cars plus a cat and a rabbit**, all on
+  the same seeded `trafficBrain` and `createVehicleMotor` seams. The only new
+  motor input is `VehicleMotorOptions.halfLength` (default `0.43`), so a
+  creature's capsule matches its fitted box instead of a car-length body; every
+  internal `capsuleCentres` call threads it. The creatures are **three.js
+  primitives, not GLBs** — no new registry entry, no new precache entry, no new
+  provenance. They are merged **per material** with
+  `three/examples/jsm/utils/BufferGeometryUtils.js`, because a waddling,
+  hopping creature animates as one rigid body: one cat costs three draw calls
+  instead of twelve (the unmerged first pass cost +25 calls on the town, the
+  merge recovered half of that). All twelve ambient meshes stay out of the
+  shadow-map pass and ride the existing merged traffic blob mesh, whose height
+  helper now measures the creatures to their ear tips. Re-measured at
+  1500×1050 / DPR 1: fresh spawn **50,553 triangles / 180 calls** against a
+  re-measured baseline of 50,541 / 180 (+12 triangles, no new draw call);
+  worst window +12 calls, with the trade-off recorded in the track's
+  `measurements.md`. Final quality gates: **869 tests across 67 files**, Biome
+  and TypeScript clean, **49 precache entries / 4,246.61 KiB**, cache-backed
+  offline reopen, and owner-confirmed iPad 9th-generation play.
+
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
   oscillators; CC0 samples decoded to AudioBuffers. First-tap unlock,

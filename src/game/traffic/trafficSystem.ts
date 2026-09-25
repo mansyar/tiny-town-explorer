@@ -57,11 +57,17 @@ export interface TrafficActorExtents {
 }
 
 const CREATURE_EXTENTS: Readonly<Record<'cat' | 'rabbit', TrafficActorExtents>> = {
-  cat: { halfLength: 0.14, halfWidth: 0.11 },
-  rabbit: { halfLength: 0.12, halfWidth: 0.1 },
+  cat: { halfLength: 0.18, halfWidth: 0.12 },
+  rabbit: { halfLength: 0.17, halfWidth: 0.11 },
 };
 
-/** The fitted world footprint for one ambient actor profile. */
+/**
+ * The fitted world footprint for one ambient actor profile.
+ *
+ * The creature numbers are measured from the mounted primitive bounds in
+ * `trafficActors.ts` (tail tip to nose, widest paw to paw), so the box a child
+ * bonks is the body they can see.
+ */
 export function trafficActorHalfExtents(kind: TrafficActorKind): TrafficActorExtents {
   if (kind === 'cat' || kind === 'rabbit') {
     return CREATURE_EXTENTS[kind];
@@ -71,11 +77,13 @@ export function trafficActorHalfExtents(kind: TrafficActorKind): TrafficActorExt
 
 /** The blob-shadow height for one ambient actor profile. */
 export function trafficActorFittedHeight(kind: TrafficActorKind): number {
+  // The creatures are measured to their ear tips, so a hopping rabbit throws
+  // the same sun-offset shadow its height would really cast.
   if (kind === 'cat') {
-    return 0.22;
+    return 0.26;
   }
   if (kind === 'rabbit') {
-    return 0.28;
+    return 0.37;
   }
   return parkedCarFittedHeight(kind);
 }
