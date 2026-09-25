@@ -66,6 +66,7 @@ import { createVehicleMotor } from './vehicle/vehicleMotor';
 import {
   type AbilityEvent,
   createVehicleSystem,
+  VEHICLE_IDS,
   type VehicleId,
 } from './vehicle/vehicleSystem';
 
@@ -111,14 +112,17 @@ export interface GameAudio {
 export interface GameHud {
   /** Light up the vehicle the kid is driving. */
   setActive(id: VehicleId): void;
-  /** Point the ability button at the active vehicle's trick. */
-  setAbility(id: VehicleId): void;
   /** Dim the ability button while its one-shot is running. */
   setAbilityBusy(busy: boolean): void;
   /** Show or hide the ability button; it doubles as the hose button. */
   setAbilityVisible(visible: boolean): void;
   /** Pulse the police button while the town waits for the siren. */
   setPolicePulse(pulsing: boolean): void;
+  /**
+   * Answer a switch tap the moment it arrives, before the actor has loaded, and
+   * withdraw that answer when the request settles. `undefined` means none.
+   */
+  setPending(id: VehicleId | undefined): void;
 }
 
 /**
@@ -472,6 +476,10 @@ export function createGame(deps: GameDeps): Game {
   let latestDestinationGeneration = 0;
   let latestVehicleRequest = 0;
   let latestSelectionGeneration = 0;
+  // The generation of the switch tap the HUD is currently answering, if any. It
+  // is the same counter the arbitration already stamps, so the pending answer
+  // and the intent that supersedes it can never disagree about who is newest.
+  let pendingSelectionGeneration: number | undefined;
   let vehicleBusy = false;
   const vehicleQueue: PendingVehicleRequest[] = [];
   const vehicleReadyWaiters: Array<() => void> = [];
@@ -649,8 +657,11 @@ export function createGame(deps: GameDeps): Game {
   function activate(id: VehicleId): void {
     fleet.setActive(id);
     serveGate.noteActiveVehicle(id);
+    // One call, because the HUD derives the ability button from the committed
+    // vehicle. It used to take a second `hud.setAbility(id)` alongside this one;
+    // that left two functions able to write the same state, which is the defect
+    // class the pending answer's review fix removed.
     hud.setActive(id);
-    hud.setAbility(id);
   }
 
   /**
@@ -753,7 +764,25 @@ export function createGame(deps: GameDeps): Game {
     } catch {
       // Keep the queue alive even if a future port grows an unexpected throw.
       request.resolve(false);
+    } finally {
+      // Every accepted request ends in exactly one of commit or failure, so
+      // this is the one place the answer has to be withdrawn from. Arbitration
+      // still decides what became active; this only stops claiming otherwise.
+      settlePendingSelection(request);
     }
+  }
+
+  /**
+   * Withdraws the pending answer, but only from the request that raised it. A
+   * superseded request settling must leave the newest tap's answer standing, or
+   * a fast triple-tap would blink the ring off the vehicle the child last chose.
+   */
+  function settlePendingSelection(request: PendingVehicleRequest): void {
+    if (pendingSelectionGeneration !== request.generation) {
+      return;
+    }
+    pendingSelectionGeneration = undefined;
+    hud.setPending(undefined);
   }
 
   function waitForVehicleReady(): Promise<void> {
@@ -786,6 +815,9 @@ export function createGame(deps: GameDeps): Game {
       request.mode === 'selection' &&
       request.generation !== latestSelectionGeneration
     ) {
+      // Skipped as stale. It is still a terminal outcome for the answer, but
+      // only if it is the one holding it — a newer tap has already claimed it.
+      settlePendingSelection(request);
       request.resolve(false);
       drainVehicleQueue();
       return;
@@ -813,6 +845,19 @@ export function createGame(deps: GameDeps): Game {
     const generation = ++latestVehicleRequest;
     if (mode === 'selection') {
       latestSelectionGeneration = generation;
+      // Answer the tap here, in the same synchronous turn as the pointer event:
+      // everything below this line may await an actor load, and the button must
+      // not sit mute through it. Only a real tap answers — a mission's own morph
+      // and a direct swap are things the child did not ask for.
+      pendingSelectionGeneration = generation;
+      try {
+        hud.setPending(id);
+      } catch {
+        // Same reasoning as the guard in `runVehicleRequest`: a port that throws
+        // here would strand the request before it ever reaches the queue, so the
+        // tap would neither commit nor resolve. The answer is worth losing.
+        pendingSelectionGeneration = undefined;
+      }
     }
 
     let resolveRequest!: (committed: boolean) => void;
@@ -1454,6 +1499,31 @@ export function createGame(deps: GameDeps): Game {
     pressAbility();
   }
 
+  /**
+   * Fills the library's cache for every vehicle the child could switch into,
+   * while the boot overlay is still up.
+   *
+   * The child is already waiting here, every one of these four GLBs is already
+   * precached, and the work that follows — traffic actors, then the hero car —
+   * is all in flight regardless. So the warm is close to free, and it is the
+   * difference between a switch being a cache hit and a switch being a fetch
+   * nobody has started (FR2).
+   *
+   * Never awaited. A slow or failing warm must not hold the boot, and a warm
+   * that fails is not a boot failure: `load` evicts a failed model from the
+   * cache, so the tap that needs it retries, which is the existing recovery
+   * path and needs no help from here.
+   */
+  function warmFleet(): void {
+    for (const id of VEHICLE_IDS) {
+      // `load`, not `instantiate`: the warm wants the parsed template, and must
+      // not build a scene graph for a vehicle nobody is driving yet.
+      void library?.load(fleet.spec(id).model).catch(() => {
+        // Nothing to do, and nothing to say. A switch retries.
+      });
+    }
+  }
+
   async function mount(): Promise<void> {
     library = createModelLibrary();
     world.library = library;
@@ -1463,6 +1533,9 @@ export function createGame(deps: GameDeps): Game {
       onBaseReady: (group) => scene.add(group),
     });
     world.town = town;
+    // Started only once the base is on screen, so the warm rides behind the
+    // traffic and hero loads instead of competing with the town's own.
+    warmFleet();
     // The parked cars' faked shadows join the town's own graph: one static mesh
     // seated above the kerb top, so a car reads as resting on the street the way
     // the houses do rather than as a floating box.

@@ -125,10 +125,10 @@ async function main(): Promise<void> {
   let hud: VehicleHud | undefined;
   const hudPort: GameHud = {
     setActive: (id) => hud?.setActive(id),
-    setAbility: (id) => hud?.setAbility(id),
     setAbilityBusy: (busy) => hud?.setAbilityBusy(busy),
     setAbilityVisible: (visible) => hud?.setAbilityVisible(visible),
     setPolicePulse: (pulsing) => hud?.setPolicePulse(pulsing),
+    setPending: (id) => hud?.setPending(id),
   };
 
   // Dev-only, and dropped from production builds: `?calmGap=2` shortens the
@@ -272,8 +272,9 @@ async function main(): Promise<void> {
     });
     hud = hudControls;
     document.body.append(hudControls.element);
+    // One call: `setActive` records the committed vehicle, which is what the
+    // ability button is derived from.
     hudControls.setActive(game.activeVehicle());
-    hudControls.setAbility(game.activeVehicle());
   } catch (error) {
     // A failed initial load is a dead end by design, so clean up the things that
     // keep the page alive behind the retry icon: no ticking loop, no resize

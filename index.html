@@ -71,6 +71,9 @@
         height: 84px;
         justify-content: center;
         padding: 0;
+        /* The pending ring below is absolutely positioned against this button,
+           not against the HUD row behind it. */
+        position: relative;
         transition:
           transform 120ms ease-out,
           box-shadow 120ms ease-out;
@@ -85,6 +88,35 @@
           0 6px 0 rgb(0 0 0 / 18%),
           0 0 0 6px rgb(255 255 255 / 65%);
         transform: translateY(-6px) scale(1.08);
+      }
+      /* The answer to a switch tap, while the model is still coming.
+         A steady ring, drawn *outside* the active one, so "asked for" and
+         "driving" stay two readable things even when both are on screen at
+         once - which is exactly what a superseded tap produces. No lift and no
+         transform of its own: the active button's own lift must survive, and a
+         pending button is answering, not arriving. Steady rather than filling
+         because a warm switch is over in a few milliseconds, and an animation
+         that misreports a duration the child can perceive is worse than none.
+         The button already wears its own colour; the ability button beside it
+         is what takes the target vehicle's colour. */
+      .hud-button.is-pending::after {
+        background: #fff;
+        border-radius: 50%;
+        content: '';
+        inset: -13px;
+        opacity: 0.9;
+        pointer-events: none;
+        position: absolute;
+        -webkit-mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 4px),
+          #000 calc(100% - 3px)
+        );
+        mask: radial-gradient(
+          farthest-side,
+          transparent calc(100% - 4px),
+          #000 calc(100% - 3px)
+        );
       }
       .hud-button--fire {
         background: #e1473e;

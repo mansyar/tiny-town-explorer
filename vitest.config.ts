@@ -25,8 +25,12 @@ export default defineConfig({
         // contract remains measured in renderMetrics.test.ts.
         'src/game/renderProbe.ts',
         'src/game/hud/parentPanel.ts',
-        'src/game/hud/vehicleHud.ts',
         'src/game/hud/bootOverlay.ts',
+        // `vehicleHud.ts` used to sit on this list, and a review finding is why
+        // it no longer does: its pending-answer state machine shipped a bug that
+        // painted the ability button for a truck nobody was driving, and with no
+        // test here nothing could have caught it. The chrome is still verified
+        // by hand; the state machine now has `vehicleHud.test.ts`.
       ],
     },
   },

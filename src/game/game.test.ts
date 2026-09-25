@@ -1,5 +1,6 @@
 import type { Group } from 'three';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { VEHICLE_MODELS } from './assets/modelRegistry';
 import { createGame, type GameDeps } from './game';
 import { findPath } from './path/pathfinder';
 import { mountParkedShadows } from './town/parkedShadows';
@@ -8,6 +9,16 @@ import { mountTown } from './town/townRenderer';
 import { mountTrafficShadows } from './traffic/trafficShadows';
 import { createVehicleActor } from './vehicle/vehicleActor';
 import { createVehicleMotor, facingOf } from './vehicle/vehicleMotor';
+import { VEHICLE_IDS } from './vehicle/vehicleSystem';
+
+// The fleet warm is boot-time work this file has to watch, so the library fake
+// carries inspectable spies rather than an empty object. `vi.hoisted` because a
+// `vi.mock` factory is hoisted above the const it would otherwise close over.
+const fakeLibrary = vi.hoisted(() => ({
+  load: vi.fn(async (url: string) => ({ url })),
+  instantiate: vi.fn(async (url: string) => ({ url })),
+  dispose: vi.fn(),
+}));
 
 // The async model pipeline never runs in unit tests: the town, the traffic
 // actors and the car actor resolve from fakes while everything else stays
@@ -15,7 +26,7 @@ import { createVehicleMotor, facingOf } from './vehicle/vehicleMotor';
 // test owns the loading.
 vi.mock('./assets/modelLibrary', async (importOriginal) => ({
   ...((await importOriginal()) as Record<string, unknown>),
-  createModelLibrary: vi.fn(() => ({})),
+  createModelLibrary: vi.fn(() => fakeLibrary),
 }));
 vi.mock('./town/townRenderer', async (importOriginal) => ({
   ...((await importOriginal()) as Record<string, unknown>),
@@ -80,10 +91,10 @@ function deps(): GameDeps {
     hud: strict(
       {
         setActive: vi.fn(),
-        setAbility: vi.fn(),
         setAbilityBusy: vi.fn(),
         setAbilityVisible: vi.fn(),
         setPolicePulse: vi.fn(),
+        setPending: vi.fn(),
       },
       'hud',
     ),
@@ -256,10 +267,10 @@ describe('createGame controller seam (Phase 2)', () => {
       'sploosh',
     ]);
     expect(Object.keys(attached.hud).sort()).toEqual([
-      'setAbility',
       'setAbilityBusy',
       'setAbilityVisible',
       'setActive',
+      'setPending',
       'setPolicePulse',
     ]);
     expect(Object.keys(attached.camera).sort()).toEqual([
@@ -554,6 +565,10 @@ function holdMissionTap(game: ReturnType<typeof createGame>): Deferred<boolean> 
 // boundary per test: the production code must still receive a fresh actor for
 // each mount, while a test can replace one call with a deferred promise.
 beforeEach(() => {
+  // Call history only: these fakes keep their implementations, which are what
+  // every other test in this file is already resolving against.
+  fakeLibrary.load.mockClear();
+  fakeLibrary.instantiate.mockClear();
   vi.mocked(createVehicleActor).mockReset();
   vi.mocked(createVehicleActor).mockImplementation(async () => testActor());
 });
@@ -794,13 +809,15 @@ describe('session rules: the closures Phase 3 had to bring with them', () => {
   it('activates the fleet and tells the serve latch which truck is driving', async () => {
     const { game, attached } = await booted();
     const setActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
-    const setAbility = attached.hud.setAbility as ReturnType<typeof vi.fn>;
 
     game.activate('garbage');
 
     expect(game.world.fleet.activeId()).toBe('garbage');
+    // One call, not two. The HUD derives the ability button from the committed
+    // vehicle, so a second writer would be a second thing able to disagree
+    // about which truck is driving.
     expect(setActive).toHaveBeenCalledWith('garbage');
-    expect(setAbility).toHaveBeenCalledWith('garbage');
+    expect(setActive).toHaveBeenCalledOnce();
   });
 
   it('builds the replacement car before removing the old one', async () => {
@@ -1809,5 +1826,202 @@ describe('async intent arbitration (regression coverage)', () => {
 
     expect(onSetPath).toHaveBeenCalledTimes(1);
     expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);
+  });
+});
+
+describe('the pending answer to a switch tap', () => {
+  it('tells the HUD before the tap returns, with no await in between', async () => {
+    const { game, attached } = await booted();
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+
+    const selection = game.selectVehicle('police');
+
+    // The whole point of the track: the button is already answered here, while
+    // the actor is still unresolved. No `await` stands between them.
+    expect(onSetPending).toHaveBeenCalledWith('police');
+
+    actor.resolve(testActor('police'));
+    await selection;
+
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('clears the answer when the vehicle commits', async () => {
+    const { game, attached } = await booted();
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    const onSetActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+    onSetActive.mockClear();
+
+    await game.selectVehicle('garbage');
+
+    expect(game.activeVehicle()).toBe('garbage');
+    // The ring is gone and the real active state has taken over.
+    expect(onSetActive).toHaveBeenLastCalledWith('garbage');
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('clears the answer and keeps the old car when the model fails', async () => {
+    const { game, attached } = await booted();
+    game.activate('fire');
+    vi.mocked(createVehicleActor).mockRejectedValueOnce(new Error('404'));
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+
+    await game.selectVehicle('police');
+
+    // A failed switch must not leave a permanently ringed button, and must not
+    // invent an active vehicle that never mounted.
+    expect(game.activeVehicle()).toBe('fire');
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('keeps the newest tap answered while a superseded one commits', async () => {
+    const { game, attached } = await booted();
+    const first = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(first.promise);
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    const onSetActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+    onSetActive.mockClear();
+
+    const fireTap = game.selectVehicle('fire');
+    const garbageTap = game.selectVehicle('garbage');
+    const policeTap = game.selectVehicle('police');
+    expect(onSetPending).toHaveBeenLastCalledWith('police');
+
+    // The in-flight request commits even though it was superseded. That is the
+    // arbitration this track must not re-open, so the answer stays honest: the
+    // newer tap still owns the ring.
+    first.resolve(testActor('fire'));
+    await fireTap;
+    expect(onSetActive).toHaveBeenCalledWith('fire');
+    expect(onSetPending).toHaveBeenLastCalledWith('police');
+
+    await Promise.all([garbageTap, policeTap]);
+
+    // The skipped middle request never painted, and the newest tap won.
+    expect(onSetActive).not.toHaveBeenCalledWith('garbage');
+    expect(game.activeVehicle()).toBe('police');
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('raises no answer for a morph the child did not ask for', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses to claim');
+    }
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+
+    game.activate('police');
+    game.lightFire(house.id);
+    await game.tapAt(house.position, house.position);
+    // A mission's own morph is not a tap, so it gets no acknowledgement ring.
+    expect(onSetPending).not.toHaveBeenCalled();
+
+    onSetPending.mockClear();
+    await game.swapVehicle('iceCream');
+    // Nor does a direct swap, which the rule suite and the helper hand use.
+    expect(onSetPending).not.toHaveBeenCalled();
+  });
+});
+
+describe('warming the fleet while the child waits', () => {
+  /** Which hero model each vehicle id drives, in the registry's own keys. */
+  const HeroModelKey = {
+    fire: 'firetruck',
+    iceCream: 'iceCreamTruck',
+    garbage: 'garbageTruck',
+    police: 'police',
+  } as const satisfies Record<(typeof VEHICLE_IDS)[number], keyof typeof VEHICLE_MODELS>;
+
+  /** The four hero models a switch can need. */
+  const HeroModels = VEHICLE_IDS.map((id) => VEHICLE_MODELS[HeroModelKey[id]]);
+
+  it('requests every hero model through the library before ready', async () => {
+    const game = createGame(deps());
+    await game.ready;
+
+    const warmed = new Set(fakeLibrary.load.mock.calls.map(([url]) => url));
+    // Without the warm the only hero model anyone asks for is the one the boot
+    // mounts, and the other three are fetched by a child's first tap instead.
+    expect(HeroModels.every((url) => warmed.has(url))).toBe(true);
+  });
+
+  it('warms the templates without building an instance for each', async () => {
+    const game = createGame(deps());
+    await game.ready;
+
+    // `load`, never `instantiate`: a warm nobody asked to drive should not
+    // clone a scene graph, and a clone is the only thing the library charges
+    // real memory for.
+    expect(fakeLibrary.instantiate).not.toHaveBeenCalled();
+    // Exactly once each. A duplicate would be the same model parsed twice, and
+    // the library's cache would only keep the last of them.
+    expect(fakeLibrary.load).toHaveBeenCalledTimes(4);
+    const warmed = fakeLibrary.load.mock.calls.map(([url]) => url);
+    // Every load the warm issued is a hero model, so the controller has not
+    // quietly widened "warm the fleet" into warming the whole kit.
+    expect(warmed.filter((url) => !HeroModels.includes(url))).toEqual([]);
+  });
+
+  it('reaches ready even when a warm model fails, and reports nothing', async () => {
+    fakeLibrary.load.mockImplementationOnce(async () => {
+      throw new Error('404');
+    });
+    const game = createGame(deps());
+
+    await expect(game.ready).resolves.toBeUndefined();
+    await expect(game.driven).resolves.toBeUndefined();
+    // A warm that failed is not a boot failure, and has nothing to say to a
+    // child: the game simply boots and the tap that needs it retries.
+    expect(game.world.actor).toBeDefined();
+  });
+
+  it('keeps the town base ahead of the warm', async () => {
+    const attached = deps();
+    const group = { add: vi.fn() } as unknown as Group;
+    let baseReadyAt = -1;
+    let firstWarmAt = -1;
+    let tick = 0;
+    fakeLibrary.load.mockImplementation(async (url: string) => {
+      tick += 1;
+      if (firstWarmAt < 0) {
+        firstWarmAt = tick;
+      }
+      return { url };
+    });
+    vi.mocked(mountTown).mockImplementationOnce(
+      async (_grid, _library, _plan, options) => {
+        tick += 1;
+        baseReadyAt = tick;
+        options?.onBaseReady?.(group);
+        return { group, houseFootprints: new Map(), dispose: vi.fn() };
+      },
+    );
+
+    const game = createGame(attached);
+    await game.ready;
+
+    // The child is already looking at the town while the fleet warms behind it,
+    // which is the whole point of warming during the boot window.
+    expect(baseReadyAt).toBeGreaterThan(0);
+    expect(firstWarmAt).toBeGreaterThan(baseReadyAt);
+  });
+
+  it('leaves a switch to a warm model working', async () => {
+    const { game } = await booted();
+
+    // The warm is a cache fill, not a lease: switching to every warmed vehicle
+    // still commits through the ordinary queue.
+    for (const id of VEHICLE_IDS) {
+      await game.selectVehicle(id);
+      expect(game.activeVehicle()).toBe(id);
+    }
   });
 });
