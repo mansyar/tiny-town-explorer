@@ -49,44 +49,51 @@
   - **Red result:** `pnpm test -- src/game/traffic/trafficSystem.test.ts src/game/vehicle/vehicleMotor.test.ts` failed only on the new six-instance roster assertions and fitted-creature capsule assertion; 51 existing assertions passed.
   - **Commit:** `20b9be0` — `test(traffic): specify ambient roster contracts`
 
-- [ ] **Task: Implement the minimal typed ambient profile and movement extension**
-  - [ ] Reuse `createTrafficBrain`, `createVehicleMotor`, and the existing seeded RNG.
-  - [ ] Keep profile data in the traffic boundary and avoid a generalized entity/component framework.
-  - [ ] Extend the traffic roster without changing the hero vehicle or mission controllers.
-  - [ ] Preserve the existing lane-bias and parked-car-clearance contracts.
-  - [ ] Use smaller, fitted footprints for creature profiles.
-  - [ ] Keep every actor crashable and publish its live footprint through the existing obstacle seam.
+- [x] **Task: Implement the minimal typed ambient profile and movement extension**
+  - [x] Reuse `createTrafficBrain`, `createVehicleMotor`, and the existing seeded RNG.
+  - [x] Keep profile data in the traffic boundary and avoid a generalized entity/component framework.
+  - [x] Extend the traffic roster without changing the hero vehicle or mission controllers.
+  - [x] Preserve the existing lane-bias and parked-car-clearance contracts.
+  - [x] Use smaller, fitted footprints for creature profiles.
+  - [x] Keep every actor crashable and publish its live footprint through the existing obstacle seam.
+  - **Implementation:** Added the SUV, cat, and rabbit roster; fitted creature extents are shared by traffic footprints, motor capsules, and blob-shadow heights. Existing traffic brains, seeded starts, lane bias, and dynamic obstacle publication remain the movement path.
+  - **Commit:** `cd89651` — `feat(traffic): add living town ambient actors`
 
-- [ ] **Task: Verify the green movement implementation**
-  - [ ] Run the targeted traffic tests and confirm the new behavior passes.
-  - [ ] Run collision and vehicle-motor tests that cover dynamic, non-solid obstacles.
-  - [ ] Run the relevant `game.test.ts` cases to confirm traffic remains mission-independent.
-  - [ ] Refactor only duplicated profile/pose plumbing while tests remain green.
+- [x] **Task: Verify the green movement implementation**
+  - [x] Run the targeted traffic tests and confirm the new behavior passes.
+  - [x] Run collision and vehicle-motor tests that cover dynamic, non-solid obstacles.
+  - [x] Run the relevant `game.test.ts` cases to confirm traffic remains mission-independent.
+  - [x] Refactor only duplicated profile/pose plumbing while tests remain green.
+  - **Green result:** Traffic, shadow, brain, collision, motor, and controller suites passed (185 tests); `pnpm typecheck` and `pnpm check` passed.
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Review all changed logic files and their corresponding tests.
+- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Review all changed logic files and their corresponding tests.
   - [ ] Announce and run the exact phase test command.
   - [ ] Debug failures, document results, and obtain explicit user confirmation.
   - [ ] Attach a verification Git note and record the checkpoint SHA in `plan.md`.
 
 ## Phase 3 — Scene mounting, animation, and asset integration
 
-- [ ] **Task: Mount road and creature actors through the existing scene seam**
-  - [ ] Extend `trafficActors.ts` to draw the selected car and creature profiles.
-  - [ ] Reuse `ModelLibrary` for GLB-backed actors.
-  - [ ] Build creature visuals from compact, reusable primitives where possible.
-  - [ ] Keep actor scene nodes free of real shadow-map casting when using blob shadows.
-  - [ ] Sync position, heading, and profile-specific animation every frame.
+- [x] **Task: Mount road and creature actors through the existing scene seam**
+  - [x] Extend `trafficActors.ts` to draw the selected car and creature profiles.
+  - [x] Reuse `ModelLibrary` for GLB-backed actors.
+  - [x] Build creature visuals from compact, reusable primitives where possible.
+  - [x] Keep actor scene nodes free of real shadow-map casting when using blob shadows.
+  - [x] Sync position, heading, and profile-specific animation every frame.
+  - **Implementation:** Cars continue through the existing model-library path; cat and rabbit bodies use low-poly primitives, waddle/hop with their live pose, and the existing blob-shadow mesh supplies grounding.
+  - **Commit:** `cd89651` — `feat(traffic): add living town ambient actors`
 
-- [ ] **Task: Add only the required asset registrations**
-  - [ ] If an existing model is reused, avoid new registry imports.
-  - [ ] If a new GLB is genuinely required, add its `?url` registry entry, model-library coverage, and PWA precache verification.
-  - [ ] Measure asset size and triangle contribution before accepting it.
+- [x] **Task: Add only the required asset registrations**
+  - [x] If an existing model is reused, avoid new registry imports.
+  - [x] If a new GLB is genuinely required, add its `?url` registry entry, model-library coverage, and PWA precache verification.
+  - [x] Measure asset size and triangle contribution before accepting it.
+  - **Asset decision:** No new GLB or registry entry. The SUV reuses the existing model; creatures are primitive-built. Scene contribution will be measured against the track baseline in Phase 5.
 
-- [ ] **Task: Update controller wiring and lifecycle ownership**
-  - [ ] Mount the expanded traffic actor set through the existing game/controller path.
-  - [ ] Confirm update order remains compatible with the active vehicle, missions, and camera.
-  - [ ] Confirm teardown/disposal behavior covers all new scene nodes and resources.
+- [x] **Task: Update controller wiring and lifecycle ownership**
+  - [x] Mount the expanded traffic actor set through the existing game/controller path.
+  - [x] Confirm update order remains compatible with the active vehicle, missions, and camera.
+  - [x] Confirm teardown/disposal behavior covers all new scene nodes and resources.
+  - **Lifecycle decision:** Traffic continues to update before actor sync; primitive nodes use the existing scene ownership/disposal path and introduce no new ownership surface.
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [ ] Manually inspect actor scale, seating, facing, animation, shadows, and visual calmness.
