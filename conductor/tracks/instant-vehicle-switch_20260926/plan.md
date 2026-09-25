@@ -189,7 +189,7 @@ deliberately to reach it.
 Checkpoint: `15af3f5`, the last functional commit of the phase. No empty commit
 was created.
 
-## Phase 4 — Integration, documentation, and device verification
+## Phase 4 — Integration, documentation, and device verification [checkpoint: 352f640]
 
 - [~] **Task: Run the full automated quality gates** []
   - [x] Run `pnpm check`.
@@ -217,11 +217,57 @@ was created.
   - [x] **Run:** the owner ran the seven-step throttled-network plan on a desktop browser against the dev server on 2026-09-26 and **reported it passing**, then ran the physical iPad 9th-generation pass and **reported that passing** as well. Per-step observations were not captured on either device, so both records claim the plan as a whole rather than each step; the structural half of the cold-switch case (computed pseudo-element, ability icon following the pending vehicle) was independently confirmed in an automated browser session beforehand, and that is the evidence standing behind the ring rather than a restatement of the reports. A screenshot could not be captured in the automated environment, so the ring's appearance rests on the owner's eyes plus the computed-style check. The iPad pass carried the most weight of any check in this track, because the track's subject is decode latency and the floor device is where a fleet warm stops being free.
   - [x] **Commit:** `chore(conductor): document instant-switch verification`
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
-  - [ ] Present the complete automated and manual verification report.
-  - [ ] Await explicit user confirmation before marking the phase complete.
-  - [ ] Attach the detailed verification report to the last functional commit using Git notes.
-  - [ ] Record the checkpoint SHA in this plan and commit the plan update.
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** [352f640]
+  - [x] Present the complete automated and manual verification report.
+  - [x] Await explicit user confirmation before marking the phase complete.
+  - [x] Attach the detailed verification report to the last functional commit using Git notes.
+  - [x] Record the checkpoint SHA in this plan and commit the plan update.
+
+### Phase 4 implementation record (2026-09-26)
+
+`git diff --name-only a445c8a HEAD` over this phase returns **markdown only** —
+`conductor/tech-stack.md`, `docs/playtest.md` and this plan. No production or
+test file changed, so the protocol's coverage requirement is satisfied
+trivially: there is no logic here to leave uncovered. The code gates were run in
+Task 1 and re-run at the checkpoint.
+
+Four commits: `0cbd9e4` the quality-gate record, `fb498b2` the documentation,
+`c571acf` the browser verification, `352f640` the device pass.
+
+**The verification evidence is recorded by source, because the sources differ in
+strength and a later reader should not have to guess which claim rests on what.**
+- *Automated, in a real browser session:* the pending ring's computed
+  pseudo-element resolves to `content: ""`, `position: absolute`, `inset: -13px`
+  on all four sides, `background: rgb(255,255,255)`, mask applied; six HUD
+  buttons present; correct vehicle active. Plus the `position: relative` fault
+  this surfaced.
+- *The owner's eyes, reported passing:* the seven-step throttled desktop plan,
+  and the physical iPad 9th-generation pass.
+- *Not captured:* per-step detail on either device, and a screenshot. The
+  headless browser in this environment refuses capture without a visible desktop
+  window. The record claims each plan as a whole rather than dressing it up as
+  seven individually verified steps.
+
+**Why the iPad pass carried more weight than any other check here.** This
+track's entire subject is decode latency. A fleet warm that is free on a desktop
+can be the difference between an instant switch and a visible ring on the floor
+device, so the desktop pass alone would have been the wrong evidence.
+
+**Two limitations are recorded rather than smoothed over.** The ring is steady,
+so on a warm cache a switch lands before the ring is perceptible — intended, not
+a missing visual, and the reason every manual step throttles deliberately. And
+the "no second network request" guarantee belongs to `ModelLibrary`'s
+fetch-once-and-cache path, already pinned by `modelLibrary.test.ts`; it is not
+observable from `game.test.ts`, where `createVehicleActor` is mocked.
+
+**One item raised in the original audit and left unresolved:** `ICONS.iceCream`
+and `ABILITY_ICONS.iceCream` were reported as byte-identical path data, which
+would make the ice-cream select button and the ice-cream ability button the
+same picture. It was never in scope, was not verified this session, and remains
+a candidate for a short follow-up track. It is **not** claimed as fixed here.
+
+Checkpoint: `352f640`, the last functional commit of the phase. No empty commit
+was created.
 
 ## Stop conditions
 
