@@ -522,6 +522,15 @@ describe('per-car speed and turn rate (FR2)', () => {
     expect(motor.position.x).toBeCloseTo(0, 10);
     expect(motor.heading()).toBeCloseTo(2 * 0.05, 6);
   });
+
+  it('uses a smaller fitted capsule when an ambient creature asks for one', () => {
+    const points = capsuleCentres({ x: 0, z: 0 }, EAST, 0.08, 0.12);
+    expect(points[0]?.x).toBeCloseTo(0.04, 10);
+    expect(points[1]?.x).toBeCloseTo(-0.04, 10);
+
+    const carPoints = capsuleCentres({ x: 0, z: 0 }, EAST);
+    expect(carPoints[0]?.x).toBeCloseTo(CAR_HALF_LENGTH - CAR_RADIUS, 10);
+  });
 });
 
 describe('rotate-then-drive', () => {

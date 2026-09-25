@@ -25,7 +25,7 @@ function wander(traffic: TrafficSystem, frames: number): [number, number][][] {
 }
 
 describe('a self-contained traffic system (FR9)', () => {
-  it('publishes three live boxes under stable ids, and nothing else', () => {
+  it('publishes six live boxes under stable ids, and nothing else', () => {
     const traffic = createTrafficSystem({ grid, seed: 7 });
     const footprints = traffic.footprints();
 
@@ -33,6 +33,9 @@ describe('a self-contained traffic system (FR9)', () => {
       'traffic-0',
       'traffic-1',
       'traffic-2',
+      'traffic-3',
+      'creature-cat-0',
+      'creature-rabbit-0',
     ]);
     for (const obstacle of footprints) {
       expect(obstacle.shape.kind).toBe('box');
@@ -46,8 +49,33 @@ describe('a self-contained traffic system (FR9)', () => {
     }
   });
 
+  it('keeps creature footprints small and all ambient actors finite and crashable', () => {
+    const traffic = createTrafficSystem({ grid, seed: 7 });
+    const poses = traffic.poses();
+    const footprints = traffic.footprints();
+
+    expect(poses).toHaveLength(6);
+    expect(footprints).toHaveLength(poses.length);
+    expect(new Set(poses.map((pose) => pose.kind))).toEqual(
+      new Set(['parkedSedan', 'parkedHatchback', 'parkedVan', 'parkedSuv', 'cat', 'rabbit']),
+    );
+
+    for (const [index, pose] of poses.entries()) {
+      const shape = footprints[index]?.shape;
+      if (shape?.kind !== 'box') {
+        throw new Error('expected every ambient actor to publish a fitted box');
+      }
+      expect(footprints[index]?.solid).toBe(false);
+      expect(Number.isFinite(pose.position.x)).toBe(true);
+      expect(Number.isFinite(pose.position.z)).toBe(true);
+      if (pose.kind === 'cat' || pose.kind === 'rabbit') {
+        expect(shape.halfX).toBeLessThan(0.2);
+        expect(shape.halfZ).toBeLessThan(0.2);
+      }
+    }
+  });
   it('never publishes a wall: every box is crashable (FR4, FR8)', () => {
-    // With three wanderers two can share a lane; when they meet they squash
+    // With six ambient actors two can share a lane; when they meet they squash
     // past as the mover-to-mover comedy — crashable, never solid.
     const traffic = createTrafficSystem({ grid, seed: 7 });
     for (const obstacle of traffic.footprints()) {
@@ -74,8 +102,8 @@ describe('a self-contained traffic system (FR9)', () => {
     }
     // ...and neither ever teleported: one update is one frame of driving.
     for (const frame of trace) {
-      for (let car = 0; car < 3; car++) {
-        const [wasX, wasZ] = frame[car] ?? [Number.NaN, Number.NaN];
+      for (let actor = 0; actor < frame.length; actor++) {
+        const [wasX, wasZ] = frame[actor] ?? [Number.NaN, Number.NaN];
         expect(Number.isFinite(wasX)).toBe(true);
         expect(Number.isFinite(wasZ)).toBe(true);
       }
@@ -120,7 +148,7 @@ describe('a self-contained traffic system (FR9)', () => {
       const footprints = traffic.footprints();
       traffic.poses().forEach((pose, index) => {
         expect(footprints[index]?.id).toBe(pose.id);
-        expect(['parkedSedan', 'parkedHatchback', 'parkedVan']).toContain(pose.kind);
+        expect(['parkedSedan', 'parkedHatchback', 'parkedVan', 'parkedSuv', 'cat', 'rabbit']).toContain(pose.kind);
         const box = footprints[index]?.shape;
         if (box?.kind !== 'box') {
           throw new Error('expected a box footprint');
