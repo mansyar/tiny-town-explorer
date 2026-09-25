@@ -1,0 +1,16 @@
+Moves the completed Resilient Progressive Boot track from conductor/tracks/ to
+conductor/archive/, with spec.md, plan.md, metadata.json, and index.md intact, and
+repoints its registry entry at the archive path.
+
+Deliberate deviation from the review skill's cleanup step, which says to remove the
+track section from the Tracks Registry entirely. This project keeps completed
+tracks listed: both existing archived entries (Async Intent Arbitration and Living
+Town Expansion) remain in the registry as [x] with a link into conductor/archive/.
+Removing the entry would leave the registry with no record of the three tracks the
+project has actually shipped, so the established convention was followed instead.
+The registry is the project's track history, not a work queue.
+
+Leaves metadata.json at status "complete". The two older archived tracks still say
+"new", which is their own drift and is not being propagated backwards.
+
+conductor/tracks/ is empty again, matching the state before this track began.
