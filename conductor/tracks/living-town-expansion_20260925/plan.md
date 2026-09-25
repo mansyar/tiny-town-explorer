@@ -158,10 +158,10 @@
   - [x] Verify the iPad 9th-generation floor device where available. — The user ran the production build on the floor device over the LAN preview (`http://192.168.0.114:4173/`) and reported a pass on all five checks: frame smoothness, cat and rabbit visible on the roads alongside the SUV, harmless bonk that lets the car continue, fire mission coexistence, and portrait/landscape framing.
   - [x] Confirm frame rate remains at the established 60fps target. — Headless Chromium reports 4.14 ms average and 4.3 ms p95 per frame at 1500×1050 DPR 1 (uncapped `requestAnimationFrame`, so this is per-frame cost, not display rate) both settled and during a mission, and the user confirmed the iPad 9th-generation floor device stayed smooth with the expanded roster.
 
-- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [x] Present the complete automated and manual verification results.
-  - [ ] Obtain explicit user confirmation.
-  - [ ] Attach the final verification note and record the checkpoint SHA.
+  - [x] Obtain explicit user confirmation. — Approved.
+  - [x] Attach the final verification note and record the checkpoint SHA. — Checkpoint `8a62b63`; `git notes show 8a62b63`
 
 ## Phase 6 — Review, documentation, and closeout
 
