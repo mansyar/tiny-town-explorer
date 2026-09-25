@@ -1,0 +1,1 @@
+Phase 2 started after explicit checkpoint approval. The controller will own destination generations, a serialized vehicle-request queue, and mission morph-failure context; inputRouter remains synchronous and unchanged.
