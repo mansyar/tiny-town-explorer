@@ -754,3 +754,93 @@ cannot stand in for: the loading toy's presence and new squash, the first-tap
 audio unlock, and the failure-and-retry path that now removes the parent panel
 and install hint rather than leaving them frozen. No remaining open item from
 the review work.
+
+## Instant-answer vehicle switching (track `instant-vehicle-switch_20260926`)
+
+The vehicle switcher was the only control in the game with no answer inside a
+frame. `hud.setActive` is reached from `activate()`, which runs only after
+`commitVehicleActor` has awaited `loadVehicleActor` → `ModelLibrary.instantiate`
+→ `load`. `ModelLibrary` is fetch-once-and-cache and nothing preloaded the
+fleet, so the **first** tap of each of the four vehicles answered nothing while
+its model downloaded. On a cold first visit that is a beat measured in hundreds
+of milliseconds, on a shared family tablet, on the largest, brightest, most
+tempting control in the game — and it is the `product.md` "repeated ineffective
+taps" frustration marker arriving through exactly the wrong door.
+
+### Automated gates - 2026-09-26
+
+Biome clean (163 files), TypeScript clean, **892 tests across 69 files** (up from
+882 on `main`), overall coverage **92.05% statements / 87.76% branches**,
+`src/game/game.ts` at **94.89 / 86.66** (from 94.5 / 86.6 on record for
+game-controller-extraction). Production build reports **49 precache entries /
+4,250.34 KiB** — still 49 entries, so the track added no asset and no precache
+entry; the 1.31 KiB growth is the new CSS and the new controller code.
+
+Ten new cases in `game.test.ts`: five for the pending-answer contract and five
+for the fleet warm.
+
+### Browser checks performed - 2026-09-26
+
+Run against a dev server at `http://localhost:5173` (HTTP 200), in Chromium.
+
+**The ring resolves as designed.** With `is-pending` forced onto the garbage
+button while fire was active, the computed pseudo-element returns
+`content: ""`, `position: absolute`, `inset: -13px` on all four sides,
+`background: rgb(255, 255, 255)`, and the mask gradient applied. All six HUD
+buttons are present and the correct vehicle is active.
+
+**A real fault was caught here, not by reasoning.** `.hud-button` had no
+`position`, so the ring's absolutely positioned `::after` resolved against
+`.hud-vehicles` and would have drawn one ring per button at the row's origin.
+`position: relative` was added in `15af3f5`. The gap geometry — 18px row gap
+against a 13px ring, leaving 5px clear each side, with the leftmost button
+holding 20px plus its safe-area inset — was checked separately and was never at
+risk; the containing block was the actual defect, and only running the page
+surfaced it.
+
+### Manual verification - OUTSTANDING
+
+No manual or device result is claimed. The seven-step plan below was approved by
+the owner on 2026-09-26 and **has not been reported as performed**. A screenshot
+could not be captured in the automated environment (the headless browser refuses
+capture without a visible desktop window), so the ring's appearance is confirmed
+structurally and geometrically, not visually.
+
+Throttling is required, and this is not a workaround. The ring is steady rather
+than filling, so on a warm cache a switch lands within a few milliseconds and
+there is nothing to see — which is the intended result of the fleet warm, not a
+missing visual. The ring exists for the cold, blocked or slow-network case.
+
+1. Open the dev server, wait for the loading toy and then the town.
+2. DevTools → Network → Slow 3G, then hard-reload, so the fleet is cold.
+3. Tap a vehicle you are not driving. The button must ring **in the same frame**
+   as the tap, and the ability button must already show that vehicle's colour
+   and icon, *before* the car appears.
+4. Let it land: the ring clears, the button lifts into the active state, and
+   nothing is left ringed.
+5. Tap three vehicles in rapid succession (fire → garbage → police). The ring
+   must follow the finger to police. The fire button may briefly flash active
+   as its request commits — **that is correct**, it is the shipped arbitration.
+   Final state: police driving, nothing ringed.
+6. Disable throttling, reload, tap through all four. Switches should be
+   effectively instant.
+7. Confirm no regressions: drive, honk, ability, a mission, the parent panel,
+   mute, and no console errors.
+
+### Physical iPad 9th-generation pass - OUTSTANDING
+
+Not performed. This is the performance floor named in `product.md` and the
+device a shared family tablet actually means, and the switch is the interaction
+most likely to expose a slow decode on it.
+
+### Cases covered by unit tests rather than by hand
+
+- **Failure** (a blocked or 404 model): the pending answer is withdrawn, the
+  previous vehicle stays active, no button is left ringed, no unhandled
+  rejection escapes, and the boot itself still resolves. A later switch retries.
+- **Supersession** (fire → garbage → police): the pending answer stays on
+  police throughout, the skipped middle request neither raises nor clears an
+  answer, the in-flight fire commit still shows fire as active with the newer
+  ring still on, and the final state is police with nothing ringed.
+- **Non-taps**: a mission morph, the helper siren demo, and a direct swap never
+  raise a pending answer, because the child did not ask for them.

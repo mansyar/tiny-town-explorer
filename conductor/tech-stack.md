@@ -263,6 +263,63 @@
   files** at 91.4% statements / 87.39% branches overall, Biome and TypeScript
   clean, **49 precache entries / 4,249.03 KiB**. Scene inventory after the change
   measured 49,428 triangles, inside the standing budget.
+- **Instant-answer vehicle switching (added 2026-09-26)** — the vehicle switcher
+  was the only control in the game with no answer inside a frame: `hud.setActive`
+  is reached from `activate()`, which runs only after `commitVehicleActor` has
+  awaited `loadVehicleActor` → `ModelLibrary.instantiate` → `load`, and nothing
+  preloaded the fleet, so the first tap of each of the four vehicles was silent
+  while the model fetched. That is the `product.md` "repeated ineffective taps"
+  frustration marker arriving through the largest, brightest, most tempting
+  control in the game. Three additions, no new module, no new dependency, asset
+  or text surface:
+  - `GameHud` gains `setPending(id)`, answered from `enqueueVehicleRequest` in
+    the same synchronous turn as the pointer event — no `await` stands between
+    the tap and the answer. It is raised only for `selection` mode, so a
+    mission's own morph and a direct swap stay unacknowledged, as they should:
+    the child did not ask for those.
+  - The pending answer **reuses the generation counter the arbitration already
+    stamps** rather than introducing a second one, so the answer and the intent
+    that supersedes it cannot disagree about who is newest. `settlePendingSelection`
+    withdraws it on commit, on the stale-skip path, and in a `finally` covering
+    failure, each guarded so a superseded settle leaves the newest answer
+    standing. The queue, the generation scheme, `commitVehicleActor`,
+    `restoreVehicleActor` and `activate` are untouched, and the five
+    `async-intent-arbitration` regression cases pass unmodified.
+  - `warmFleet()` in `mount()` calls `ModelLibrary.load` for all four hero
+    models, fired once the town base is on screen and never awaited. It uses
+    `load` rather than `instantiate` so a warm nobody asked to drive never
+    builds a scene graph, and it is placed after the base-ready seam so it rides
+    behind the traffic and hero loads already in flight rather than competing
+    with the town's own ~25. It cannot hold `ready` by construction, and a
+    failed warm is silent by design — `load` evicts, so the tap that needs it
+    retries, which is the existing recovery path.
+  - Presentation: `is-pending` draws a steady white annulus via a masked
+    pseudo-element, reusing the `.panel-gate::after` hold-ring pattern. It sits
+    *outside* `.hud-button.is-active`'s 6px box-shadow ring (active reaches
+    ~96px, pending ~110px) so "asked for" and "driving" stay two readable
+    things when both are on screen, which is exactly what a superseded tap
+    produces. It sets no transform, because the active rule owns `transform` and
+    a pending transform would override an active button's lift — the same
+    reason the police beacon uses the separate `scale` property. Steady, not
+    filling: a warm switch lands in a few milliseconds, and an animation that
+    misreports a duration a child can perceive is worse than none.
+  - **`position: relative` on `.hud-button` is load-bearing, not cosmetic.** The
+    ring is an absolutely positioned pseudo-element; without it the ring
+    resolves against `.hud-vehicles` and draws one ring per button at the row's
+    origin. Found by running the app, not by reasoning about the gap geometry.
+  - Costs: about **1.31 KiB** on the precache, **no new precache entry** (still
+    49), no new draw call, no per-frame cost, and no measurable change to boot
+    wall-clock. Final quality gates: **892 tests across 69 files** at 92.05%
+    statements / 87.76% branches overall, Biome and TypeScript clean,
+    **49 precache entries / 4,250.34 KiB**. `game.ts` measures 94.89% statements
+    / 86.66% branches, up from the 94.5 / 86.6 recorded for
+    game-controller-extraction.
+  - **Known limitation, recorded so it is not later mistaken for a bug:** the
+    ring is steady, so on a warm cache a switch is over before the ring is
+    perceptible. It exists for the cold, blocked or slow-network case. And the
+    switch's "no second network request" guarantee is `ModelLibrary`'s
+    fetch-once-and-cache path, already pinned by `modelLibrary.test.ts`; it is
+    not observable from `game.test.ts`, where `createVehicleActor` is mocked.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
