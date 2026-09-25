@@ -74,3 +74,11 @@
 - Scene, visual, asset, and UI changes are manually verified as required by `conductor/workflow.md`.
 - Each task follows the standard commit, Git-note, plan-status, and plan-update lifecycle.
 - Phase verification pauses for explicit user feedback before a phase checkpoint is finalized.
+
+## Post-review corrections
+
+- [x] Task: Apply formal review findings `c8aa786`
+  - [x] Rename the development-only shadow experiment group to match the vehicle actors it actually selects.
+  - [x] Track orthographic viewport aspect in render-window context and flag mixed resize/rotation windows.
+  - [x] Add focused regression coverage and rerun the automated gates.
+  - [~] Re-review the corrected track and finalize the review checkpoint.
