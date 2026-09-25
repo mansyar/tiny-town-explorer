@@ -47,5 +47,29 @@ Do **not** add a custom camera-only visibility layer in this track. The evidence
 
 ## Notes
 
-- The headless browser reported an unrelated `Unable to decode audio data` console message while loading the audio samples; it did not prevent WebGL rendering or the measurement probe.
-- The probe is development-only and exposes no child-visible UI.
+## Shadow-pass candidate investigation
+
+The dev probe also toggled named shadow groups without changing the source. With the normal 8-unit extent, disabling road and non-car prop casters reduced a fresh-spawn sample from 55,150 / 240 to 51,230 / 186. Tightening the extent to 7 was close but remained above the target in some fresh-load windows. A 5.5-unit extent plus the hero vehicle opt-out produced a repeatable margin without removing any scene content.
+
+The selected production changes are:
+
+- road placements: `castsShadow = false`;
+- non-car prop placements: `castsShadow = false`;
+- hero vehicle actors: `castsShadow = false`;
+- `SUN_SHADOW_EXTENT`: `8 → 5.5`.
+
+The visual comparison retained house shadows, vehicle grounding, the shop/pond composition, and the existing parked/traffic blob-shadow language. No road, prop, car, traffic, or mission object was removed.
+
+## Shipped candidate measurements
+
+Measured from the actual source path after the changes, in Chromium at 1280×720 / DPR 1:
+
+| Window | Samples | Peak triangles | Peak calls |
+| --- | ---: | ---: | ---: |
+| Fresh spawn | 361 | 48,463 | 180 |
+| Transit peak | 605 | 46,477 | 176 |
+| Settled junction | 361 | 45,797 | 154 |
+| Dev-paced mission-active | 361 | 49,080 | 203 |
+
+The headless browser reported an unrelated `Unable to decode audio data` console message while loading the audio samples; it did not prevent WebGL rendering or the measurement probe.
+The probe is development-only and exposes no child-visible UI.

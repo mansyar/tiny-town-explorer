@@ -1,4 +1,5 @@
 import {
+  DirectionalLight,
   InstancedMesh,
   Mesh,
   type Object3D,
@@ -16,11 +17,21 @@ import {
 } from './renderMetrics';
 
 /** Dev-only browser controls used to collect named render windows. */
+/** Static scene groups used only for controlled shadow-pass experiments. */
+export type ShadowExperimentGroup =
+  | 'roads'
+  | 'props'
+  | 'roads-and-props'
+  | 'houses'
+  | 'hero';
+
 export interface RenderMetricsApi {
   start(name: string): void;
   stop(name: string): RenderWindowSummary;
   snapshot(): readonly RenderWindowSummary[];
   inventory(): RenderInventory;
+  setShadowGroup(group: ShadowExperimentGroup, enabled: boolean): void;
+  setShadowExtent(extent: number): void;
   clear(): void;
 }
 
@@ -79,6 +90,63 @@ function readRenderInventory(scene: Scene): RenderInventory {
   return { meshes, visibleMeshes, frustumCulledFalse, estimatedTriangles };
 }
 
+function belongsToShadowGroup(
+  node: Object3D,
+  scene: Scene,
+  group: ShadowExperimentGroup,
+): boolean {
+  const prefixes =
+    group === 'roads'
+      ? ['road-']
+      : group === 'props'
+        ? ['cone-', 'dumpster-', 'powerPole-', 'tree-']
+        : group === 'houses'
+          ? ['house-']
+          : group === 'hero'
+            ? ['vehicle']
+            : ['road-', 'cone-', 'dumpster-', 'powerPole-', 'tree-'];
+  let current: Object3D | null = node;
+  while (current !== null && current !== scene) {
+    if (prefixes.some((prefix) => current?.name.startsWith(prefix))) {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
+}
+
+function setShadowGroup(
+  scene: Scene,
+  group: ShadowExperimentGroup,
+  enabled: boolean,
+): void {
+  scene.traverse((node) => {
+    if (node instanceof Mesh && belongsToShadowGroup(node, scene, group)) {
+      node.castShadow = enabled;
+    }
+  });
+}
+
+function setShadowExtent(scene: Scene, extent: number): void {
+  if (!Number.isFinite(extent) || extent <= 0) {
+    throw new Error(`Shadow extent must be positive and finite, got ${extent}`);
+  }
+  let sun: DirectionalLight | undefined;
+  scene.traverse((node) => {
+    if (node instanceof DirectionalLight) {
+      sun = node;
+    }
+  });
+  if (sun === undefined) {
+    throw new Error('No directional light found for the shadow experiment');
+  }
+  sun.shadow.camera.left = -extent;
+  sun.shadow.camera.right = extent;
+  sun.shadow.camera.top = extent;
+  sun.shadow.camera.bottom = -extent;
+  sun.shadow.camera.updateProjectionMatrix();
+}
+
 /** Installs a development-only named-window probe on the browser target. */
 export function installRenderProbe(options: RenderProbeOptions): RenderProbe {
   const { renderer, scene, camera, focus, target } = options;
@@ -127,6 +195,12 @@ export function installRenderProbe(options: RenderProbeOptions): RenderProbe {
     },
     inventory(): RenderInventory {
       return readRenderInventory(scene);
+    },
+    setShadowGroup(group: ShadowExperimentGroup, enabled: boolean): void {
+      setShadowGroup(scene, group, enabled);
+    },
+    setShadowExtent(extent: number): void {
+      setShadowExtent(scene, extent);
     },
     clear(): void {
       active.clear();

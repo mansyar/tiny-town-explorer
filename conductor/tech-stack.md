@@ -204,6 +204,17 @@
   the same on the bigger town. Precache grows to **49 entries / 4,236.32
   KiB** (+1 GLB, +44.45 KiB; zero new audio — the sploosh is synthesized).
 
+- **Render budget recovery (added 2026-09-25):** the second district's
+  controlled DPR-1 browser baseline was 55,150 triangles / 240 calls at fresh
+  spawn. The shipped optimization keeps the town content but removes roads and
+  non-car props from the shadow-map pass, opts the hero vehicle out of its real
+  shadow pass, and narrows the car-following sun shadow extent from 8 to 5.5
+  world units. Re-measured through the dev post-render probe: 48,463 / 180 at
+  fresh spawn, 46,477 / 176 in transit, 45,797 / 154 at the settled junction,
+  and 49,080 / 203 in a dev-paced mission window. The visual pass retained
+  house shadows and the established blob-shadow language; no town content was
+  removed.
+
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
   oscillators; CC0 samples decoded to AudioBuffers. First-tap unlock,

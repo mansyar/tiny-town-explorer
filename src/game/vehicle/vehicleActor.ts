@@ -1,4 +1,4 @@
-import { Box3, Group, type Object3D, Vector3 } from 'three';
+import { Box3, Group, Mesh, type Object3D, Vector3 } from 'three';
 import type { ModelLibrary } from '../assets/modelLibrary';
 
 /**
@@ -105,6 +105,11 @@ export interface VehicleActorOptions {
    * scale, so they are measured and scaled down rather than re-authored.
    */
   readonly fitLength?: number;
+  /**
+   * Overrides the library's shadow-caster setting on every mounted mesh.
+   * Leave undefined to preserve the library default.
+   */
+  readonly castsShadow?: boolean;
 }
 
 /**
@@ -121,8 +126,15 @@ export async function createVehicleActor(
   motor: VehiclePose,
   options: VehicleActorOptions = {},
 ): Promise<VehicleActor> {
-  const { facingYaw = MODEL_FACING_YAW, fitLength } = options;
+  const { facingYaw = MODEL_FACING_YAW, fitLength, castsShadow } = options;
   const model = await library.instantiate(url);
+  if (castsShadow !== undefined) {
+    model.traverse((node) => {
+      if (node instanceof Mesh) {
+        node.castShadow = castsShadow;
+      }
+    });
+  }
   // Seat the model on the asphalt by measuring it, rather than trusting a
   // kit's origin convention: swapping in another vehicle must not float it.
   model.position.y -= new Box3().setFromObject(model).min.y;

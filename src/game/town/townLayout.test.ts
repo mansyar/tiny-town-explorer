@@ -189,6 +189,22 @@ describe('planTown — houses and props', () => {
     }
   });
 
+  it('keeps roads and non-car props out of the shadow-map pass', () => {
+    for (const placement of plan.placements) {
+      if (placement.kind !== 'model') {
+        continue;
+      }
+      if (placement.name.startsWith('road-')) {
+        expect(placement.castsShadow, placement.name).toBe(false);
+      }
+    }
+    for (const prop of grid.props) {
+      if (!isParkedCarKind(prop.kind)) {
+        expect(models(prop.id)?.castsShadow, prop.id).toBe(false);
+      }
+    }
+  });
+
   it('keeps parked cars out of the shadow-map pass (FR7)', () => {
     // The blob shadow exists because four more casters means re-rendering the
     // town per frame into a 1024 map. The library forces castShadow on every

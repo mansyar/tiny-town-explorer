@@ -43,9 +43,10 @@ describe('createScene', () => {
     if (sun instanceof DirectionalLight) {
       expect(sun.position.y).toBeGreaterThan(0);
       expect(sun.castShadow).toBe(true);
-      // Shadow frustum must cover the whole town so no house drops its shadow.
-      expect(sun.shadow.camera.right).toBeGreaterThanOrEqual(6);
-      expect(sun.shadow.camera.left).toBeLessThanOrEqual(-6);
+      // Shadow frustum is deliberately wider than the ~5.3-unit camera view,
+      // while staying tight enough to exclude distant town casters.
+      expect(sun.shadow.camera.right).toBe(5.5);
+      expect(sun.shadow.camera.left).toBe(-5.5);
     }
 
     dispose();

@@ -18,7 +18,7 @@ export const SKY_COLOR = 0x87ceeb;
  * performance-floor device because the frustum travels with the car (FR7)
  * instead of covering the whole town at once.
  */
-const SUN_SHADOW_EXTENT = 8;
+const SUN_SHADOW_EXTENT = 5.5;
 
 /**
  * Where the sun stands, in world units. Shared rather than private because it
