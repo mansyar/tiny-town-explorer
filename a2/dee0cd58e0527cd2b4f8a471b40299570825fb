@@ -1,0 +1,15 @@
+Records the owner-confirmed physical iPad 9th-generation recheck performed after
+the two review passes (7e00295 and 3b62885), and the review-fix history the
+track plan had not yet captured.
+
+docs/playtest.md gains a dated "Post-review fix recheck" entry tabulating all
+eight findings across both passes with how each was resolved, the two
+instrumented proofs (AudioContext construction counted at 1 -> 2 where the leak
+would have read 3; Enter navigations at 0 -> 1 against a pointer control), the
+final gates of 882 tests across 69 files and 49 precache entries / 4,249.68 KiB,
+and the note that no open item remains.
+
+plan.md gains a "Phase: Review Fixes" section listing each finding, the two
+commits that fixed them, the three deliberate non-changes with their reasons, and
+the same verification and device result. The figures in the earlier phase
+records are left untouched as historical measurements.
