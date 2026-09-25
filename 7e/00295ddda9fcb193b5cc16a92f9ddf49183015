@@ -1,0 +1,35 @@
+Review fixes for the Resilient Progressive Boot track, addressing all five findings.
+
+1. AC7 listener leak (main.ts): the one-shot first-gesture unlock is now a named
+   handler that the failure path removes. Previously a boot failure before any tap
+   left the listener live, so the retry tap ran audio.unlock() and rebuilt a fresh
+   AudioContext on an engine that had just been disposed.
+2. FR2/AC3 touch acknowledgement (bootOverlay.ts, main.ts): acknowledgeTouch() was
+   implemented and unit-tested but never called. The overlay now listens on its own
+   surface and answers a tap with a 220ms Web Animations squash on the loading toy,
+   gated by boot.acknowledgeTouch() so the lifecycle decides whether an answer is owed.
+   Restart-not-queue, so rapid taps each land.
+3. Console diagnosis (main.ts): the catch was an empty block, so a GLB that downloads
+   but fails to parse logged nothing while docs/cloudflare-pages.md told a grown-up to
+   check the console. Now logs "Tiny Town Explorers failed to start" with the error.
+   Still no visible text for a child.
+4. Type-safety (game.test.ts): removed a leftover red-phase cast
+   `mountTown as unknown as (...args: unknown[]) => ...` that erased the signature of
+   the exact API this track added. The test now mocks the real four-argument signature;
+   only the `group` stand-in carries one narrow, commented assertion.
+5. Frozen failure UI (main.ts): the failure path now disposes the parent panel and
+   dismisses the install hint, so neither a dark frozen card nor live listeners remain
+   behind the retry icon.
+
+Verification: pnpm check clean (162 files); pnpm typecheck clean; 882 tests across 69
+files pass; pnpm build succeeds at 49 precache entries / 4,249.47 KiB (+0.44 KiB).
+Browser-verified via Playwright: squash verified by sampling computed transform
+mid-animation (matrix(1.08541,0,0,0.914593,0,0) at 90ms, playState running, handing
+back to the CSS bounce at 390ms); first-load failure shows retry with install-hint
+display none and panel-root removed; console carries exactly the expected 404 plus the
+new named failure and no unhandled rejections; happy path still reaches ready with 6
+HUD buttons and the parent gear intact; retry click causes exactly 1 navigation,
+matching a plain-reload control.
+
+main.ts and bootOverlay.ts remain DOM glue, manually verified and excluded from
+coverage. No new dependency, asset, visible text, or product behavior.
