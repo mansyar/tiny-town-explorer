@@ -85,7 +85,14 @@ function deps(): GameDeps {
       'hud',
     ),
     scene: strict({ add: vi.fn(), remove: vi.fn() }, 'scene'),
-    camera: strict({ facing: { quaternion: { x: 0, y: 0, z: 0, w: 1 } } }, 'camera'),
+    camera: strict(
+      {
+        facing: { quaternion: { x: 0, y: 0, z: 0, w: 1 } },
+        setTarget: vi.fn(),
+        followSun: vi.fn(),
+      },
+      'camera',
+    ),
     grid: createTownGrid(),
   };
 }
@@ -206,7 +213,11 @@ describe('createGame controller seam (Phase 2)', () => {
       'setActive',
       'setPolicePulse',
     ]);
-    expect(Object.keys(attached.camera)).toEqual(['facing']);
+    expect(Object.keys(attached.camera).sort()).toEqual([
+      'facing',
+      'followSun',
+      'setTarget',
+    ]);
   });
 
   it('fires every mission celebration through the shared deps', async () => {
@@ -1049,5 +1060,110 @@ describe('the rest of the tap surface and the round edges', () => {
     game.missionsTick(0.016, motor.position);
     expect(game.world.orders.snapshot().state).toBe('complete');
     expect(confetti()).toBeGreaterThan(afterFire);
+  });
+});
+
+describe('the frame, the camera order and the boot window (Phase 4)', () => {
+  it('aims the camera inside the vehicle frame and never eases the rig itself', async () => {
+    const { game, attached } = await booted();
+    const setTarget = attached.camera.setTarget as ReturnType<typeof vi.fn>;
+    const followSun = attached.camera.followSun as ReturnType<typeof vi.fn>;
+    const motor = game.world.motor;
+    if (motor === undefined) {
+      throw new Error('The car is missing');
+    }
+    motor.snapTo({ x: motor.position.x + 1, z: motor.position.z + 1 });
+
+    game.advance(0.016);
+
+    // The target is the car, and the shadow frustum follows it in the same
+    // frame — in that order, so the map is texel-still while the town slides.
+    expect(setTarget).toHaveBeenCalledWith(motor.position);
+    expect(followSun).toHaveBeenCalledWith(motor.position);
+    expect(setTarget.mock.invocationCallOrder[0]).toBeLessThan(
+      followSun.mock.invocationCallOrder[0] ?? 0,
+    );
+    // The rig's own `update` is the edge's business; the camera port has no
+    // such member, so a call would have thrown through the proxy already.
+    expect(Object.keys(attached.camera).sort()).toEqual([
+      'facing',
+      'followSun',
+      'setTarget',
+    ]);
+  });
+
+  it('holds the camera still before the car exists, and follows it every frame after', async () => {
+    const attached = deps();
+    const game = createGame(attached);
+    const setTarget = attached.camera.setTarget as ReturnType<typeof vi.fn>;
+    const followSun = attached.camera.followSun as ReturnType<typeof vi.fn>;
+
+    // The boot window: the sky is up, the models are loading, the camera has
+    // nothing to follow yet.
+    game.advance(0.016);
+    game.advance(0.016);
+    expect(setTarget).not.toHaveBeenCalled();
+    expect(followSun).not.toHaveBeenCalled();
+
+    await game.ready;
+    game.advance(0.016);
+    game.advance(0.016);
+    expect(setTarget).toHaveBeenCalledTimes(2);
+    expect(followSun).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the ability-busy edge firing on the fleet clock, not every frame', async () => {
+    const { game, attached } = await booted();
+    const setBusy = attached.hud.setAbilityBusy as ReturnType<typeof vi.fn>;
+
+    game.advance(0.016);
+    game.advance(0.016);
+    // A quiet fleet never crosses the edge, so the button is never touched.
+    expect(setBusy).not.toHaveBeenCalled();
+
+    game.world.fleet.requestAbility();
+    game.advance(0.016);
+    expect(setBusy).toHaveBeenCalledTimes(1);
+    expect(setBusy).toHaveBeenLastCalledWith(true);
+
+    // Still bursting, still no edge.
+    game.advance(0.016);
+    expect(setBusy).toHaveBeenCalledTimes(1);
+
+    game.world.fleet.update(2);
+    game.advance(0.016);
+    expect(setBusy).toHaveBeenCalledTimes(2);
+    expect(setBusy).toHaveBeenLastCalledWith(false);
+  });
+
+  it('starts the loop before the mount resolves, so the sky is up while models stream (AC5)', () => {
+    const attached = deps();
+    let settled = false;
+    const game = createGame(attached);
+    // The mount is still in flight at the moment the edge gets its game.
+    void game.ready.then(() => {
+      settled = true;
+    });
+
+    expect(settled).toBe(false);
+    expect(typeof game.advance).toBe('function');
+    expect(game.world.spawn).toBeDefined();
+    expect(game.world.town).toBeUndefined();
+    expect(() => game.advance(1 / 60)).not.toThrow();
+  });
+
+  it('runs the whole mission frame from one advance call', async () => {
+    const { game, attached } = await booted();
+    const onRotation = vi.spyOn(game.world.rotation, 'update');
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses');
+    }
+
+    // The pacers and the hand are inside the frame now, not separate calls.
+    vi.mocked(findPath).mockClear();
+    game.advance(0.016);
+    expect(onRotation).toHaveBeenCalled();
+    expect(game.world.frameCarPosition).toEqual(game.world.motor?.position);
   });
 });

@@ -130,6 +130,18 @@ export interface GameScene {
 export interface GameCamera {
   /** The live camera the sun effect reads for its facing. */
   readonly facing: SunFacing;
+  /**
+   * Starts easing toward the car. Called inside the vehicle frame, before
+   * `followSun`, so the shadow map is aimed where the camera is already going.
+   * The rig's own `update` stays at the edge and runs after the game frame
+   * (FR5), which is why this port declares no `update`.
+   */
+  setTarget(point: Vec2): void;
+  /**
+   * Aims the sun's shadow frustum at the car, snapped to the shadow map's
+   * texels so the shadows never shimmer (FR7).
+   */
+  followSun(focus: { readonly x: number; readonly z: number }): void;
 }
 
 /** The dev-only calm-gap override, resolved at the edge and passed as data. */
@@ -219,8 +231,20 @@ export interface Game {
    * `main.ts`; `ready` is the heavier "everything is on screen" signal.
    */
   readonly driven: Promise<void>;
-  /** One frame of the world-owned systems; safe to call before `ready`. */
+  /** One frame of the whole game; safe to call before `ready`. */
   advance(deltaSeconds: number): void;
+  /** The dead-zone honk: the ring answers the tap and the car says hello. */
+  honk(at: Vec2): void;
+  /** Any touch at all is a kid playing, so the hand restarts its patience. */
+  noteActivity(): void;
+  /** The kid picked a vehicle on the HUD: morph the fleet, then the car. */
+  selectVehicle(id: VehicleId): Promise<void>;
+  /** The car's live position, for the input router at the edge. */
+  carPosition(): Vec2;
+  /** Which vehicle is driving, for the HUD's opening state. */
+  activeVehicle(): VehicleId;
+  /** The parent panel's helper toggle: the hand helps, or stays out of it. */
+  setHelperEnabled(enabled: boolean): void;
   /**
    * The registry pass for one frame: it records the car's position and gives
    * every mission its turn in registration order. Phase 4 folds this into
@@ -401,6 +425,9 @@ export function createGame(deps: GameDeps): Game {
   let library: GameWorld['library'];
 
   let abilityBusy = false;
+  // Bonks are counted here, not at the edge: the engine chime belongs to the
+  // car's frame, which is the controller's.
+  let bonks = 0;
   // The tap router is wired the moment the motor exists, which is the same edge
   // `main.ts` used to build it on; `ready` waits for the car model as well.
   let signalDriven: () => void = () => {};
@@ -1292,11 +1319,53 @@ export function createGame(deps: GameDeps): Game {
   }
 
   /**
-   * One frame of the world-owned systems, in the order the pieces depend on
-   * it. The DOM-owned chrome (hold gate, parent panel, install hint) and the
-   * vehicle frame (`tickVehicle`, the rig update) stay with `main.ts` until
-   * Phase 4; everything here guards the handles the mount has not landed yet,
-   * so calling it before `ready` only ticks what already exists.
+   * The car's frame: the engine note rides its speed, its bonks chime, the
+   * missions read its position, and the pond raises one splash per entry
+   * (FR4) — its droplet poof (FR10) the visual counterpart the sploosh
+   * always shares, so muted play still reads the water.
+   */
+  function tickVehicle(delta: number): void {
+    if (motor === undefined) {
+      return;
+    }
+    // The camera eases after the car, which is the only thing that moves.
+    camera.setTarget(motor.position);
+    // The sun's shadows ride with the car (FR7): the map stays texel-still
+    // while the town slides beneath it.
+    camera.followSun(motor.position);
+    // The engine note rides the speed: silent parked, chugging under way.
+    audio.setEngine(motor.isDriving() ? fleet.engineRate(motor.speed()) : 0);
+    if (motor.bonkCount() > bonks) {
+      bonks = motor.bonkCount();
+      audio.play('bonk');
+    }
+    tickMissions(delta, motor.position);
+    if (world.pondWatcher?.note(motor.position)) {
+      fx.burst('poof', motor.position, motor.heading());
+      audio.sploosh();
+    }
+  }
+
+  /**
+   * One tick of the town's own story: the registry gives every mission its
+   * frame in order (FSM then feedback), the pacers decide when the town is due
+   * another, and the hand offers one tap if the kid has gone quiet with one
+   * still waiting.
+   */
+  function tickMissions(delta: number, carPosition: Vec2): void {
+    missionsTick(delta, carPosition);
+    tickPacers(delta);
+    tickHelperHand(delta, carPosition);
+  }
+
+  /**
+   * One frame of the whole game, in the order the pieces depend on it. Named
+   * rather than inlined so the loop and any verification drive the same code.
+   * The rig's own easing stays at the edge and runs after this returns (FR5),
+   * so the camera never lags a frame behind the car it is chasing.
+   *
+   * Everything here guards the handles the mount has not landed yet, so
+   * calling it before `ready` only ticks what already exists.
    */
   function advance(deltaSeconds: number): void {
     // The wanderers go first, so the kid's sweep meets where they now stand.
@@ -1319,6 +1388,39 @@ export function createGame(deps: GameDeps): Game {
       abilityBusy = fleet.isBursting();
       hud.setAbilityBusy(abilityBusy);
     }
+    tickVehicle(deltaSeconds);
+  }
+
+  /** The dead-zone honk: the ring answers the tap and the car says hello. */
+  function honk(at: Vec2): void {
+    ring.show(at);
+    audio.honk();
+  }
+
+  /** Any touch at all is a kid playing, so the hand restarts its patience. */
+  function noteActivity(): void {
+    hand.noteActivity();
+  }
+
+  /** The kid picked a vehicle on the HUD: morph the fleet, then the car. */
+  async function selectVehicle(id: VehicleId): Promise<void> {
+    activate(id);
+    await swapVehicle(id);
+  }
+
+  /** The car's live position, for the input router at the edge. */
+  function carAt(): Vec2 {
+    return carPosition();
+  }
+
+  /** Which vehicle is driving, for the HUD's opening state. */
+  function activeVehicle(): VehicleId {
+    return fleet.activeId();
+  }
+
+  /** The parent panel's helper toggle: the hand helps, or stays out of it. */
+  function setHelperEnabled(enabled: boolean): void {
+    hand.setEnabled(enabled);
   }
 
   const ready = mount();
@@ -1328,12 +1430,22 @@ export function createGame(deps: GameDeps): Game {
     ready,
     driven,
     advance,
+    tapAt,
+    honk,
+    noteActivity,
+    selectVehicle,
+    pressAbility,
+    carPosition: carAt,
+    activeVehicle,
+    setHelperEnabled,
+    // The rule handles below are the contract suite's surface, not the edge's:
+    // `main.ts` reaches the game through the entries above and nothing else.
+    // They are what lets `game.test.ts` pin each rule in isolation instead of
+    // re-deriving it from a whole frame (AC3).
     missionsTick,
     tickPacers,
     absorb,
     distanceToFire,
-    pressAbility,
-    tapAt,
     tickHelperHand,
     startPark,
     startPuppy,

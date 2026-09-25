@@ -17,7 +17,6 @@ import { calmGapOverride } from './game/mission/devCalmGap';
 import { startRenderLoop } from './game/renderLoop';
 import { createScene } from './game/scene';
 import { createTownGrid } from './game/town/townGrid';
-import type { Vec2 } from './game/town/townTypes';
 
 /**
  * Creates the single WebGL renderer. Antialiasing, soft shadows, and a pixel
@@ -103,11 +102,14 @@ async function main(): Promise<void> {
     audio,
     hud: hudPort,
     scene,
-    camera: { facing: rig.camera },
+    camera: {
+      facing: rig.camera,
+      setTarget: (point) => rig.setTarget(point),
+      followSun: (focus) => followSun(focus),
+    },
     grid,
     calmGap,
   });
-  const world = game.world;
 
   // The parent settings, and the only way in: a three-second hold on the gear.
   const gate = createHoldGate();
@@ -118,7 +120,7 @@ async function main(): Promise<void> {
         hud?.setMuted(!on);
         return;
       }
-      world.hand.setEnabled(on);
+      game.setHelperEnabled(on);
     },
   });
   document.body.append(panel.element);
@@ -160,8 +162,6 @@ async function main(): Promise<void> {
     installHint.show();
   }
 
-  let bonks = 0;
-
   // The loop starts as soon as the controller returns, so the sky is on screen
   // while the models stream in.
   startRenderLoop(renderer, scene, rig.camera, ({ delta }) => advance(delta));
@@ -177,18 +177,17 @@ async function main(): Promise<void> {
   const router = createInputRouter({
     camera: rig.camera,
     grid,
-    getCarPosition: () => world.motor?.position ?? world.spawn,
+    getCarPosition: () => game.carPosition(),
   });
   renderer.domElement.addEventListener('pointerdown', (event) => {
     // The first gesture is the only thing that lets the browser start audio.
     void audio.unlock();
     // Any touch at all is a kid playing, so the hand restarts its patience.
-    world.hand.noteActivity();
+    game.noteActivity();
     const rect = renderer.domElement.getBoundingClientRect();
     const command = router.tapAt(ndcFromPoint(event.clientX, event.clientY, rect));
     if (command.kind === 'honk') {
-      world.ring.show(command.at);
-      audio.honk();
+      game.honk(command.at);
       return;
     }
     if (!router.isCurrent(command)) {
@@ -201,24 +200,22 @@ async function main(): Promise<void> {
 
   const hudControls = createVehicleHud({
     onSelect: (id) => {
-      game.activate(id);
-      void game.swapVehicle(id);
+      void game.selectVehicle(id);
     },
     onAbility: () => game.pressAbility(),
     onMute: (muted) => audio.setMuted(muted),
   });
   hud = hudControls;
   document.body.append(hudControls.element);
-  hudControls.setActive(world.fleet.activeId());
-  hudControls.setAbility(world.fleet.activeId());
+  hudControls.setActive(game.activeVehicle());
+  hudControls.setAbility(game.activeVehicle());
 
   /**
    * One frame of the whole game, in the order the pieces depend on it. Named
    * rather than inlined so the loop and any verification drive the same code.
    */
   function advance(delta: number): void {
-    // The world-owned half of the frame: wanderers, motor, actor, the feedback
-    // stack, the fleet's clock and the HUD's ability-busy edge.
+    // The game frame: the world, the car, and the town's own story.
     game.advance(delta);
     // The gear fills its ring while it is held, and the settings open on the
     // frame the hold completes - once, however long the finger stays down.
@@ -231,49 +228,8 @@ async function main(): Promise<void> {
       panel.show();
     }
     installHint.update(delta);
-    // The camera eases after the car, which is the only thing that moves.
-    tickVehicle(delta);
+    // The rig eases last, after the game frame, so the camera never lags.
     rig.update(delta);
-  }
-
-  /**
-   * The car's frame: the engine note rides its speed, its bonks chime, the
-   * missions read its position, and the pond raises one splash per entry
-   * (FR4) — its droplet poof (FR10) the visual counterpart the sploosh
-   * always shares, so muted play still reads the water.
-   */
-  function tickVehicle(delta: number): void {
-    const motor = world.motor;
-    if (motor === undefined) {
-      return;
-    }
-    rig.setTarget(motor.position);
-    // The sun's shadows ride with the car (FR7): the map stays texel-still
-    // while the town slides beneath it.
-    followSun(motor.position);
-    // The engine note rides the speed: silent parked, chugging under way.
-    audio.setEngine(motor.isDriving() ? world.fleet.engineRate(motor.speed()) : 0);
-    if (motor.bonkCount() > bonks) {
-      bonks = motor.bonkCount();
-      audio.play('bonk');
-    }
-    tickMissions(delta, motor.position);
-    if (world.pondWatcher?.note(motor.position)) {
-      world.fx.burst('poof', motor.position, motor.heading());
-      audio.sploosh();
-    }
-  }
-
-  /**
-   * One tick of the town's own story: the registry gives every mission its
-   * frame in order (FSM then feedback), the pacers decide when the town is due
-   * another, and the hand offers one tap if the kid has gone quiet with one
-   * still waiting.
-   */
-  function tickMissions(delta: number, carPosition: Vec2): void {
-    game.missionsTick(delta, carPosition);
-    game.tickPacers(delta);
-    game.tickHelperHand(delta, carPosition);
   }
 }
 
