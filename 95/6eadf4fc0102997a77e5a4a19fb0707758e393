@@ -1,0 +1,9 @@
+Review Fixes: applied the findings from the conductor-review of the whole track.
+
+Medium — driven could hang forever. createGame resolves driven mid-mount via signalDriven() and never rejected it, while main.ts awaits driven before ready. A mount that died earlier (a model fetch failing on a first offline visit) left main() parked on a promise nobody would settle, and the rejection landed on ready, which main never reached. Before the extraction the same failure sat directly inside main() and propagated out of it. Fixed by rejecting driven from the mount's own promise (void ready.catch(failDriven)), so the failure travels the path the edge is actually waiting on. Pinned red-first: with a rejected mountTown the new case times out on the unfixed code — the timeout IS the hang — and passes with the fix.
+
+Low — seven mount slots (motor, actor, traffic, trafficActors, trafficShadows, pondDucks, library) are one object in two places, a closure local plus a world.* field assigned on adjacent lines. Every assignment pair was verified consistent; the invariant is now written down at the declarations, with the note that a partial assignment would leave the app working off the local while the suite reads a stale mirror.
+
+Low — the ability-busy edge lost its hud !== undefined guard. Traced every pre-HUD path that can arm a burst: there is none (only the fire truck bursts, and the sole pre-HUD caller, the helper hand's siren demo, casts the police car's zero-second siren). Recorded as a comment on the edge rather than restored, so the reasoning survives the next cast change.
+
+Gates: biome 150 files clean, tsc clean, 843/843 tests (66 files) — the suite grew by the one regression case. Coverage on game.ts holds at 94.58% statements / 86.6% branches.
