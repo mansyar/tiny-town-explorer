@@ -9,6 +9,7 @@ import {
 const context: RenderContext = {
   focusX: 0,
   focusZ: 0,
+  viewportAspect: 16 / 9,
   zoom: 1,
   pixelRatio: 1.5,
   shadowPass: true,
@@ -72,6 +73,16 @@ describe('summarizeRenderWindow', () => {
     ]);
 
     expect(summary.contextConsistent).toBe(true);
+  });
+
+  it('flags a window that mixed viewport aspect ratios', () => {
+    const summary = summarizeRenderWindow('junction', [
+      sample(1, 40_000, 180),
+      sample(2, 41_000, 181, { viewportAspect: 4 / 3 }),
+    ]);
+
+    expect(summary.contextConsistent).toBe(false);
+    expect(summary.context).toEqual(context);
   });
 
   it('flags a window that mixed zoom, pixel-ratio, or shadow contexts', () => {

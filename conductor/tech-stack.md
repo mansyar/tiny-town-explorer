@@ -215,7 +215,7 @@
   junction, and **49,080 / 203** in a dev-paced mission window. The visual and
   device passes retained house shadows and the established blob-shadow
   language; no town content was removed and draw calls did not regress.
-  Final quality gates: **851 tests across 67 files**, Biome and TypeScript clean;
+  Final quality gates: **852 tests across 67 files**, Biome and TypeScript clean;
   the production PWA build generated **49 precache entries / 4,238.99 KiB**.
   The development-only render probe is excluded from the production bundle.
   Physical iPad 9th-generation verification and cache-backed offline reopen

@@ -12,6 +12,8 @@ export interface RenderContext {
   /** The camera focus point on the ground plane; it may follow the car. */
   readonly focusX: number;
   readonly focusZ: number;
+  /** The width-to-height ratio of the orthographic camera's view. */
+  readonly viewportAspect: number;
   /** The orthographic camera's zoom. */
   readonly zoom: number;
   /** The renderer's current pixel ratio. */
@@ -40,7 +42,7 @@ export interface RenderWindowSummary {
   readonly averageCalls: number;
   /** The first context in the window, for the report's assumptions. */
   readonly context: RenderContext | undefined;
-  /** False when a window mixed zoom, pixel-ratio, or shadow settings. */
+  /** False when a window mixed viewport, zoom, pixel-ratio, or shadow settings. */
   readonly contextConsistent: boolean;
 }
 
@@ -64,6 +66,7 @@ export interface RenderWindowRecorder {
 /** Whether two samples used the same non-positional measurement settings. */
 function sameContext(left: RenderContext, right: RenderContext): boolean {
   return (
+    left.viewportAspect === right.viewportAspect &&
     left.zoom === right.zoom &&
     left.pixelRatio === right.pixelRatio &&
     left.shadowPass === right.shadowPass

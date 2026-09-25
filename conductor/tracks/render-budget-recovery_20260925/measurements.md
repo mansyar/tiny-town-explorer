@@ -9,7 +9,7 @@ The dev-only `window.__tteRenderMetrics` probe samples `renderer.info.render` af
 
 - triangles and draw calls after the current render, including the shadow pass;
 - camera focus at the start of the window;
-- zoom, pixel ratio, and shadow-map mode as comparison settings.
+- viewport aspect, zoom, pixel ratio, and shadow-map mode as comparison settings.
 
 The controlled desktop pass used the Vite development server in Chromium at a 1280×720 viewport with device pixel ratio 1. The shadow map was enabled. The mission sample used the existing dev-only `?calmGap=2` override; production pacing was not changed.
 
@@ -76,8 +76,17 @@ The probe is development-only and exposes no child-visible UI.
 
 ## Phase 3 release verification
 
-The final quality-gate run was `pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build`: Biome checked 154 files, TypeScript passed, all 851 tests across 67 files passed, and the PWA build generated 49 precache entries / 4,238.99 KiB. The existing JavaScript chunk-size warning was unchanged.
+The final quality-gate run was `pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build`: Biome checked 154 files, TypeScript passed, all 852 tests across 67 files passed, and the PWA build generated 49 precache entries / 4,238.99 KiB. The existing JavaScript chunk-size warning was unchanged.
 
 A controlled Playwright/Chromium replay at 1280×720 / DPR 1 reproduced the shipped fresh-spawn result of 48,463 triangles / 180 calls after the authored town and seeded traffic settled. Real road-route windows measured 48,709 / 199, 48,343 / 198, 46,473 / 174, and 41,829 / 132; the recorded settled-junction reference remains 45,797 / 154. The desktop and physical iPad 9th-generation visual/gameplay checks were confirmed by the owner, including all four missions, traffic, parked cars, pond effects, target rings, bonks, shadows, rotation, and airplane-mode offline play.
 
 The production preview service worker controlled the page and a reload succeeded after the preview server was stopped, confirming cache-backed offline startup. The dev-only probe was absent from production.
+
+## Post-review probe corrections
+
+The formal review found two development-only measurement ambiguities, both corrected without changing shipped rendering or the recorded performance figures:
+
+- The shadow experiment group is now named `vehicles`, matching the actual `vehicle` actor wrapper shared by the hero and traffic actors. Traffic actors already use blob shadows and do not cast real shadows.
+- `RenderContext` now records the orthographic viewport aspect, so a named window that spans a resize or rotation is marked inconsistent instead of silently mixing camera framing.
+
+A regression test brings the current suite to 852 passing tests; the production PWA output remains 49 precache entries / 4,238.99 KiB.

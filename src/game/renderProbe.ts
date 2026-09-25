@@ -16,14 +16,13 @@ import {
   summarizeRenderWindow,
 } from './renderMetrics';
 
-/** Dev-only browser controls used to collect named render windows. */
-/** Static scene groups used only for controlled shadow-pass experiments. */
+/** Dev-only browser controls and static groups for controlled shadow-pass experiments. */
 export type ShadowExperimentGroup =
   | 'roads'
   | 'props'
   | 'roads-and-props'
   | 'houses'
-  | 'hero';
+  | 'vehicles';
 
 export interface RenderMetricsApi {
   start(name: string): void;
@@ -102,7 +101,7 @@ function belongsToShadowGroup(
         ? ['cone-', 'dumpster-', 'powerPole-', 'tree-']
         : group === 'houses'
           ? ['house-']
-          : group === 'hero'
+          : group === 'vehicles'
             ? ['vehicle']
             : ['road-', 'cone-', 'dumpster-', 'powerPole-', 'tree-'];
   let current: Object3D | null = node;
@@ -156,6 +155,7 @@ export function installRenderProbe(options: RenderProbeOptions): RenderProbe {
 
   const record = (): void => {
     frame += 1;
+    const viewportAspect = (camera.right - camera.left) / (camera.top - camera.bottom);
     const sample: RenderSample = {
       frame,
       triangles: renderer.info.render.triangles,
@@ -163,6 +163,7 @@ export function installRenderProbe(options: RenderProbeOptions): RenderProbe {
       context: {
         focusX: focus.x,
         focusZ: focus.z,
+        viewportAspect,
         zoom: camera.zoom,
         pixelRatio: renderer.getPixelRatio(),
         shadowPass: renderer.shadowMap.enabled,

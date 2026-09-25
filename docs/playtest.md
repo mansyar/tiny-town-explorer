@@ -606,7 +606,7 @@ pond/traffic content, clipping, or gameplay regression was observed.
 ### Production and offline verification
 
 The production build passed `pnpm check`, `pnpm typecheck`, `CI=true pnpm test`
-(**851 tests across 67 files**), and `pnpm build`. The PWA generated **49
+(**852 tests across 67 files**), and `pnpm build`. The PWA generated **49
 precache entries / 4,238.99 KiB**. The preview service worker registered,
 activated, controlled the page, and served the built document, manifest,
 JavaScript, audio, and model assets. With the preview origin stopped, a reload
