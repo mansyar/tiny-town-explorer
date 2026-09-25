@@ -1,0 +1,1 @@
+Living Town Expansion Phase 2 verification: six ambient profiles and fitted creature capsules implemented; 6 test files and 185 tests passed; pnpm typecheck passed; pnpm check passed; scope remained traffic, collision, motor, shadow, and controller sync only.
