@@ -23,9 +23,12 @@
   - [x] Confirm the roster contains 4–6 total instances.
   - **Roster decision:** Keep the three existing sedan/hatchback/van wanderers; add one `parkedSuv` road wanderer and two small creature profiles (`cat`, `rabbit`) for six total instances. The SUV uses the existing Car Kit model and fitted car extents. Creatures use low-poly primitive actors, their own fitted extents/heights, seeded routes, and gentle waddle/hop plus the motor's harmless bonk bounce. New instance IDs are `traffic-3`, `creature-cat-0`, and `creature-rabbit-0`; sides alternate `1`, `-1`, `1` across the new actors and speeds are `0.85`, `0.45`, and `0.35` world units per second respectively.
 
-- [ ] **Task: Lock the scope boundaries**
-  - [ ] Confirm no mission, input-router, persistence, HUD, or parent-panel changes are required.
-  - [ ] Record the accepted collision behavior as harmless, crashable, and non-blocking.
+- [x] **Task: Lock the scope boundaries**
+  - [x] Confirm no mission, input-router, persistence, HUD, or parent-panel changes are required.
+  - [x] Record the accepted collision behavior as harmless, crashable, and non-blocking.
+  - **Scope boundary:** Reuse the existing traffic, collision, render-loop, and scene-mount seams. Add only ambient actor types, deterministic movement/footprint contracts, primitive scene actors, and the one-time game update/sync wiring needed for their animation. Do not change mission/input-router semantics, persistence, HUD/parent controls, dependencies, or public product behavior.
+  - **Collision contract:** Every new actor publishes a live non-solid footprint; a contact uses the existing crashable bump-once-then-pass path, briefly recoils, never blocks a route, and never creates a failure state.
+  - **Commit:** `898c42c` — `chore(track): define living town ambient roster`
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [ ] Review the baseline and roster against the approved specification.
