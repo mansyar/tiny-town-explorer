@@ -179,7 +179,7 @@
   - [x] Block an audio sample and verify the game still reaches ready with all visual cues intact.
   - [x] Load the production preview, complete a first visit, enable airplane mode, and verify a cache-backed reopen reaches ready.
   - [x] Exercise representative vehicle selection, movement, traffic, pond, helper, and mission interactions after readiness.
-  - [ ] Run the physical iPad 9th-generation check at the existing render budget. — **outstanding, owner's device**
+  - [x] Run the physical iPad 9th-generation check at the existing render budget. — **passed, owner-confirmed**
   - [x] **Commit:** `chore(conductor): document resilient boot verification`
 
 ### Phase 5 browser verification record (2026-09-25)
@@ -209,16 +209,81 @@
   fully in-viewport at full touch size — vehicles 91×91, ability 96×96, mute
   72×72, parent gear 56×56 — with the overlay gone in both orientations.
 
-**Outstanding:** the physical iPad 9th-generation check is the owner's to run and
-is deliberately left unchecked, per the track's stop condition that an
-unavailable device step leaves the phase incomplete rather than marked by
-proxy.
+**Outstanding:** none. The physical iPad 9th-generation check was completed by the
+owner and passed — the loading toy is calm, first-tap audio unlock works during
+loading, the airplane-mode reopen reaches ready, and frame feel is unchanged
+while the world streams in.
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)**
-  - [ ] Present the complete automated and manual verification report.
-  - [ ] Await explicit user confirmation before marking the phase complete.
-  - [ ] Attach the detailed verification report to the last functional commit using Git notes.
-  - [ ] Record the checkpoint SHA in this plan and commit the plan update.
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** [3aef0cf]
+  - [x] Present the complete automated and manual verification report.
+  - [x] Await explicit user confirmation before marking the phase complete.
+  - [x] Attach the detailed verification report to the last functional commit using Git notes.
+  - [x] Record the checkpoint SHA in this plan and commit the plan update.
+
+### Phase 5 integration and device-verification record (2026-09-25)
+
+**Delivered**
+
+- The world mounts in two phases: `mountTown` places every ground quad first
+  and calls `TownMountOptions.onBaseReady` once, before the first awaited GLB,
+  and `game.mount` adds that group to the scene from the seam. Sky, ground and
+  roads are therefore on screen while models, traffic and the hero car load.
+- `bootStatus.ts` owns the pure `loading → ready | failed → retrying`
+  lifecycle, including one-shot retry and the rule that a late promise can
+  never overwrite a settled boot. `bootOverlay.ts` is the DOM over it: a
+  bouncing toy car while loading, one large round-arrow retry button on
+  failure, and no visible text in either state.
+- `main.ts` holds `driven` and `ready` in a single `try`/`catch`, creates
+  gameplay input and the vehicle HUD only after `ready`, and on failure stops
+  the render loop, disconnects the `ResizeObserver`, disposes audio and wires
+  the retry control to exactly one `location.reload()`.
+- First-gesture unlock moved to a one-shot window-level `pointerdown`, so a
+  touch on the loading overlay still starts the `AudioContext`.
+- `sampleLoader.ts` settles the nine optional samples with
+  `Promise.allSettled`, so one failed fetch or decode is silent rather than
+  fatal. The registry, URLs, decode path, synthesized voices, mute behaviour
+  and unlock path are unchanged, and a later load can still populate the clip.
+
+**Automated gates**
+
+- `pnpm check` — passed, 162 files, no fixes.
+- `pnpm typecheck` — passed.
+- `CI=true pnpm test` — **882 tests across 69 files passed**.
+- `CI=true pnpm test:coverage` — **91.4% statements / 87.39% branches / 93.19%
+  functions / 91.26% lines** overall, above the 80% logic target. `sampleLoader`
+  and `townRenderer` at 100%; `bootStatus` 94.44 / 88.88 / 85.71; `game.ts`
+  94.01 / 86.16 / 90.36.
+- `pnpm build` — succeeded; main chunk 707.40 kB (185.90 kB gzip). The known
+  Vite chunk-size warning persists and stays out of scope.
+- PWA precache — **49 entries / 4,249.03 KiB**, same entries as before and
+  about 2.4 KiB larger. `docs/cloudflare-pages.md` carried a stale "42 entries
+  / 3.3 MiB" figure and has been corrected.
+
+**Browser verification** — recorded in the task above and in `docs/playtest.md`:
+delayed models show the base first, a blocked model shows the retry icon with a
+stopped loop and exactly one reload, a blocked sample still reaches ready with
+zero unhandled rejections, the production preview's airplane-mode reopen still
+renders and animates, all four vehicles select, the ability and routed taps
+work, the parent hold opens, and every control stays in-viewport in portrait
+and landscape.
+
+**Target device** — the owner completed the physical iPad 9th-generation check
+and confirmed it passed: the loading toy is calm, first-tap audio unlock works
+during loading, the airplane-mode reopen reaches ready, and frame feel is
+unchanged while the world streams in.
+
+**Scope and deviations**
+
+- No new dependency, asset, framework, registry entry, or visible text surface.
+- No WebGL context-loss handling, service-worker/PWA redesign, bundle splitting,
+  CI/browser-test infrastructure, mission cycle cleanup, or mission/vehicle
+  semantics changes — all explicitly out of scope.
+- One in-flight fix beyond the original wording: the loading toy was first a
+  bare white icon that washed out against the ground, so it was given the same
+  chunky circular weight and palette as the HUD buttons (`fba6c30`).
+
+**Checkpoint:** `3aef0cf` (`feat(boot): gate gameplay and recover from initial
+mount failure`) carries the full verification record in its Git note.
 
 ## Stop conditions
 
