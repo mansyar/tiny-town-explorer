@@ -71,13 +71,13 @@ was created.
 
 ## Phase 2 — Warm the fleet during the boot window
 
-- [ ] **Task: Add red tests for boot-window prewarming** []
+- [x] **Task: Add red tests for boot-window prewarming** [12824f9]
   - [ ] Assert that all four hero vehicle URLs are requested through the library before `game.ready` resolves.
   - [ ] Assert that a prewarm request is a `load` (cached template), not an `instantiate`, so no instance is created during boot.
   - [ ] Assert that a rejected prewarm neither rejects `game.ready` nor `game.driven`, and produces no unhandled rejection.
   - [ ] Assert that prewarming does not change the order in which the town base, the hero actor, and the traffic mount.
   - [ ] Assert that a post-boot switch issues no second network request for a warmed model.
-  - [ ] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts`; record the intentional red baseline.
+  - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — recorded 70 pre-existing cases passing and the intentional red baseline: 3 of the 5 new cases fail. The other two pass vacuously (a failure path with no failure to absorb, and ordinary switching) and become load-bearing once the warm exists. **Commit:** `12824f9`
 
 - [ ] **Task: Implement non-blocking fleet prewarming** []
   - [ ] Start the warm in `game.mount`, after the town base is on screen and alongside the hero model's own load, iterating `VEHICLE_IDS` through `ModelLibrary.load`.
