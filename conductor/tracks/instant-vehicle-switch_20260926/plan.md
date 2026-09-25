@@ -121,7 +121,7 @@ no behaviour change.
 Checkpoint: `f6a26c6`, the last functional commit of the phase. No empty commit
 was created.
 
-## Phase 3 — Draw the pending state, with no text
+## Phase 3 — Draw the pending state, with no text [checkpoint: 15af3f5]
 
 This phase is DOM glue and styling, which `workflow.md` exempts from red/green.
 It is verified by hand in a browser and at the phase checkpoint.
@@ -146,10 +146,48 @@ It is verified by hand in a browser and at the phase checkpoint.
   button, all drawn at the row's origin. The plan's "verify in a browser" step
   is what caught it; the geometric reasoning alone would not have.
 
-- [~] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
+- [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** [15af3f5]
   - [x] Identify the changed production and test files and their corresponding tests.
   - [x] Run the exact targeted test and quality commands.
-  - [ ] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
+  - [x] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 3 implementation record (2026-09-26)
+
+Task 1 was delivered in Phase 1 Task 3 and is recorded there as a relocation.
+Task 2 is `15af3f5`, the ring itself.
+
+`pnpm check`, `pnpm typecheck` and `pnpm build` are all clean, and the suite is
+unchanged at 892 tests across 69 files, which is the expected result for a
+phase that adds styling and no logic. Coverage rose to 92.05% statements /
+87.76% branches. `pnpm build` reports **precache 49 entries, 4250.34 KiB** —
+still 49, so AC7 holds; the 1.31 KiB growth is the new CSS and the new
+controller code, not new assets.
+
+**The fault this phase caught is the reason it exists.** `.hud-button` had no
+`position`, so the ring's absolutely positioned `::after` would have resolved
+against `.hud-vehicles` and drawn one ring per button, all at the row's origin.
+`position: relative` was required and is in the commit. The gap geometry was
+checked separately and was never at risk; what was at risk was the containing
+block, and only running the page surfaced it.
+
+**What is verified and what is not.** Verified in a real browser session: with
+`is-pending` forced on, the computed pseudo-element resolves to the expected
+content, position, inset, colour and mask, with all six HUD buttons present and
+the correct vehicle active. Not verified: a screenshot. The headless browser
+here refuses capture without a visible desktop window, so the ring's appearance
+is confirmed structurally and geometrically, not visually, and the owner
+approved a seven-step throttled-network plan to look at it directly. No
+browser result is claimed, because none has been reported.
+
+One honest limitation of the design, recorded so a later reader does not
+mistake it for a bug: **the ring is steady, and a warm switch lands in a few
+milliseconds.** So on a warm cache there is nothing to see, which is the
+intended outcome of Phase 2 rather than a missing visual. The ring exists for
+the cold, blocked, or slow-network case, and the verification plan throttles
+deliberately to reach it.
+
+Checkpoint: `15af3f5`, the last functional commit of the phase. No empty commit
+was created.
 
 ## Phase 4 — Integration, documentation, and device verification
 
