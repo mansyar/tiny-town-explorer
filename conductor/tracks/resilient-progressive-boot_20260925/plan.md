@@ -147,14 +147,14 @@
 
 ## Phase 5 — Integration, documentation, and device verification
 
-- [x] **Task: Run the full automated quality gates** [670a379]
+- [x] **Task: Run the full automated quality gates** [a202486]
   - [x] Run `pnpm check`.
   - [x] Run `pnpm typecheck`.
   - [x] Run `CI=true pnpm test`.
   - [x] Run `CI=true pnpm test:coverage` and confirm new logic remains above 80%.
   - [x] Run `pnpm build`.
   - [x] Confirm the PWA precache still contains the required assets and record the current entry count/size.
-  - [x] **Commit:** `chore(conductor): record resilient boot quality gates` (`670a379`)
+  - [x] **Commit:** `chore(conductor): record resilient boot quality gates` (`a202486`)
 
 ### Phase 5 automated quality-gate record (2026-09-25)
 
