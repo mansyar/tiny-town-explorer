@@ -14,7 +14,7 @@
   - [x] Implement the smallest non-production measurement helper or dev-only harness needed to collect the existing `renderer.info.render` data.
   - [x] Measure fresh-spawn, transit-peak, settled-junction, mission-active, and traffic-active states using one consistent method.
   - [x] Record the baseline, command, viewport assumptions, and scene-state differences in the track artifacts.
-- [ ] Task: Investigate camera-only and built-in frustum culling
+- [~] Task: Investigate camera-only and built-in frustum culling
   - [ ] Verify the current scene's culling behavior and object bounds; confirm there are no hidden `frustumCulled` exceptions.
   - [ ] Compare total scene inventory with objects actually submitted in the camera and shadow passes.
   - [ ] Run a controlled manual-visibility experiment only if the baseline shows culling is not already handling the dominant cost.
