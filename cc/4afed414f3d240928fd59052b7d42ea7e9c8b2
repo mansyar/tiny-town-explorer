@@ -1,0 +1,26 @@
+Task: Establish a reproducible render-measurement contract.
+
+Summary:
+- Added a pure render-window contract that records post-render triangles/calls, camera focus, zoom, pixel ratio, and shadow-pass settings; reports frame span, peaks, means, and mixed-setting detection.
+- Added a dev-only browser probe with named start/stop/snapshot/clear controls and a scene inventory readout, while leaving production behavior free of the probe.
+- Extended the render loop with an optional post-render callback so samples represent the current WebGL frame.
+- Recorded controlled Chromium baseline windows and the culling finding: zero meshes disable frustum culling, so custom camera filtering was rejected as a likely source of regression without meaningful measured headroom.
+
+Files:
+- src/game/renderMetrics.ts
+- src/game/renderMetrics.test.ts
+- src/game/renderProbe.ts
+- src/game/renderLoop.ts
+- src/game/renderLoop.test.ts
+- src/main.ts
+- vitest.config.ts
+- conductor/tracks/render-budget-recovery_20260925/measurements.md
+
+Verification:
+- 849 tests passed across 67 files.
+- Overall coverage: 91.45% statements, 88.20% branches, 92.61% functions, 91.32% lines.
+- renderMetrics.ts: 100% coverage.
+- pnpm check, pnpm typecheck, and pnpm build passed.
+- Controlled 1280x720 DPR 1 browser baseline: fresh spawn peak 53,068 triangles / 235 calls; transit peak 53,214 / 236; settled 51,724 / 213; dev-paced mission 57,434 / 251.
+
+Why: establish trustworthy, repeatable evidence before selecting a rendering optimization, and prove whether camera-only visibility is useful rather than assuming it is.
