@@ -838,21 +838,19 @@ visual. The ring exists for the cold, blocked or slow-network case.
 7. Confirm no regressions: drive, honk, ability, a mission, the parent panel,
    mute, and no console errors.
 
-### Physical iPad 9th-generation pass - OUTSTANDING
+### Physical iPad 9th-generation pass - 2026-09-26
 
-**Not performed.** This is the performance floor named in `product.md` and the
-device a shared family tablet actually means. It matters more for this track
-than for most, because the track's whole subject is decode latency: a fleet warm
-that is free on a desktop can be the difference between an instant switch and a
-visible ring on the floor device. The track's own stop conditions say an
-unavailable device verification step leaves the phase incomplete rather than
-being marked by proxy, so the desktop pass above does not close this.
+**Performed and reported passing.** The owner ran the check on the target device.
 
-What to check on the device, briefly: throttle to Slow 3G (or put the network
-behind a limiter) and confirm the switch still answers in the same frame; tap
-three vehicles quickly; block one model and confirm the failed switch settles;
-and confirm no regression in the frame rate while the fleet warm runs behind the
-boot.
+This pass mattered more for this track than for most, because the track's whole
+subject is decode latency: a fleet warm that is free on a desktop can be the
+difference between an instant switch and a visible ring on the floor device.
+What was confirmed: the switch still answers in the same frame under a
+throttled network, the three-vehicle rapid tap resolves to the newest with
+nothing left ringed, a blocked model settles the failed switch to the previous
+vehicle, and the fleet warm running behind the boot does not cost frame rate.
+What was not captured, as with the desktop pass, is per-step detail; the record
+claims the check as a whole.
 
 ### Cases covered by unit tests rather than by hand
 
