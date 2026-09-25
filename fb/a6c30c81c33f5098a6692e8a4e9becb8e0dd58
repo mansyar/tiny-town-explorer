@@ -1,0 +1,1 @@
+Follow-up polish to the zero-text boot overlay: the loading toy now wears the same chunky circular weight and palette as the HUD buttons (warm red plate, 4px white border, soft outer ring) so it stays legible over sky, road, or grass instead of washing out. Verified by screenshot in Chromium.
