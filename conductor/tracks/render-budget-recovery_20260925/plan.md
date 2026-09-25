@@ -9,11 +9,11 @@
 
 ## Phase 1 — Baseline and culling evidence
 
-- [~] Task: Establish a reproducible render-measurement contract
-  - [ ] Write failing tests for the logic that classifies and records a measured render window, including camera state, shadow-pass inclusion, triangles, and draw calls.
-  - [ ] Implement the smallest non-production measurement helper or dev-only harness needed to collect the existing `renderer.info.render` data.
-  - [ ] Measure fresh-spawn, transit-peak, settled-junction, mission-active, and traffic-active states using one consistent method.
-  - [ ] Record the baseline, command, viewport assumptions, and scene-state differences in the track artifacts.
+- [x] Task: Establish a reproducible render-measurement contract `cc4afed`
+  - [x] Write failing tests for the logic that classifies and records a measured render window, including camera state, shadow-pass inclusion, triangles, and draw calls.
+  - [x] Implement the smallest non-production measurement helper or dev-only harness needed to collect the existing `renderer.info.render` data.
+  - [x] Measure fresh-spawn, transit-peak, settled-junction, mission-active, and traffic-active states using one consistent method.
+  - [x] Record the baseline, command, viewport assumptions, and scene-state differences in the track artifacts.
 - [ ] Task: Investigate camera-only and built-in frustum culling
   - [ ] Verify the current scene's culling behavior and object bounds; confirm there are no hidden `frustumCulled` exceptions.
   - [ ] Compare total scene inventory with objects actually submitted in the camera and shadow passes.
