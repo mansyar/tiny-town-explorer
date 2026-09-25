@@ -1,4 +1,13 @@
-import { ConeGeometry, Group, Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
+import {
+  type BufferGeometry,
+  ConeGeometry,
+  Group,
+  Mesh,
+  MeshLambertMaterial,
+  Object3D,
+  SphereGeometry,
+} from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { ModelLibrary } from '../assets/modelLibrary';
 import { PARKED_CAR_MODELS } from '../assets/modelRegistry';
 import { PARKED_CAR_FIT } from '../town/townTypes';
@@ -80,103 +89,183 @@ const RABBIT_BODY = 0xd9c7b0;
 const RABBIT_INNER_EAR = 0xf2a6a6;
 const CREATURE_EYE = 0x2b2b2b;
 
-/** A low-poly cat facing +z, the town's heading convention. */
-function createCat(): Group {
+/** One primitive of a creature, in the creature's local space. */
+interface CreaturePart {
+  readonly geometry: SphereGeometry | ConeGeometry;
+  readonly material: MeshLambertMaterial;
+  readonly name: string;
+  readonly position: readonly [number, number, number];
+  readonly rotation?: readonly [number, number, number];
+  readonly scale?: readonly [number, number, number];
+}
+
+/**
+ * Builds one creature and merges its parts into a single mesh per material.
+ *
+ * A creature waddles, hops, and squashes as one rigid body, so its parts never
+ * move on their own. Merging them keeps the same picture for three draw calls
+ * instead of the dozen a cat is made of, which is what the render budget needs.
+ */
+function buildCreature(name: string, parts: readonly CreaturePart[]): Group {
   const group = new Group();
-  group.name = 'ambient-creature-cat';
-  const bodyMaterial = new MeshLambertMaterial({ color: CAT_BODY });
-  const bellyMaterial = new MeshLambertMaterial({ color: CAT_BELLY });
-  const eyeMaterial = new MeshLambertMaterial({ color: CREATURE_EYE });
+  group.name = name;
+  const byMaterial = new Map<
+    MeshLambertMaterial,
+    { name: string; geometries: BufferGeometry[] }
+  >();
 
-  const body = new Mesh(new SphereGeometry(0.1, 8, 6), bodyMaterial);
-  body.name = 'cat-body';
-  body.scale.set(1.2, 0.82, 1.05);
-  body.position.set(0, 0.09, 0);
-  group.add(body);
+  for (const part of parts) {
+    const transform = new Object3D();
+    transform.position.set(...part.position);
+    if (part.rotation) {
+      transform.rotation.set(...part.rotation);
+    }
+    if (part.scale) {
+      transform.scale.set(...part.scale);
+    }
+    transform.updateMatrix();
 
-  const belly = new Mesh(new SphereGeometry(0.065, 7, 5), bellyMaterial);
-  belly.name = 'cat-belly';
-  belly.position.set(0, 0.075, 0.065);
-  group.add(belly);
-
-  const head = new Mesh(new SphereGeometry(0.072, 7, 5), bodyMaterial);
-  head.name = 'cat-head';
-  head.position.set(0, 0.16, 0.09);
-  group.add(head);
-
-  for (const side of [-1, 1]) {
-    const ear = new Mesh(new ConeGeometry(0.028, 0.07, 5), bodyMaterial);
-    ear.name = side < 0 ? 'cat-ear-l' : 'cat-ear-r';
-    ear.position.set(side * 0.045, 0.225, 0.085);
-    ear.rotation.z = side * -0.18;
-    group.add(ear);
-
-    const eye = new Mesh(new SphereGeometry(0.009, 4, 3), eyeMaterial);
-    eye.name = side < 0 ? 'cat-eye-l' : 'cat-eye-r';
-    eye.position.set(side * 0.025, 0.17, 0.15);
-    group.add(eye);
+    const bucket = byMaterial.get(part.material);
+    const geometry = part.geometry.clone().applyMatrix4(transform.matrix);
+    if (bucket) {
+      bucket.geometries.push(geometry);
+      continue;
+    }
+    byMaterial.set(part.material, { name: part.name, geometries: [geometry] });
   }
 
-  const tail = new Mesh(new ConeGeometry(0.025, 0.13, 6), bodyMaterial);
-  tail.name = 'cat-tail';
-  tail.position.set(0, 0.11, -0.12);
-  tail.rotation.x = Math.PI / 2.6;
-  group.add(tail);
-
-  for (const side of [-1, 1]) {
-    const foot = new Mesh(new SphereGeometry(0.025, 5, 4), bodyMaterial);
-    foot.name = side < 0 ? 'cat-foot-l' : 'cat-foot-r';
-    foot.position.set(side * 0.055, 0.025, 0.025);
-    group.add(foot);
+  for (const [material, bucket] of byMaterial) {
+    const merged = mergeGeometries(bucket.geometries);
+    // Spheres and cones carry the same attributes, so a merge only fails if a
+    // profile mixes in an incompatible geometry; skipping then loses one
+    // creature's body instead of the whole town's actors.
+    if (!merged) {
+      continue;
+    }
+    const mesh = new Mesh(merged, material);
+    mesh.name = bucket.name;
+    group.add(mesh);
   }
 
   return group;
 }
 
+/** A low-poly cat facing +z, the town's heading convention. */
+function createCat(): Group {
+  const bodyMaterial = new MeshLambertMaterial({ color: CAT_BODY });
+  const bellyMaterial = new MeshLambertMaterial({ color: CAT_BELLY });
+  const eyeMaterial = new MeshLambertMaterial({ color: CREATURE_EYE });
+  const parts: CreaturePart[] = [
+    {
+      name: 'cat-body',
+      geometry: new SphereGeometry(0.1, 8, 6),
+      material: bodyMaterial,
+      position: [0, 0.09, 0],
+      scale: [1.2, 0.82, 1.05],
+    },
+    {
+      name: 'cat-belly',
+      geometry: new SphereGeometry(0.065, 7, 5),
+      material: bellyMaterial,
+      position: [0, 0.075, 0.065],
+    },
+    {
+      name: 'cat-head',
+      geometry: new SphereGeometry(0.072, 7, 5),
+      material: bodyMaterial,
+      position: [0, 0.16, 0.09],
+    },
+    {
+      name: 'cat-tail',
+      geometry: new ConeGeometry(0.025, 0.13, 6),
+      material: bodyMaterial,
+      position: [0, 0.11, -0.12],
+      rotation: [Math.PI / 2.6, 0, 0],
+    },
+  ];
+
+  for (const side of [-1, 1]) {
+    const suffix = side < 0 ? 'l' : 'r';
+    parts.push(
+      {
+        name: `cat-ear-${suffix}`,
+        geometry: new ConeGeometry(0.028, 0.07, 5),
+        material: bodyMaterial,
+        position: [side * 0.045, 0.225, 0.085],
+        rotation: [0, 0, side * -0.18],
+      },
+      {
+        name: `cat-eye-${suffix}`,
+        geometry: new SphereGeometry(0.009, 4, 3),
+        material: eyeMaterial,
+        position: [side * 0.025, 0.17, 0.15],
+      },
+      {
+        name: `cat-foot-${suffix}`,
+        geometry: new SphereGeometry(0.025, 5, 4),
+        material: bodyMaterial,
+        position: [side * 0.055, 0.025, 0.025],
+      },
+    );
+  }
+
+  return buildCreature('ambient-creature-cat', parts);
+}
+
 /** A low-poly rabbit facing +z, with tall ears that read at play distance. */
 function createRabbit(): Group {
-  const group = new Group();
-  group.name = 'ambient-creature-rabbit';
   const bodyMaterial = new MeshLambertMaterial({ color: RABBIT_BODY });
   const earMaterial = new MeshLambertMaterial({ color: RABBIT_INNER_EAR });
   const eyeMaterial = new MeshLambertMaterial({ color: CREATURE_EYE });
-
-  const body = new Mesh(new SphereGeometry(0.1, 8, 6), bodyMaterial);
-  body.name = 'rabbit-body';
-  body.scale.set(1.05, 0.9, 1.2);
-  body.position.set(0, 0.1, -0.01);
-  group.add(body);
-
-  const head = new Mesh(new SphereGeometry(0.07, 7, 5), bodyMaterial);
-  head.name = 'rabbit-head';
-  head.position.set(0, 0.18, 0.085);
-  group.add(head);
+  const parts: CreaturePart[] = [
+    {
+      name: 'rabbit-body',
+      geometry: new SphereGeometry(0.1, 8, 6),
+      material: bodyMaterial,
+      position: [0, 0.1, -0.01],
+      scale: [1.05, 0.9, 1.2],
+    },
+    {
+      name: 'rabbit-head',
+      geometry: new SphereGeometry(0.07, 7, 5),
+      material: bodyMaterial,
+      position: [0, 0.18, 0.085],
+    },
+    {
+      name: 'rabbit-tail',
+      geometry: new SphereGeometry(0.035, 6, 4),
+      material: bodyMaterial,
+      position: [0, 0.12, -0.13],
+    },
+  ];
 
   for (const side of [-1, 1]) {
-    const ear = new Mesh(new ConeGeometry(0.027, 0.16, 6), earMaterial);
-    ear.name = side < 0 ? 'rabbit-ear-l' : 'rabbit-ear-r';
-    ear.position.set(side * 0.035, 0.29, 0.075);
-    ear.rotation.z = side * -0.12;
-    group.add(ear);
-
-    const eye = new Mesh(new SphereGeometry(0.009, 4, 3), eyeMaterial);
-    eye.name = side < 0 ? 'rabbit-eye-l' : 'rabbit-eye-r';
-    eye.position.set(side * 0.024, 0.19, 0.14);
-    group.add(eye);
-
-    const foot = new Mesh(new SphereGeometry(0.027, 5, 4), bodyMaterial);
-    foot.name = side < 0 ? 'rabbit-foot-l' : 'rabbit-foot-r';
-    foot.position.set(side * 0.055, 0.025, 0.06);
-    foot.scale.set(1.2, 0.7, 1.35);
-    group.add(foot);
+    const suffix = side < 0 ? 'l' : 'r';
+    parts.push(
+      {
+        name: `rabbit-ear-${suffix}`,
+        geometry: new ConeGeometry(0.027, 0.16, 6),
+        material: earMaterial,
+        position: [side * 0.035, 0.29, 0.075],
+        rotation: [0, 0, side * -0.12],
+      },
+      {
+        name: `rabbit-eye-${suffix}`,
+        geometry: new SphereGeometry(0.009, 4, 3),
+        material: eyeMaterial,
+        position: [side * 0.024, 0.19, 0.14],
+      },
+      {
+        name: `rabbit-foot-${suffix}`,
+        geometry: new SphereGeometry(0.027, 5, 4),
+        material: bodyMaterial,
+        position: [side * 0.055, 0.025, 0.06],
+        scale: [1.2, 0.7, 1.35],
+      },
+    );
   }
 
-  const tail = new Mesh(new SphereGeometry(0.035, 6, 4), bodyMaterial);
-  tail.name = 'rabbit-tail';
-  tail.position.set(0, 0.12, -0.13);
-  group.add(tail);
-
-  return group;
+  return buildCreature('ambient-creature-rabbit', parts);
 }
 
 /** Creates a visual-only primitive actor and keeps its pose in sync. */

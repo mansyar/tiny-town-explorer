@@ -54,3 +54,64 @@ Relevant traffic coverage at baseline:
 ## Comparison rule
 
 After implementation, repeat the same browser capture and report absolute and percentage deltas for each window. Do not accept a result that exceeds the agreed representative budget without an explicit optimization or scope decision.
+
+## Post-change measurement
+
+Captured on 2026-09-25 after the ambient roster shipped, with the same method as the
+pre-change capture: 1500 × 1050, DPR 1, zoom 1, shadow pass enabled, same capture
+order (fresh spawn, road transit to spawn point 3, settled junction at spawn point 2,
+mission window with a fire marker lit). No page or console errors.
+
+### Baseline correction
+
+The pre-change numbers above were captured with a route the camera never left, so
+only the fresh-spawn window is comparable as recorded. For a like-for-like
+comparison the same capture script was also run against `54f4901` (the merge of the
+previous track) in a throwaway detached worktree, and that run is the "baseline
+(re-measured)" column below.
+
+| Window | Baseline (recorded) | Baseline (re-measured) | Post-change |
+| --- | ---: | ---: | ---: |
+| Fresh spawn — triangles / calls | 50,541 / 180 | 50,541 / 180 | 50,553 / 180 |
+| Transit — triangles / calls | 50,541 / 180 | 61,259 / 248 | 63,745 / 254 |
+| Settled junction — triangles / calls | 50,541 / 180 | 46,742 / 210 | 49,832 / 222 |
+| Mission window — triangles / calls | 48,453 / 175 | 48,110 / 213 | 50,868 / 224 |
+
+### Deltas against the re-measured baseline
+
+| Window | Triangle delta | Draw-call delta |
+| --- | ---: | ---: |
+| Fresh spawn | +12 (+0.02%) | 0 (0.00%) |
+| Transit | +2,486 (+4.06%) | +6 (+2.42%) |
+| Settled junction | +3,090 (+6.61%) | +12 (+5.71%) |
+| Mission window | +2,758 (+5.73%) | +11 (+5.16%) |
+
+Scene inventory, baseline to post-change:
+
+| Metric | Baseline | Post-change | Delta |
+| --- | ---: | ---: | ---: |
+| Meshes | 317 | 329 | +12 |
+| Visible meshes | 263 | 275 | +12 |
+| Estimated triangles | 46,344 | 49,428 | +3,084 |
+| Meshes with `frustumCulled = false` | 0 | 0 | 0 |
+
+The twelve new meshes are the SUV model (four) plus three merged meshes per
+creature. The first pass of this measurement used unmerged creature primitives
+(342 meshes, +25 draw calls in the worst window); the creatures now merge their
+primitives per material through `mergeGeometries`, which halved the draw-call
+cost at identical triangle counts and an identical picture.
+
+### Recorded trade-off
+
+The mission window peaks at 50,868 triangles, 1.7% over the approximately
+50,000-triangle guide, and the transit window peaks at 63,745, but the re-measured
+baseline for that same transit window is already 61,259 — the overshoot comes from
+the route through the denser middle of town, not from the roster. The fresh-spawn
+representative window, which is what the guide is anchored to, is unchanged.
+
+Accepted cost of six ambient actors: +12 meshes, +3,084 estimated triangles, and at
+most +12 draw calls in the worst window. The alternatives were dropping the SUV or
+the creatures, and the specification requires both categories to survive, so the
+roster was kept and the creature geometry was optimized instead. Frame rate on the
+iPad 9th-generation floor device is the remaining gate for this trade-off.
+
