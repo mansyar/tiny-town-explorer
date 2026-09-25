@@ -1,0 +1,1 @@
+Follow-up to the controller progressive-attachment test: made the deferred town footprint map type explicit, formatted the new fixture with Biome, and kept the 65-test controller suite green.
