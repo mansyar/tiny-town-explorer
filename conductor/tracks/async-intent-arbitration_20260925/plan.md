@@ -157,11 +157,20 @@
 
 ## Phase 4 — Review handoff and closeout
 
-- [~] **Task: Conduct the principal-engineer review**
+- [x] **Task: Conduct the principal-engineer review**
   - [x] Review the diff against the approved specification, product pillars, and workflow.
   - [x] Check for stale API surfaces, unnecessary abstractions, error-path leaks, and accidental scope expansion.
-  - [~] Add focused review fixes and regression tests only when a finding is real.
-  - [ ] **Commit:** `fix(conductor): address async arbitration review findings`
+  - [x] Add focused review fixes and regression tests only when a finding is real.
+  - [x] **Commit:** `fix(conductor): address async arbitration review findings` (`a036275`)
+
+### Phase 4 review-fix record (2026-09-25)
+
+- The principal review reproduced two additional gaps: a pre-ready selection could be overwritten by the initial boot actor, and a newer destination could call `setPath()` before a claimed morph finished.
+- The initial boot actor now yields to any replacement that committed during the `driven`-before-`ready` window; regression coverage asserts actor identity and scene residue.
+- Destination commits now wait for the serialized vehicle queue to become ready, while generation checks still discard superseded routes; regression coverage asserts no early `setPath()` and confirms the newest route after the morph.
+- Review-fix verification: targeted `game.test.ts` **61/61**; full suite **864/864 across 67 files**; coverage overall **91.34% statements / 87.91% branches**, `game.ts` **93.43% / 85.37%**; `pnpm check`, `pnpm typecheck`, and `pnpm build` passed. Build emitted 49 precache entries totaling approximately **4,240.07 KiB**; the known chunk-size warning remains out of scope.
+- Post-review browser smoke at `a036275`: rapid ice-cream → police selection settled on police, three rapid canvas taps completed without console errors, and the scene inventory remained populated. Native automation still reported a hidden tab during this bounded pass, so it was not used for visual pacing claims.
+- The user confirmed the post-fix physical iPad recheck passed the rapid destination, rapid vehicle, mission-morph, helper, and four-mission interaction set with no stuck route, invisible lock, missing state, or regression.
 
 - [ ] **Task: Finalize the track**
   - [ ] Mark all completed tasks in `plan.md`.

@@ -676,3 +676,20 @@ destination taps, rapid vehicle changes, mission-required morphs, the helper
 hand, and all four missions: fire, ice-cream, park cleanup, and lost puppy. No
 failure, stuck route, invisible lock, missing vehicle/HUD state, or other
 regression was reported.
+
+### Post-review fix recheck — 2026-09-25
+
+After the principal-review fixes at commit `a036275`, the updated browser edge
+passed a bounded smoke pass: rapid ice-cream → police selection settled on
+police as the sole active/pressed vehicle, three rapid canvas taps completed
+without console errors, and the render inventory remained populated. The
+full suite increased to **864 tests across 67 files**; coverage measured
+**91.34% statements / 87.91% branches** overall and **93.43% / 85.37%** for
+`src/game/game.ts`. The production build passed with 49 precache entries
+totaling approximately **4,240.07 KiB**; the known chunk-size warning remains
+out of scope.
+
+The user also completed and confirmed the post-fix physical iPad recheck. Rapid
+destination taps, rapid vehicle changes, mission-required morphs, helper input,
+and the four-mission interaction set passed again with no stuck route,
+invisible lock, missing vehicle/HUD state, or other regression.
