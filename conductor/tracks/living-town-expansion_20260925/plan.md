@@ -10,10 +10,11 @@
 
 ## Phase 1 — Baseline and content contract
 
-- [ ] **Task: Capture the pre-change render and behavior baseline**
-  - [ ] Record fresh-spawn, transit, settled-junction, and mission-window triangle/draw-call measurements using the existing dev render probe.
-  - [ ] Record the current test, coverage, typecheck, Biome, and production-build baseline.
-  - [ ] Store the measurements in the track-local measurement notes.
+- [x] **Task: Capture the pre-change render and behavior baseline**
+  - [x] Record fresh-spawn, transit, settled-junction, and mission-window triangle/draw-call measurements using the existing dev render probe.
+  - [x] Record the current test, coverage, typecheck, Biome, and production-build baseline.
+  - [x] Store the measurements in the track-local measurement notes.
+  - **Commit:** `3f8e494` — `chore(track): record living town expansion baseline`
 
 - [ ] **Task: Select the initial ambient roster**
   - [ ] Choose 2–3 profiles containing both a road-wanderer profile and a creature profile.
