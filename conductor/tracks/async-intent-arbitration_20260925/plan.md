@@ -37,7 +37,7 @@
   - [x] Record the failing test names and any fixture corrections in the phase checkpoint.
   - [x] **Commit:** `test(game): characterize async intent races`
 
-- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [x] Identify the changed test files and run the exact targeted test command.
   - [x] Present the red-baseline results and stop if a test is failing for an unrelated reason.
 
@@ -47,49 +47,59 @@
 - Result: **59 tests, 50 passing; 9 intentional red regressions**. The failures are limited to the new arbitration tests: two stale destination commits, fire/ice-cream/park atomic morph precedence, failed-morph rejection/rollback, concurrent HUD selections (including mission precedence), and helper-demo route overwrite.
 - Fixture corrections made before recording the baseline: park litter is sampled only after `startPark()`; the helper test starts from police so the fire morph is genuinely deferred; actor call counts are cleared after boot.
 - Supporting gates: `pnpm check` and `pnpm typecheck` pass. No unrelated fixture or existing-suite failure remains.
+- Checkpoint approval: the user approved proceeding from the recorded red baseline to Phase 2.
 
 ## Phase 2 — Implement controller-level arbitration (TDD green)
 
-- [~] **Task: Add controller-owned intent generations**
-  - [~] Add monotonic destination and vehicle request generations inside `createGame` or a small controller-local helper.
-  - [ ] Store only the latest pending destination/request; do not build a general-purpose event bus or queue every historical intent.
-  - [ ] Keep `inputRouter` synchronous and unchanged unless a red test proves it is the required authority.
-  - [ ] Document ownership, commit points, and the fact that mission claims are not cancelled.
+- [x] **Task: Add controller-owned intent generations**
+  - [x] Add monotonic destination and vehicle request generations inside `createGame` or a small controller-local helper.
+  - [x] Store only the latest pending destination/request; do not build a general-purpose event bus or queue every historical intent.
+  - [x] Keep `inputRouter` synchronous and unchanged unless a red test proves it is the required authority.
+  - [x] Document ownership, commit points, and the fact that mission claims are not cancelled.
 
-- [ ] **Task: Gate `tapAt` route commitment**
-  - [ ] Preserve immediate ring/audio feedback before any async work.
-  - [ ] Capture the tap generation, await mission handling and the relevant vehicle-swap settling point, then recompute/commit the route only if the generation is still current.
-  - [ ] Ensure a newer destination replaces the pending route and an older resumed tap cannot call `setPath`.
-  - [ ] Do not set a route for a failed mission-required morph.
+- [x] **Task: Gate `tapAt` route commitment**
+  - [x] Preserve immediate ring/audio feedback before any async work.
+  - [x] Capture the tap generation, await mission handling and the relevant vehicle-swap settling point, then recompute/commit the route only if the generation is still current.
+  - [x] Ensure a newer destination replaces the pending route and an older resumed tap cannot call `setPath`.
+  - [x] Do not set a route for a failed mission-required morph.
 
-- [ ] **Task: Serialize and commit vehicle swaps**
-  - [ ] Replace concurrent `swapVehicle()` completion paths with a serialized request/commit flow.
-  - [ ] Build the replacement actor before removing the current actor.
-  - [ ] Commit fleet active ID, serve/ability HUD state, `world.actor`, and scene node only after the replacement is ready.
-  - [ ] Keep the existing direct rule-handle/test seam where practical; normal UI/mission paths must use the serialized flow.
+- [x] **Task: Serialize and commit vehicle swaps**
+  - [x] Replace concurrent `swapVehicle()` completion paths with a serialized request/commit flow.
+  - [x] Build the replacement actor before removing the current actor.
+  - [x] Commit fleet active ID, serve/ability HUD state, `world.actor`, and scene node only after the replacement is ready.
+  - [x] Keep the existing direct rule-handle/test seam where practical; normal UI/mission paths must use the serialized flow.
 
-- [ ] **Task: Implement latest-selection and rollback policy**
-  - [ ] Keep the current mission-required morph atomic, then apply the newest explicit HUD selection.
-  - [ ] Contain actor-load failure at the controller seam: retain the last known-good actor, clear only the failed pending request, and settle without leaving an unhandled broken world.
-  - [ ] Allow a later request to retry through the model library.
-  - [ ] Remove or dispose any superseded actor so scene residue is impossible.
+- [x] **Task: Implement latest-selection and rollback policy**
+  - [x] Keep the current mission-required morph atomic, then apply the newest explicit HUD selection.
+  - [x] Contain actor-load failure at the controller seam: retain the last known-good actor, clear only the failed pending request, and settle without leaving an unhandled broken world.
+  - [x] Allow a later request to retry through the model library.
+  - [x] Remove or dispose any superseded actor so scene residue is impossible.
 
-- [ ] **Task: Route every async entry point through arbitration**
-  - [ ] Update fire, ice-cream, park, helper/siren, and public `selectVehicle()` paths to use the same request/commit policy.
-  - [ ] Keep mission FSM transitions and response timing unchanged.
-  - [ ] Add/update controller JSDoc for the new async ordering and failure contract.
-  - [ ] Do not add UI, text, assets, or new dependencies.
+- [x] **Task: Route every async entry point through arbitration**
+  - [x] Update fire, ice-cream, park, helper/siren, and public `selectVehicle()` paths to use the same request/commit policy.
+  - [x] Keep mission FSM transitions and response timing unchanged.
+  - [x] Add/update controller JSDoc for the new async ordering and failure contract.
+  - [x] Do not add UI, text, assets, or new dependencies.
 
-- [ ] **Task: Make targeted tests green**
-  - [ ] Run `CI=true pnpm test -- src/game/game.test.ts`.
-  - [ ] Run targeted coverage for touched controller logic and confirm the project’s >80% logic threshold.
-  - [ ] Refactor only to remove duplication exposed by the green tests; do not broaden scope.
+- [x] **Task: Make targeted tests green**
+  - [x] Run `CI=true pnpm test -- src/game/game.test.ts`.
+  - [x] Run targeted coverage for touched controller logic and confirm the project’s >80% logic threshold.
+  - [x] Refactor only to remove duplication exposed by the green tests; do not broaden scope.
   - [ ] **Commit:** `fix(game): arbitrate async vehicle and route intent`
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Identify all changed production/test files and their corresponding tests.
-  - [ ] Run the exact targeted test and quality commands.
+- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Identify all changed production/test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
   - [ ] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 2 implementation record (2026-09-25)
+
+- Controller state now owns destination generations, serialized vehicle requests, latest-selection generations, and a mission morph-failure context.
+- Fire, ice-cream, park, helper/siren, and HUD selection paths share the queue; direct `swapVehicle()` remains serialized for the rule-handle seam.
+- Actor replacement builds first, removes/adds exactly at commit, commits fleet/HUD state only after readiness, and retains the last known-good actor on load or commit failure.
+- Immediate tap ring/audio remains synchronous; stale or failed mission morphs never call `setPath`.
+- Automated results: `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` (**862 tests across 67 files**), `pnpm test:coverage` (overall 91.3% statements / 87.7% branches; `game.ts` 93.24% / 84.36%), and `pnpm build` all pass. The known Vite chunk-size warning remains unchanged and out of scope.
+- Remaining checkpoint action: commit the implementation and plan update, attach the detailed Git note, then obtain explicit checkpoint confirmation before integration/device verification.
 
 ## Phase 3 — Integration and regression verification
 

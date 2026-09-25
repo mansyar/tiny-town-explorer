@@ -19,6 +19,16 @@ import type { MissionFocus } from './missionFocus';
 /** Closed set of missions the town can run today. */
 export type MissionId = 'fire' | 'iceCream' | 'park' | 'puppy';
 
+/** Context for one destination tap offered to the mission registry. */
+export interface MissionTapContext {
+  /**
+   * Reports that a claimed mission could not complete its required vehicle
+   * morph. The tap stays claimed; the controller uses this to suppress a
+   * route that would otherwise be committed after the failed morph.
+   */
+  readonly morphFailed: () => void;
+}
+
 /** One mission's optional contributions to the shared pass. */
 export interface MissionContribution {
   /** Called once per frame while the registry is ticking. */
@@ -28,7 +38,7 @@ export interface MissionContribution {
    * later missions in the same pass never see that tap. May be async so a
    * claim can await a vehicle morph before the pass continues.
    */
-  readonly tap?: (aim: Vec2) => boolean | Promise<boolean>;
+  readonly tap?: (aim: Vec2, context?: MissionTapContext) => boolean | Promise<boolean>;
   /** Whether this mission is idle, for the town-at-a-time busy gate. */
   readonly isIdle?: () => boolean;
 }
@@ -41,7 +51,7 @@ export interface MissionRegistry {
   /** Runs every mission's `tick` in registration order. */
   tick(deltaSeconds: number): void;
   /** Offers `aim` to each mission until one claims it. */
-  tap(aim: Vec2): Promise<boolean>;
+  tap(aim: Vec2, context?: MissionTapContext): Promise<boolean>;
   /** Resolves the focus destination (town-wide resolver, else the car). */
   focus(carPosition: Vec2): MissionFocus;
   /** True when any registered mission is not idle. */
@@ -59,9 +69,9 @@ export function createMissionRegistry(
       }
     },
 
-    async tap(aim): Promise<boolean> {
+    async tap(aim, context): Promise<boolean> {
       for (const entry of entries) {
-        if ((await entry.tap?.(aim)) === true) {
+        if ((await entry.tap?.(aim, context)) === true) {
           return true;
         }
       }

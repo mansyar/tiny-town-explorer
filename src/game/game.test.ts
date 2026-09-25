@@ -138,7 +138,10 @@ describe('createGame controller seam (Phase 2)', () => {
     const tap = game.tapAt({ x: 1, z: 1 });
 
     await Promise.resolve();
-    expect(game.world.missions.tap).toHaveBeenCalledWith({ x: 1, z: 1 });
+    expect(game.world.missions.tap).toHaveBeenCalledWith(
+      { x: 1, z: 1 },
+      expect.objectContaining({ morphFailed: expect.any(Function) }),
+    );
 
     pending.resolve(false);
     await tap;
@@ -1236,7 +1239,7 @@ describe('the frame, the camera order and the boot window (Phase 4)', () => {
   });
 });
 
-describe('async intent arbitration (TDD red)', () => {
+describe('async intent arbitration (regression coverage)', () => {
   it('keeps the newest destination when taps resume out of order', async () => {
     const { game, attached } = await booted();
     const motor = game.world.motor;
@@ -1409,7 +1412,6 @@ describe('async intent arbitration (TDD red)', () => {
     game.activate('police');
     const activeBefore = game.world.fleet.activeId();
     const onHudActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
-    onHudActive.mockClear();
     const onRemove = vi.spyOn(attached.scene, 'remove');
     const onSetPath = vi.spyOn(motor, 'setPath');
     const actor = deferred<TestVehicleActor>();
@@ -1453,7 +1455,7 @@ describe('async intent arbitration (TDD red)', () => {
 
     const firstRequest = game.selectVehicle('police');
     const secondRequest = game.selectVehicle('iceCream');
-    await Promise.resolve();
+    await settle();
 
     // The second selection must wait rather than start a concurrent swap.
     expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(1);
@@ -1461,7 +1463,8 @@ describe('async intent arbitration (TDD red)', () => {
     const policeActor = testActor('police');
     firstActor.resolve(policeActor);
     await firstRequest;
-    await Promise.resolve();
+    await settle();
+    await settle();
     expect(vi.mocked(createVehicleActor)).toHaveBeenCalledTimes(2);
 
     const iceCreamActor = testActor('iceCream');
