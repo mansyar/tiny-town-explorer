@@ -111,28 +111,39 @@
   - [x] Ensure the overlay does not create a blocking browser dialog or visible text.
   - [x] **Commit:** `feat(boot): add zero-text loading and retry presentation` (`3ed8a8f`)
 
-- [~] **Task: Gate gameplay input and HUD readiness**
-  - [ ] Await both `game.driven` and `game.ready` through one settled error boundary.
-  - [ ] Keep gameplay pointer routing and vehicle-HUD activation unavailable until `game.ready` resolves.
-  - [ ] Ensure taps received while loading are not queued as routes, honks, mission claims, or vehicle selections.
-  - [ ] Initialize and display the existing vehicle HUD only after readiness.
-  - [ ] Preserve the current parent gate, install hint, mute, helper, and active-vehicle behavior after the transition.
-  - [ ] **Commit:** `feat(boot): gate gameplay until the world is ready`
+- [x] **Task: Gate gameplay input and HUD readiness** [3aef0cf]
+  - [x] Await both `game.driven` and `game.ready` through one settled error boundary.
+  - [x] Keep gameplay pointer routing and vehicle-HUD activation unavailable until `game.ready` resolves.
+  - [x] Ensure taps received while loading are not queued as routes, honks, mission claims, or vehicle selections.
+  - [x] Initialize and display the existing vehicle HUD only after readiness.
+  - [x] Preserve the current parent gate, install hint, mute, helper, and active-vehicle behavior after the transition.
+  - [x] **Commit:** `feat(boot): gate gameplay until the world is ready` (`3aef0cf`)
 
-- [ ] **Task: Handle initial mount failure safely**
-  - [ ] Catch failures from both pre-motor and post-motor/hero-model mount paths.
-  - [ ] Stop the render loop and disconnect the resize observer on failure.
-  - [ ] Dispose/stop the audio engine where applicable.
-  - [ ] Transition to the failed state without an unhandled rejection.
-  - [ ] Wire the retry control to exactly one full-page reload.
-  - [ ] Confirm a successful ready transition cannot be overwritten by an optional audio rejection.
-  - [ ] **Commit:** `feat(boot): recover from initial mount failure`
+- [x] **Task: Handle initial mount failure safely** [3aef0cf]
+  - [x] Catch failures from both pre-motor and post-motor/hero-model mount paths.
+  - [x] Stop the render loop and disconnect the resize observer on failure.
+  - [x] Dispose/stop the audio engine where applicable.
+  - [x] Transition to the failed state without an unhandled rejection.
+  - [x] Wire the retry control to exactly one full-page reload.
+  - [x] Confirm a successful ready transition cannot be overwritten by an optional audio rejection.
+  - [x] **Commit:** `feat(boot): recover from initial mount failure` (`3aef0cf`)
 
-- [ ] **Task: Verify Phase 4**
-  - [ ] Run the boot-state, town, game, and audio targeted tests.
-  - [ ] Run a browser smoke pass with delayed model responses, a blocked model response, and a blocked optional audio response.
-  - [ ] Confirm no duplicate listeners, duplicate scene objects, blank retry state, or post-ready behavior regression.
-  - [ ] **Checkpoint:** `Phase Verification & Checkpoint (Refer to workflow.md)`
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)** [3aef0cf]
+  - [x] Identify the changed production/test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
+  - [x] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
+
+### Phase 4 implementation record (2026-09-25)
+
+- Added `src/game/hud/bootOverlay.ts` (DOM glue, excluded from unit coverage like the other HUD chrome) and its inline `index.html` styling: a soft bouncing toy car while loading and one large round-arrow retry button on failure, with an `aria-label` rather than any visible text.
+- `src/main.ts` now appends the overlay before any async model work, unlocks audio from a one-shot window-level first `pointerdown` so a tap on the loading overlay still starts the context, holds `game.driven` and `game.ready` inside a single `try`/`catch`, and creates gameplay pointer routing plus the vehicle HUD only after `ready`.
+- On initial mount failure it stops the render loop, disconnects the `ResizeObserver`, disposes audio, and switches the overlay to the retry control wired to exactly one full-page reload. A settled failure is never blanked; a ready boot is never overwritten by a late optional-audio rejection.
+- Follow-up `fba6c30` gave the loading toy the same chunky circular weight and palette as the HUD buttons so it stays legible over sky, road, or grass.
+- Automated results: `pnpm check` — passed (162 files); `pnpm typecheck` — passed; `$env:CI='true'; pnpm test` — **882 tests across 69 files passed**.
+- Browser evidence (Chromium via Playwright): normal boot clears the overlay with 0 console errors; a delayed GLB shows the loading toy over the visible progressive base with no HUD; a blocked GLB shows the retry icon with a verifiably stopped render loop; one retry tap causes exactly one reload; a blocked `bark.mp3` still reaches ready with **0 unhandled rejections**; post-ready canvas taps are unobstructed; scene inventory sits at 49,428 triangles, inside the documented range, with no duplicated town.
+- Two verification traps were caught and corrected rather than reported: the render probe returns zero samples until a recorder is explicitly started (so loop liveness was proven by screenshot hash comparison instead), and the navigation counter double-counts per load (so a plain-reload control was run before concluding the retry count).
+- Checkpoint commits: `3aef0cf` (`feat(boot): gate gameplay and recover from initial mount failure`), with `fba6c30` as the overlay legibility follow-up; detailed Git notes attached.
+- Checkpoint confirmation: the user explicitly approved the Phase 4 report, the Chromium evidence, and the remaining physical-iPad plan (normal launch, first-tap audio unlock during loading, airplane-mode reopen).
 
 ## Phase 5 — Integration, documentation, and device verification
 
