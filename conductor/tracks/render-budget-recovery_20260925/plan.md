@@ -32,7 +32,7 @@
   - [x] Run the tests and confirm the expected red phase before implementation.
   - [x] Implement the minimum code needed to satisfy the approved contract.
   - [x] Run the focused tests green, then refactor and verify coverage remains above the project threshold.
-- [ ] Task: Integrate the optimization with the existing scene
+- [~] Task: Integrate the optimization with the existing scene
   - [ ] Preserve the current six parked cars, three wanderers, four playable vehicles, town art, mission markers, pond, and shadows.
   - [ ] Preserve camera follow/frame ordering, input routing, collision, traffic, mission, and audio behavior.
   - [ ] Verify resource ownership, cloning, teardown, and disposal for any changed scene objects.
