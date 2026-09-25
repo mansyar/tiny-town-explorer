@@ -32,13 +32,13 @@
 
 ## Phase 2 — Make the town mount progressive
 
-- [ ] **Task: Add red tests for two-phase town mounting**
-  - [ ] Use a deferred stub model source to hold the first GLB unresolved.
-  - [ ] Assert that all synchronous ground placements are mounted and the base-ready callback fires before the deferred model resolves.
-  - [ ] Assert that each resolved model is added to the same town group in the existing authored order.
-  - [ ] Assert that the final placement inventory, transforms, house footprints, and disposal behavior remain equivalent to the current mount.
-  - [ ] Assert that a rejected model rejects the mount and never produces a ready town.
-  - [ ] **Run:** `CI=true pnpm test -- src/game/town/townRenderer.test.ts` and record the intentional red baseline.
+- [x] **Task: Add red tests for two-phase town mounting** [ce3af40]
+  - [x] Use a deferred stub model source to hold the first GLB unresolved.
+  - [x] Assert that all synchronous ground placements are mounted and the base-ready callback fires before the deferred model resolves.
+  - [x] Assert that each resolved model is added to the same town group in the existing authored order.
+  - [x] Assert that the final placement inventory, transforms, house footprints, and disposal behavior remain equivalent to the current mount.
+  - [x] Assert that a rejected model rejects the mount and never produces a ready town.
+  - [x] **Run:** `CI=true pnpm test -- src/game/town/townRenderer.test.ts`; recorded 14 passing existing tests and 2 intentional progressive-seam failures. **Commit:** `ce3af40`
 
 - [ ] **Task: Implement the two-phase town mount**
   - [ ] Add the smallest optional base/progress seam needed by `mountTown`; do not add a second town or a general asset scheduler.
