@@ -241,11 +241,40 @@
   `measurements.md`. Final quality gates: **869 tests across 67 files**, Biome
   and TypeScript clean, **49 precache entries / 4,246.61 KiB**, cache-backed
   offline reopen, and owner-confirmed iPad 9th-generation play.
+- **Resilient progressive boot (added 2026-09-25):** the world now appears in
+  two phases instead of all at once. `mountTown` mounts every ground placement
+  first and calls a new `TownMountOptions.onBaseReady` seam once, before the
+  first awaited GLB; `game.mount` adds that group to the scene from the seam, so
+  the sky, ground and roads are on screen while models, traffic and the hero
+  car still stream in. Two small modules own the lifecycle: `bootStatus.ts` is
+  the pure `loading → ready | failed → retrying` contract (one-shot retry, late
+  promises cannot overwrite a settled boot) and `bootOverlay.ts` is the DOM over
+  it — a bouncing toy car while loading, one large round-arrow retry button on
+  failure, no visible text anywhere. `main.ts` holds `driven` and `ready` in a
+  single `try`/`catch` and creates gameplay input and the vehicle HUD only after
+  `ready`; on failure it stops the render loop, disconnects the observer,
+  disposes audio and shows the retry control, which triggers exactly one
+  `location.reload()`. First-gesture unlock moved to a one-shot window-level
+  `pointerdown` so a tap on the loading overlay still starts the AudioContext.
+  `sampleLoader.ts` settles the nine optional samples with `Promise.allSettled`
+  so one failed fetch or decode is silent rather than fatal. Costs: one new
+  source module, no new dependency, asset, registry entry or text surface, and
+  about 2.4 KiB on the precache. Final quality gates: **882 tests across 69
+  files** at 91.4% statements / 87.39% branches overall, Biome and TypeScript
+  clean, **49 precache entries / 4,249.03 KiB**. Scene inventory after the change
+  measured 49,428 triangles, inside the standing budget.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via
   oscillators; CC0 samples decoded to AudioBuffers. First-tap unlock,
   master gain kid-safe cap, audiocontext unlock on first pointerdown.
+- **Optional samples degrade silently (added 2026-09-25)** — `main.ts` loads the
+  nine sampled sounds through `loadSamples`, a `Promise.allSettled` aggregate
+  over the existing `AudioEngine.load` contract. A failed fetch or decode leaves
+  that one sound silent and lets the rest load, instead of rejecting the boot
+  fan-out as `Promise.all` did. The registry, URLs, decode path, synthesized
+  voices, mute behaviour and first-gesture unlock are unchanged, and a later
+  load can still populate a clip that failed.
 - **Audio assets are transcoded to MP3 (added 2026-09-21)** — the two CC0
   packs behind the one-shots (Kenney Impact Sounds and Interface Sounds) ship
   Ogg Vorbis only, and iOS Safari does not decode Ogg Vorbis, so the seven

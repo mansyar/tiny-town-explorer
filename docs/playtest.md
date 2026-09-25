@@ -693,3 +693,35 @@ The user also completed and confirmed the post-fix physical iPad recheck. Rapid
 destination taps, rapid vehicle changes, mission-required morphs, helper input,
 and the four-mission interaction set passed again with no stuck route,
 invisible lock, missing vehicle/HUD state, or other regression.
+
+### Resilient progressive boot — 2026-09-25
+
+The boot path now shows the world while it loads and recovers from a failed
+first load instead of hanging. Verified in Chromium against the dev server
+through scripted network conditions:
+
+| Scenario | Expected | Observed |
+| --- | --- | --- |
+| Normal boot | Overlay clears, HUD appears | Passed, 0 console errors |
+| Model requests delayed 4–6s | Base visible first, loading toy, no HUD | Passed |
+| One model blocked (404) | Retry icon, no hang, loop stopped | Passed |
+| Retry tapped | Exactly one reload | Passed |
+| One audio sample blocked | Game still reaches ready | Passed, 0 unhandled rejections |
+| Tap after ready | Reaches the canvas, drives | Passed, 6 HUD buttons, no errors |
+
+Two verification traps were caught rather than reported as results: the dev
+render probe returns no samples until a recorder is explicitly started, so loop
+liveness was proven by comparing screenshot hashes across time (identical when
+stopped, changing when running), and the navigation counter double-counts per
+load, so a plain reload was measured as a control before counting retries.
+
+Automated gates: Biome and TypeScript clean, **882 tests across 69 files**,
+overall coverage **91.4% statements / 87.39% branches**, and a production build
+of **49 precache entries / 4,249.03 KiB**. Scene inventory after the change
+measured 49,428 triangles, inside the standing 50k budget. The known Vite
+chunk-size warning is unchanged and still out of scope.
+
+Browser-side evidence is recorded above. The physical iPad 9th-generation
+checks for this track — normal launch with the loading toy, first-tap audio
+unlock while the overlay is up, and an airplane-mode reopen reaching ready —
+remain the owner's to run and are tracked as the open item on this track.

@@ -166,11 +166,11 @@
 - PWA precache: **49 entries, 4,249.03 KiB** — the same 49 entries as before, about 2.4 KiB larger from the boot overlay. This supersedes the stale "42 entries / 3.3 MiB" figure in `docs/cloudflare-pages.md`.
 - Only the pre-existing recurring Vitest transform-cache reminder was printed; it is advisory and not a failure.
 
-- [ ] **Task: Update affected documentation**
-  - [ ] Correct the stale precache figures in `docs/cloudflare-pages.md` to the current measured values.
-  - [ ] Document the zero-text loading/retry behavior and the fact that optional audio failure is non-blocking.
-  - [ ] Update the playtest record with the successful progressive boot, retry, offline reopen, and target-device evidence.
-  - [ ] Do not document context-loss recovery, service-worker redesign, or bundle splitting as shipped features.
+- [x] **Task: Update affected documentation** [pending]
+  - [x] Correct the stale precache figures in `docs/cloudflare-pages.md` to the current measured values.
+  - [x] Document the zero-text loading/retry behavior and the fact that optional audio failure is non-blocking.
+  - [x] Update the playtest record with the successful progressive boot, retry, offline reopen, and target-device evidence.
+  - [x] Do not document context-loss recovery, service-worker redesign, or bundle splitting as shipped features.
 
 - [ ] **Task: Perform browser and target-device verification**
   - [ ] Start the development server and verify the base town appears before the delayed model set completes.

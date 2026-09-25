@@ -91,6 +91,16 @@ panel and install hint, the input router, the audio engine, and the wiring
 between them. That split is what lets the whole game frame run in a unit test
 against fakes, with no WebGL, no Web Audio and no DOM.
 
+Boot follows the same split. `src/game/hud/bootStatus.ts` owns the pure
+`loading → ready | failed → retrying` lifecycle — including the rule that a late
+promise can never overwrite a settled boot — while `bootOverlay.ts` is the DOM
+over it: a bouncing toy car while the world loads, and one large round-arrow
+retry button if the first load fails, with no visible text in either state. The
+town also mounts in two phases, so the sky, ground and roads are on screen while
+models and the hero car still stream in. Gameplay input and the vehicle HUD
+appear only once the world is ready, and a failed first load stops the render
+loop and offers exactly one full-page reload.
+
 ```
 src/game/
   game.ts     the controller: the world, the session rules, the frame
@@ -98,7 +108,7 @@ src/game/
   audio/      Web Audio engine, schedules and samples
   collision/  hitboxes and the sweep that resolves a bonk
   feedback/   tap rings, ability bursts
-  hud/        vehicle switcher, parent gate and panel, install hint
+  hud/        vehicle switcher, parent gate and panel, install hint, boot state
   input/      tap resolution (raycast, dead zone, newest-tap-wins)
   mission/    fire state machine, pacing, helper hand, fire and sun visuals
   path/       road-first pathfinding
