@@ -72,8 +72,18 @@ the *wiring* — a burst clock nobody ticked, a mission update nobody called —
 while the logic beneath it was fully covered. That is why `conductor/workflow.md`
 splits the two.
 
+On top of that sits the **game controller**, `src/game/game.ts`. It owns the
+world — the model library, the town, the car, the traffic, the pond, every
+mission subsystem and feedback object — and it reaches the page only through
+four narrow ports (`audio`, `hud`, `scene`, `camera`) that `main.ts` supplies.
+`main.ts` is the edge and nothing else: the renderer, the camera rig, the parent
+panel and install hint, the input router, the audio engine, and the wiring
+between them. That split is what lets the whole game frame run in a unit test
+against fakes, with no WebGL, no Web Audio and no DOM.
+
 ```
 src/game/
+  game.ts     the controller: the world, the session rules, the frame
   assets/     kit loading and the model registry
   audio/      Web Audio engine, schedules and samples
   collision/  hitboxes and the sweep that resolves a bonk
