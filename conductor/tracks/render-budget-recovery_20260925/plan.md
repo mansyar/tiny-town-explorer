@@ -43,13 +43,13 @@
   - [x] Present the detailed desktop manual-verification plan and wait for explicit user feedback.
   - [x] Attach the verification report to the final functional commit with Git notes.
 
-## Phase 3 — Full player and release verification
+## Phase 3 — Full player and release verification [checkpoint: 2f5b200]
 
 - [x] Task: Run automated quality gates
-  - [ ] Run `pnpm check`.
-  - [ ] Run `pnpm typecheck`.
-  - [ ] Run `CI=true pnpm test`.
-  - [ ] Run `pnpm build` and verify the PWA output remains complete and offline-capable.
+  - [x] Run `pnpm check`.
+  - [x] Run `pnpm typecheck`.
+  - [x] Run `CI=true pnpm test`.
+  - [x] Run `pnpm build` and verify the PWA output remains complete and offline-capable.
 - [x] Task: Complete the desktop gameplay sweep
   - [x] Verify spawn, transit, and junction rendering windows.
   - [x] Drive through all four missions with the existing traffic and parked cars.
@@ -61,12 +61,12 @@
   - [x] Check the busiest spawn/transit moments for stutter and confirm the game remains calm and responsive.
   - [x] Rotate the device and confirm safe areas, HUD placement, and camera framing.
   - [x] Confirm the game still plays after going offline.
-- [ ] Task: Finalize the technical record
-  - [ ] Update `conductor/tech-stack.md` with the shipped before/after figures and the selected lever.
-  - [ ] Update `docs/playtest.md` with desktop and device verdicts.
-  - [ ] Reconcile any build/precache figures changed by the track.
-  - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] Commit the final plan status and attach the auditable verification report.
+- [x] Task: Finalize the technical record `2f5b200`
+  - [x] Update `conductor/tech-stack.md` with the shipped before/after figures and the selected lever.
+  - [x] Update `docs/playtest.md` with desktop and device verdicts.
+  - [x] Reconcile any build/precache figures changed by the track.
+  - [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: `2f5b200`]
+  - [x] Commit the final plan status and attach the auditable verification report.
 
 ## Workflow Notes
 
