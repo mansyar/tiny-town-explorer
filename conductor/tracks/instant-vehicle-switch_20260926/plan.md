@@ -7,7 +7,7 @@ hand instead. Phase 4 runs the gates and the device check.
 
 ## Phase 1 — Give the controller a pending-answer state
 
-- [ ] **Task: Add red tests for the pending-answer contract** []
+- [x] **Task: Add red tests for the pending-answer contract** [3ad937a]
   - [ ] Assert that a `selection` request raises the pending state synchronously, before any `await` resolves.
   - [ ] Assert the pending state is cleared when that request commits.
   - [ ] Assert the pending state is cleared when that request fails to load, and the previous vehicle stays active.
@@ -15,7 +15,7 @@ hand instead. Phase 4 runs the gates and the device check.
   - [ ] Assert that a `mission` morph, the helper siren demo, and a `direct` swap never raise a pending state.
   - [ ] Assert the pending state is `undefined` again after the last request settles, by every path.
   - [ ] Assert the arbitration tests' existing expectations still hold unmodified.
-  - [ ] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts`; record the existing passing count and the intentional red baseline.
+  - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — recorded 66 pre-existing cases passing and the intentional red baseline: 4 of the 5 new cases fail because `hud.setPending` is never called. The fifth asserts a negative and passes vacuously by design, becoming load-bearing once the feature exists. **Commit:** `3ad937a`
 
 - [ ] **Task: Implement the minimal pending-answer state** []
   - [ ] Track the pending vehicle id in `game.ts` alongside the existing request generation; clear it on commit, on skip, and on failure.
