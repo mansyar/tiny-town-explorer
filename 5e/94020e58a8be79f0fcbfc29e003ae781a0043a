@@ -134,3 +134,17 @@ Manual desktop result:
 - User confirmation: Yes, confirm (2026-09-25).
 
 Verdict: desktop gameplay sweep accepted; proceed to the iPad and final technical-record tasks.
+
+Phase 3 iPad 9th-generation pass report
+
+Acceptance result:
+- The user completed the physical iPad 9th-generation pass after the desktop checkpoint and replied “Yes, confirm” (2026-09-25).
+- First load and audio-unlock behavior, both-district driving, all four mission families, traffic and parked cars, busiest spawn/transit moments, rotation, safe areas, HUD placement, camera framing, and airplane-mode offline reopen were all clean.
+- No stutter judged beyond the existing calm/responsive baseline, missing content, shadow/marker/pond disappearance, clipping, or touch-friction issue was observed.
+- The iPad pass used the built/previewed app and confirmed play remained available after going offline.
+
+Supplementary automated evidence:
+- A Playwright 810x1080 CSS / DPR 2 iPad-sized smoke pass produced a 1620x2160 canvas and kept all HUD controls within the viewport; the production preview service-worker reload was separately verified by stopping the origin server and reloading from cache.
+- These emulated checks support, but do not replace, the physical-device result above.
+
+Verdict: iPad 9th-generation pass accepted; proceed to the final technical record and phase checkpoint.
