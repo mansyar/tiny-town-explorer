@@ -296,3 +296,59 @@ Stop and report rather than expanding this track if implementation requires any 
 - Changes to mission semantics, vehicle behavior, input routing after readiness, or the public product scope.
 - A loss of the existing town footprint, disposal, model-cache, offline, or render-budget contracts.
 - An unavailable iPad/device verification step; the phase remains incomplete rather than being marked by proxy.
+
+## Phase: Review Fixes
+
+Two review passes over the finished track. The first found five issues
+(request changes), the second found three actionable ones. All were fixed; none
+were deferred except where noted below.
+
+**Round 1** - committed as `7e00295` (`fix(boot): address resilient boot review
+findings`):
+
+1. The one-shot first-gesture audio unlock was registered before the `try` and
+   never removed on failure, so the retry tap called `unlock()`, which rebuilds
+   the graph and constructed a fresh `AudioContext` on a disposed engine.
+2. `acknowledgeTouch()` existed and was unit-tested but was never called, so a
+   tap during loading produced no visual answer. This broke FR2 and AC3
+   explicitly. The overlay now answers with a 220 ms squash, restart-not-queue.
+3. The empty `catch {}` logged nothing for a model that downloads and then
+   fails to parse, so the troubleshooting doc's "check the console" advice was
+   wrong for that whole class of failure.
+4. A leftover red-phase cast erased `mountTown`'s signature in `game.test.ts`,
+   so the API this track added was not type-checked at its own test.
+5. The parent panel and install hint survived the failure path, frozen behind
+   the retry icon by the stopped render loop.
+
+**Round 2** - committed as `3b62885` (`fix(boot): make retry activatable and
+squash compose with bounce`):
+
+6. The retry button listened only for `pointerdown`, leaving a focusable,
+   `aria-labelled` control inert for Enter, Space, and assistive activation.
+   Switched to `click`; `bootStatus.retry()` already refuses a second call.
+7. The squash overwrote the CSS bounce transform wholesale, snapping vertical
+   offset to zero at t=0. Moved to an inner face so the two compose.
+8. The audio troubleshooting note described a diagnostic that does not exist for
+   decode failures.
+
+**Deliberately not changed:**
+
+- The `sampleLoader` retryability test substitutes a fake engine, so it does not
+  pin `AudioEngine`'s real retry behaviour. Exercising that needs a different
+  kind of test.
+- The 4,249.03 KiB figures in `docs/playtest.md` and `conductor/tech-stack.md`
+  are historical phase measurements and are left as recorded history.
+- Synchronous edge setup before the `try`, including `new WebGLRenderer()` on a
+  device without WebGL2, stays outside the failure boundary. FR4 scoped recovery
+  to the `driven` and `ready` promises, so this is a future-track candidate.
+
+**Gates after the fixes:** `pnpm check` clean (162 files), `pnpm typecheck` clean,
+**882 tests across 69 files**, production build **49 precache entries /
+4,249.68 KiB**, no secrets in the diff. The `AudioContext` fix was proven by
+instrumenting construction (1 before retry, 2 after reload; the bug would have
+read 3) rather than by inspection. Retry activation was proven by counting
+navigations for Enter against a pointer control. Squash composition was proven
+by sampling the computed transforms mid-animation.
+
+**Target device** - the owner completed the physical iPad 9th-generation recheck
+after the review fixes and confirmed it passed.

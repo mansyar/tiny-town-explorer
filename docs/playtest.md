@@ -725,3 +725,32 @@ Browser-side evidence is recorded above. The physical iPad 9th-generation
 checks for this track — normal launch with the loading toy, first-tap audio
 unlock while the overlay is up, and an airplane-mode reopen reaching ready —
 remain the owner's to run and are tracked as the open item on this track.
+
+### Post-review fix recheck - 2026-09-26
+
+Two review passes over `resilient-progressive-boot_20260925` found eight issues
+in total. All five from the first pass and all three actionable findings from
+the second were fixed, in `7e00295` and `3b62885`.
+
+| Area | Review finding | Resolution |
+|------|----------------|------------|
+| Boot failure | One-shot first-gesture audio unlock listener survived the failure path, so the retry tap rebuilt an `AudioContext` on a disposed engine | Listener is named and removed in the catch. Instrumented `AudioContext` construction: 1 before retry, 2 after reload, where the bug would have read 3 |
+| Boot failure | Empty `catch {}` logged nothing for a model that downloads then fails to parse, contradicting the troubleshooting doc | `console.error('Tiny Town Explorers failed to start', error)`. A `TypeError: Failed to fetch` was later observed with a full stack through `modelLibrary` -> `mountTown` |
+| Boot failure | Parent panel and install hint stayed mounted and frozen behind the retry icon | `panel.dispose()` and `installHint.dismiss()` on the failure path. First-load failure shows retry with `.install-hint` at `display: none` and `.panel-root` removed |
+| Boot loading | `acknowledgeTouch()` was implemented and unit-tested but never called, so a tap on the loading screen gave no answer | 220 ms Web Animations squash on the loading toy, gated by the lifecycle. Verified by sampling the computed transform mid-animation |
+| Boot loading | Squash cancelled the CSS bounce, snapping vertical offset to zero at t=0 | Icon moved to an inner `.boot__toy-face`; outer circle keeps bouncing. Mid-squash outer reads `matrix(1.03923,0,0,1.03923,0,-9.80751)`, continuing the pre-tap `-8.87042`, while the face squashes at `1.09051 / 0.909491` |
+| Boot loading | Retry button listened only for `pointerdown`, so Enter and screen-reader activation did nothing despite the `aria-label` | Switched to `click`. Enter went from 0 navigations to 1, matching the pointer path |
+| Test code | Leftover red-phase cast `mountTown as unknown as (...args: unknown[])` erased the signature of the API this track added | Test mocks the real four-argument signature; only the `group` stand-in keeps one narrow commented assertion |
+| Docs | "Check the console for the failed clip" was only true for a 404; `Promise.allSettled` swallows decode failures silently | Reworded to distinguish a 404 from a silent decode failure |
+
+Final gates after the fixes: Biome and TypeScript clean, **882 tests across 69
+files**, production build **49 precache entries / 4,249.68 KiB**, and a loading
+toy re-screenshotted after the nesting change and rendering unchanged.
+
+**Target device** - the owner completed the physical iPad 9th-generation recheck
+after the review fixes and confirmed it passed. The fixes touch what a child
+sees and touches during boot, which is precisely what automated browser checks
+cannot stand in for: the loading toy's presence and new squash, the first-tap
+audio unlock, and the failure-and-retry path that now removes the parent panel
+and install hint rather than leaving them frozen. No remaining open item from
+the review work.
