@@ -138,17 +138,18 @@
 
 ## Phase 5 — Render, offline, and device verification
 
-- [ ] **Task: Measure the expansion against the baseline**
-  - [ ] Re-run fresh-spawn, transit, junction, and mission-window measurements with equivalent viewport/DPR settings.
-  - [ ] Record absolute and relative triangle/draw-call deltas.
-  - [ ] If the representative budget is exceeded, reduce instances or optimize the chosen visuals before completion.
+- [x] **Task: Measure the expansion against the baseline**
+  - [x] Re-run fresh-spawn, transit, junction, and mission-window measurements with equivalent viewport/DPR settings.
+  - [x] Record absolute and relative triangle/draw-call deltas.
+  - [x] If the representative budget is exceeded, reduce instances or optimize the chosen visuals before completion. **Decision:** the first pass cost +25 draw calls in the worst window (342 meshes), so creature primitives are now merged per material with `mergeGeometries` — same picture, same triangle count, 329 meshes, worst window +12 calls. The mission window peaks 1.7% over the ~50,000 guide and the trade-off is recorded in `measurements.md`; the roster was kept because the specification requires both road wanderers and creatures.
+  - **Baseline correction:** the recorded pre-change windows were captured with a stationary-camera route, so the same capture script was also run against `54f4901` in a throwaway detached worktree for a like-for-like comparison. The fresh-spawn representative window is unchanged at 50,553 triangles / 180 calls (baseline 50,541 / 180).
 
-- [ ] **Task: Run project quality gates**
-  - [ ] Run `pnpm check`.
-  - [ ] Run `pnpm typecheck`.
-  - [ ] Run `CI=true pnpm test`.
-  - [ ] Run the coverage command and review the changed-module result.
-  - [ ] Run `pnpm build` and verify the PWA precache contains every required asset.
+- [x] **Task: Run project quality gates**
+  - [x] Run `pnpm check`. — 156 files, no fixes.
+  - [x] Run `pnpm typecheck`. — `tsc --noEmit` passed.
+  - [x] Run `CI=true pnpm test`. — 67 files, 869 tests passed.
+  - [x] Run the coverage command and review the changed-module result. — 89.64% statements, 85.95% branches overall; `trafficSystem.ts` 98.48%, `trafficBrain.ts` 94.54%, `vehicleMotor.ts` 100%. `trafficActors.ts` is scene-mounting code verified by hand, not by coverage.
+  - [x] Run `pnpm build` and verify the PWA precache contains every required asset. — 112 modules; 49 precache entries, 4,246.61 KiB; the SUV model was already registered, so no new asset entered the precache and only the known chunk-size warning remains.
 
 - [ ] **Task: Perform browser and target-device verification**
   - [ ] Verify ambient movement, harmless bonks, mission coexistence, and no route blockage.
