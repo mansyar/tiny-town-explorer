@@ -40,7 +40,7 @@
 
 ## Phase 3 - The session rules move in (TDD)
 
-- [ ] Task: Pickup, spawn and the mission frame (FR1)
+- [~] Task: Pickup, spawn and the mission frame (FR1)
   - [ ] Write failing tests in `game.test.ts`: `absorb` keeps its three rules — the first drive-over piece responds the park mission and morphs the fleet, a sweep voices one gulp for the group while each drive-over piece earns its own, and completion fires exactly once at the last piece; `startPark`/`startPuppy`/`lightFire`/`lightOrder` open a round atomically; the four per-mission ticks run in the registry's stable pass order; the pacers keep the shared calm gap and the never-twice rule, and a busy mission pauses every pacer (red first)
   - [ ] Move `absorb`, `startPark`, `startPuppy`, `lightFire`, `lightOrder`, `headToGarbageTruck`, `tickFireMission`, `tickOrderMission`, `tickParkMission`, `tickPuppyMission`, `tickPacers`, `activate`, `swapVehicle`, and the leaf `firePoint`/`distanceToFire`/`orderPoint`/`distanceToOrder`/`nearestLitterPoint`/`distanceToLitter`/`ownerPoint` helpers into `game.ts`
   - [ ] Refactor + coverage
