@@ -2,12 +2,12 @@
 
 ## Phase 1 — Define and test the boot-state contract
 
-- [ ] **Task: Add red tests for boot-state transitions**
-  - [ ] Define the initial `loading`, successful `ready`, failed `failed`, and one-shot `retrying` states in a small, injectable state contract.
-  - [ ] Test that a loading touch produces a visual acknowledgement without creating a gameplay command.
-  - [ ] Test that a failed boot exposes retry exactly once and repeated retry input cannot trigger multiple reloads.
-  - [ ] Test that a late failure cannot replace a successful ready state.
-  - [ ] **Run:** `CI=true pnpm test -- src/game/hud/bootStatus.test.ts` and confirm the new tests fail for the intended missing contract.
+- [x] **Task: Add red tests for boot-state transitions** [aa92ce9]
+  - [x] Define the initial `loading`, successful `ready`, failed `failed`, and one-shot `retrying` states in a small, injectable state contract.
+  - [x] Test that a loading touch produces a visual acknowledgement without creating a gameplay command.
+  - [x] Test that a failed boot exposes retry exactly once and repeated retry input cannot trigger multiple reloads.
+  - [x] Test that a late failure cannot replace a successful ready state.
+  - [x] **Run:** `CI=true pnpm test -- src/game/hud/bootStatus.test.ts`; recorded the intentional red baseline (module missing). **Commit:** `aa92ce9`
 
 - [ ] **Task: Implement the minimal boot-status state contract**
   - [ ] Add the pure transition/state helpers and a thin DOM-facing wrapper.
