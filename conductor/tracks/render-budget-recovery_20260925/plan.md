@@ -27,7 +27,7 @@
 
 ## Phase 2 — Minimal behavior-preserving optimization
 
-- [ ] Task: TDD the chosen optimization contract
+- [~] Task: TDD the chosen optimization contract
   - [ ] Write failing tests for any logic-bearing visibility, grouping, merge, shadow-caster, or draw-work rules.
   - [ ] Run the tests and confirm the expected red phase before implementation.
   - [ ] Implement the minimum code needed to satisfy the approved contract.
