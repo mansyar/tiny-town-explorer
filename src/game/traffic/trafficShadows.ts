@@ -7,17 +7,16 @@ import {
 } from 'three';
 import { sunGroundOffset } from '../scene';
 import type { TownGrid } from '../town/townGrid';
-import { parkedCarFittedHeight } from '../town/townTypes';
 import { ROAD_SURFACE_HEIGHT } from '../vehicle/vehicleActor';
-import type { TrafficSystem } from './trafficSystem';
+import { type TrafficSystem, trafficActorFittedHeight } from './trafficSystem';
 
 /**
- * Following blob shadows for the two wanderers (FR8).
+ * Following blob shadows for every ambient road actor (FR8).
  *
  * Exactly the parked cars' language (`parkedShadows`): a box's real shadow is
  * its footprint together with that footprint shifted away from the sun, so the
- * blob is the box around those two — one stretched quad per car, centred half
- * way down the sun offset. The difference is that these blobs follow: both
+ * blob is the box around that actor — one stretched quad per profile, centred
+ * half way down the sun offset. The difference is that these blobs follow: all
  * quads live in one merged mesh whose vertices are rewritten every frame, so
  * the whole town's moving shadows cost one draw call.
  *
@@ -76,7 +75,7 @@ export function trafficShadowQuads(
       // Footprints and poses publish as a pair; anything else is noise.
       return;
     }
-    const offset = sunGroundOffset(grid.tileSize * parkedCarFittedHeight(pose.kind));
+    const offset = sunGroundOffset(grid.tileSize * trafficActorFittedHeight(pose.kind));
     quads.push({
       center: {
         x: shape.centre.x + offset.x / 2,

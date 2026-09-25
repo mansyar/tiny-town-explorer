@@ -101,6 +101,10 @@ works offline on the family tablet. Tiny Town Explorers fills that gap.
 - ~~Static parked cars~~ — shipped in `parked-cars_20260922`, 2026-09-22.
 - ~~Light wandering traffic~~ — shipped in
   `light-wandering-traffic_20260923`, 2026-09-23: two seeded civilian cars
+- ~~Living town expansion~~ — shipped in
+  `living-town-expansion_20260925`, 2026-09-25: four seeded civilian cars plus
+  a cat and a rabbit wandering the same roads, silent, crashable, and mounted
+  from primitives rather than new assets.
 - ~~Second district~~ — shipped in `second-district_20260923`, 2026-09-24: the
   figure-eight town (two loops meeting at one shared junction), the corner
   shop landmark, the pond with waddling ducks, six parked cars on measured
