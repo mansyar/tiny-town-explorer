@@ -3,6 +3,7 @@ import { createGame, type GameDeps } from './game';
 import { findPath } from './path/pathfinder';
 import { mountParkedShadows } from './town/parkedShadows';
 import { createTownGrid } from './town/townGrid';
+import { mountTown } from './town/townRenderer';
 import { mountTrafficShadows } from './traffic/trafficShadows';
 import { createVehicleActor } from './vehicle/vehicleActor';
 
@@ -1165,5 +1166,18 @@ describe('the frame, the camera order and the boot window (Phase 4)', () => {
     game.advance(0.016);
     expect(onRotation).toHaveBeenCalled();
     expect(game.world.frameCarPosition).toEqual(game.world.motor?.position);
+  });
+
+  it('rejects `driven` when the mount dies before the car exists', async () => {
+    // A model fetch failing is the realistic case: offline-first means the
+    // first visit really can fail. The edge awaits `driven` before `ready`, so
+    // a mount that never reaches the motor must reject it — otherwise the boot
+    // parks on a promise nobody will ever settle and the failure is swallowed.
+    const boom = new Error('model fetch failed');
+    vi.mocked(mountTown).mockRejectedValueOnce(boom);
+    const game = createGame(deps());
+
+    await expect(game.driven).rejects.toThrow('model fetch failed');
+    await expect(game.ready).rejects.toThrow('model fetch failed');
   });
 });

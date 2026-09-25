@@ -409,6 +409,12 @@ export function createGame(deps: GameDeps): Game {
 
   // The car and its motor arrive only once the town has been measured, because
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
+  //
+  // INVARIANT: every mount slot below is ONE object in two places — the local
+  // the frame reads and the `world.*` field the contract suite observes. They
+  // are assigned in pairs, on adjacent lines. If you ever assign only one, the
+  // app keeps working off the local while the suite reads a stale mirror; the
+  // cleaner fix is to read through `world` and delete the local.
   let motor: GameWorld['motor'];
   let actor: GameWorld['actor'];
   // The wanderers and their actors mount across the same async window (the
@@ -430,9 +436,14 @@ export function createGame(deps: GameDeps): Game {
   let bonks = 0;
   // The tap router is wired the moment the motor exists, which is the same edge
   // `main.ts` used to build it on; `ready` waits for the car model as well.
+  // `driven` has to reject as well as resolve: the edge awaits it first, so a
+  // mount that dies before the car exists (a model fetch failing, on a first
+  // offline visit) must surface there rather than park the boot forever.
   let signalDriven: () => void = () => {};
-  const driven = new Promise<void>((resolve) => {
+  let failDriven: (reason: unknown) => void = () => {};
+  const driven = new Promise<void>((resolve, reject) => {
     signalDriven = resolve;
+    failDriven = reject;
   });
   // Session state the moved rules close over: the fire's burst total, whether
   // the ability and serve affordances are currently showing, and the park and
@@ -1384,6 +1395,11 @@ export function createGame(deps: GameDeps): Game {
     // The fleet ticks its own clock. A burst that is never updated never ends,
     // which leaves the ability button dimmed and every later press ignored.
     fleet.update(deltaSeconds);
+    // This edge used to carry a `hud !== undefined` guard. It does not need one
+    // because the port no-ops before the HUD is built, and because nothing can
+    // arm a burst that early: only the fire truck bursts, and the sole pre-HUD
+    // caller (the helper hand's siren demo) casts the police car's zero-second
+    // siren. If a cast ever gains a burst, restore the old guard.
     if (fleet.isBursting() !== abilityBusy) {
       abilityBusy = fleet.isBursting();
       hud.setAbilityBusy(abilityBusy);
@@ -1424,6 +1440,9 @@ export function createGame(deps: GameDeps): Game {
   }
 
   const ready = mount();
+  // A mount that fails before the car exists never reaches `signalDriven`, so
+  // the failure is handed to `driven` as well — the edge is waiting there.
+  void ready.catch(failDriven);
 
   return {
     world,
