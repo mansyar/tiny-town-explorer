@@ -1,0 +1,19 @@
+Final review verification — Living Town Expansion
+
+Review scope: 54f4901..087ce2d, 10 changed files, 575 insertions, reviewed file by file as Principal Engineer.
+No Critical or High findings. Plan compliance, code-style guides, and workflow verified.
+
+Findings fixed in 3f0b6e5 (approved by the user to fix docs plus all four low nits):
+- Medium: README / product.md / tech-stack.md described the old three-wanderer roster and omitted the creature render contract.
+- Low: creature collision extents were inset ~0.04 from the visible body; now fitted (cat 0.18x0.12, rabbit 0.17x0.11).
+- Low: creature blob shadows measured the body, not the ear tips; now 0.26 cat / 0.37 rabbit.
+- Low: buildCreature cloned each owned part geometry; it now transforms in place.
+- Low: creatures relied on the implicit three.js castShadow=false default; disableRealShadows is now called explicitly.
+
+Post-fix verification:
+- pnpm exec biome check on both changed modules: clean
+- pnpm typecheck: clean
+- CI=true pnpm test: 67 files, 869 tests passed
+- pnpm build: 49 precache entries, 4,246.61 KiB (unchanged: the fixes touch collision boxes, shadow offsets and comments, never geometry or assets)
+- Live browser pass: both creatures mount as three merged meshes each, castShadow false, no page or console errors; measured body radii 0.182 (cat) and 0.172 (rabbit) now match the fitted extents, proving the boxes are genuinely fitted.
+- Render measurements remain valid: no new geometry, no new draw calls.
