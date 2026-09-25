@@ -1,0 +1,1 @@
+Principal review found two reproducible specification gaps: the pre-ready initial actor can overwrite a queued selection, and a newer destination can call setPath before a claimed mission morph is ready. The user approved fixing both. Regression tests will be added before production changes under the existing TDD requirement.
