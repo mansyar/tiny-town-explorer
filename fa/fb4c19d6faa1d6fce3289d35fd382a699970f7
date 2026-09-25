@@ -1,0 +1,26 @@
+Applies the conductor-review skill's archive convention consistently to the registry
+rather than only to the newest track.
+
+The review skill's cleanup step is "Move to conductor/archive/ and remove from the
+tracks file." The track archived in 9c32c5d kept a [x] registry entry instead,
+matching the two older archived tracks, so the repository had a third convention
+alongside the skill's. This settles it on the skill's reading: conductor/tracks.md
+now lists active work only, and a finished track moves to conductor/archive/ and
+leaves the file.
+
+All three previously listed tracks were already in conductor/archive/, so the
+registry is now just a header plus the convention itself, stated once so the next
+track does not re-add a completed entry.
+
+Removed: Async Intent Arbitration, Living Town Expansion, Resilient Progressive
+Boot entries. None of the track content is lost - all 14 archive folders keep their
+spec.md, plan.md, metadata.json, index.md, and the git notes that carry the
+phase-by-phase verification.
+
+Added "Track Archive" to conductor/index.md. Without it, stripping the registry
+would have left conductor/archive/ unreachable from the Conductor index, since the
+registry entries were the only thing pointing at it. All 8 links from index.md now
+resolve. README.md already described conductor/archive/ as the home of finished
+tracks, so that framing needed no change.
+
+No source files touched, so no test run: this is two markdown files.
