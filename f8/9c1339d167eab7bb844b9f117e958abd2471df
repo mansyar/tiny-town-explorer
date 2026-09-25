@@ -1,0 +1,102 @@
+Resilient Progressive Boot - consolidated verification record.
+
+NOTE ON STRUCTURE: this PR was squash-merged, so the 35 branch commits are not
+ancestors of this commit. The per-commit git notes written during the track remain
+in refs/notes/commits, attached to their original SHAs, but `git log main --notes`
+will not surface them. This note re-anchors the auditable record that
+conductor/workflow.md requires onto the commit that actually landed. The original
+per-commit notes are preserved, not deleted; read them by SHA.
+
+  Track: resilient-progressive-boot_20260925
+  Plan:  conductor/archive/resilient-progressive-boot_20260925/plan.md
+  PR:    #9
+
+=== Phase 1 - boot status state contract (e32650b) ===
+Added src/game/hud/bootStatus.ts as a pure loading -> ready | failed -> retrying
+lifecycle with an injected retry callback, guarded late failure, and one-shot retry
+semantics. 5 targeted tests. Coverage 94.44% statements / 88.88% branches / 85.71%
+functions. No DOM behaviour in this phase.
+
+=== Phase 2 - progressive town (39218bf) ===
+Two-phase mount: mountTown mounts every ground quad, signals an onBaseReady seam,
+then streams model placements in authored order; game.mount adds the group from that
+seam so the base renders while models load. townRenderer.ts at 100% coverage across
+all metrics, game.ts 94.01% / 86.16% / 90.36%. 16 town tests, 65 controller tests.
+
+=== Phase 3 - non-blocking optional audio (eb0e252) ===
+src/game/audio/sampleLoader.ts settles every clip with Promise.allSettled over
+AudioEngine.load. A failed fetch or decode leaves one sound silent instead of
+rejecting the boot fan-out as Promise.all did. Registry, URLs, decode path,
+synthesized voices, mute, and unlock all unchanged; a later load can repopulate a
+failed clip. sampleLoader.ts at 100% coverage.
+
+=== Phase 4 - browser edge and failure recovery (3aef0cf) ===
+src/game/hud/bootOverlay.ts is the DOM over bootStatus: a bouncing toy car while
+loading, one large round-arrow retry on failure, no visible text. main.ts gains a
+single try/catch around the driven and ready promises, gameplay input and the
+vehicle HUD only after ready, and on failure stops the render loop, disconnects the
+observer, disposes audio, and offers exactly one full-page reload. The one-shot
+first-gesture audio unlock moved to a window-level pointerdown so a tap on the
+overlay still unlocks.
+
+=== Phase 5 - integration, docs, device ===
+Production preview verified: first visit cleared the overlay with 6 HUD buttons,
+service worker registered and active, 0 page errors; airplane-mode reopen with
+navigator.onLine false still reached ready and kept animating; safe areas held at
+810x1080 and 1080x810 with vehicles 91x91, ability 96x96, mute 72x72, parent gear
+56x56, all fully in-viewport. Physical iPad 9th-generation: passed, owner-confirmed,
+including after the review fixes.
+
+=== Review pass 1 (7e00295) - 5 findings, all fixed ===
+1. The one-shot first-gesture unlock was registered before the try and never removed
+   on failure, so the retry tap called unlock(), which rebuilds the graph and made a
+   fresh AudioContext on a disposed engine. PROVEN FIXED by instrumenting AudioContext
+   construction: 1 before retry, 2 after reload, where the bug reads 3.
+2. acknowledgeTouch() was implemented and unit-tested but never called from
+   production, so a tap during loading produced no visual answer. This broke FR2 and
+   AC3 explicitly. Now a 220ms Web Animations squash, restart-not-queue.
+3. The empty catch {} logged nothing for a model that downloads and then fails to
+   parse, so the troubleshooting doc's "check the console" advice was wrong for that
+   whole class. Now logs "Tiny Town Explorers failed to start". A later
+   TypeError: Failed to fetch was observed with a full stack through modelLibrary.
+4. A leftover red-phase cast `mountTown as unknown as (...args: unknown[])` erased
+   the signature of the API this track added, so it was not type-checked at its own
+   test. The test now mocks the real four-argument signature.
+5. Parent panel and install hint survived the failure path, frozen behind the retry
+   icon by the stopped render loop. Now disposed and dismissed.
+
+=== Review pass 2 (3b62885) - 3 findings, all fixed ===
+6. The retry button listened only for pointerdown, leaving a focusable, aria-labelled
+   control inert for Enter, Space, and assistive activation. Switched to click.
+   PROVEN FIXED by counting navigations: Enter went 0 -> 1, pointer stayed at 1.
+7. The squash overwrote the CSS bounce transform wholesale, snapping vertical offset
+   to zero at t=0. Icon moved to an inner .boot__toy-face so the two compose.
+8. The audio troubleshooting note described a console diagnostic that does not exist
+   for decode failures, which Promise.allSettled swallows silently.
+
+=== Final gates ===
+pnpm check clean (162 files); pnpm typecheck clean; 882 tests across 69 files pass;
+overall coverage 91.4% statements / 87.39% branches; production build 49 precache
+entries / 4,249.68 KiB; 49,428 triangles inside the standing 50k budget; no secrets
+in the diff; Cloudflare Pages check passed. The known Vite chunk-size warning is
+unchanged and explicitly out of scope.
+
+=== Verification traps caught rather than reported ===
+The dev render probe returns no samples until a recorder is started, so loop liveness
+was proven by comparing screenshot hashes across time. The navigation counter
+double-counted per load, so a plain reload was measured as a control before counting
+retries. A session-scoped install hint made an early first-load-failure test miss its
+target, so it was re-run after clearing sessionStorage.
+
+=== Deliberately not done ===
+The sampleLoader retryability test substitutes a fake engine and so does not pin
+AudioEngine's real retry behaviour. The 4,249.03 KiB figures in docs/playtest.md and
+conductor/tech-stack.md are historical phase measurements and were left as recorded
+history. Synchronous edge setup before the try, including new WebGLRenderer() on a
+device without WebGL2, stays outside the failure boundary: FR4 scoped recovery to the
+driven and ready promises, so that is a future-track candidate, not a defect.
+
+=== Out of scope by design ===
+WebGL context-loss handling, service-worker/PWA redesign, bundle splitting, CI/E2E
+infrastructure, and the mission dependency cycle. No new dependency, asset, framework,
+registry entry, or visible text surface.
