@@ -1,0 +1,39 @@
+Second review pass on Resilient Progressive Boot. Fixes the three actionable
+findings from the full-track re-review.
+
+1. Medium - retry button unreachable by keyboard and screen reader. The overlay
+   listened only for `pointerdown`, so a focusable, aria-labelled <button> was
+   inert for Enter, Space, and assistive activation, contradicting its own
+   "read aloud to a grown-up" intent. Switched to `click`, which covers mouse,
+   touch, Enter/Space, and assistive activation. `bootStatus.retry()` already
+   refuses a second call, so a rapid double tap still reloads exactly once.
+   Verified in the browser: the button reports isActive true with aria-label
+   "Try again", and Enter went from 0 navigations before the fix to 1 after,
+   with the pointer path still at 1.
+
+2. Low - the touch squash cancelled the bounce. A Web Animation on the toy
+   overwrote the CSS boot-bounce transform wholesale, snapping the vertical
+   offset to zero at t=0. The icon now lives on an inner .boot__toy-face that
+   carries the squash while the outer circle keeps bouncing, so the two
+   compose. Verified mid-squash: outer matrix(1.03923,0,0,1.03923,0,-9.80751),
+   a natural continuation of the pre-tap -8.87042, while the inner face reads
+   matrix(1.09051,0,0,0.909491,0,0).
+
+3. Low - docs/cloudflare-pages.md told a grown-up to "check the console for the
+   failed clip", but Promise.allSettled swallows a decode failure with no log,
+   so that advice was only true for a 404. Reworded to say a missing file
+   shows as a 404 while a decode failure leaves the console empty.
+
+Not addressed here, deliberately: the sampleLoader retryability test still
+substitutes a fake engine so it does not pin AudioEngine's real retry
+behaviour, and the two internal records of 4,249.03 KiB in docs/playtest.md
+and conductor/tech-stack.md are historical phase measurements that should not
+be rewritten. The synchronous edge setup before the try block, including
+WebGLRenderer construction, remains outside the failure boundary; FR4 scoped
+recovery to the driven/ready promises, so that is a future-track candidate
+rather than a defect.
+
+Gates: pnpm check clean (162 files); pnpm typecheck clean; 882 tests across 69
+files pass; build 49 precache entries / 4,249.68 KiB. Loading toy re-screenshotted
+after the nesting change and renders unchanged. bootOverlay.ts and index.html
+remain manually verified DOM/presentation glue.
