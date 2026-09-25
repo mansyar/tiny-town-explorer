@@ -172,11 +172,11 @@
 - Post-review browser smoke at `a036275`: rapid ice-cream → police selection settled on police, three rapid canvas taps completed without console errors, and the scene inventory remained populated. Native automation still reported a hidden tab during this bounded pass, so it was not used for visual pacing claims.
 - The user confirmed the post-fix physical iPad recheck passed the rapid destination, rapid vehicle, mission-morph, helper, and four-mission interaction set with no stuck route, invisible lock, missing state, or regression.
 
-- [~] **Task: Finalize the track**
+- [x] **Task: Finalize the track**
   - [x] Mark all completed tasks in `plan.md`.
   - [x] Run the smallest final gates invalidated by review fixes.
-  - [~] Archive the track, update the registry, and prepare the implementation merge.
-  - [ ] **Commit:** `chore(conductor): archive track 'Async Intent Arbitration'`
+  - [x] Archive the track, update the registry, and prepare the implementation merge.
+  - [x] **Commit:** `chore(conductor): archive track 'Async Intent Arbitration'`
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [ ] Confirm the final diff, tests, build, manual record, Git notes, and archive state.

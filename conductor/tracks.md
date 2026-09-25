@@ -2,4 +2,4 @@
 
 ---
 
-- [~] **Track: Async Intent Arbitration** *Link: [conductor/tracks/async-intent-arbitration_20260925/index.md](./tracks/async-intent-arbitration_20260925/index.md)*
+- [x] **Track: Async Intent Arbitration** *Link: [conductor/archive/async-intent-arbitration_20260925/index.md](./archive/async-intent-arbitration_20260925/index.md)*
