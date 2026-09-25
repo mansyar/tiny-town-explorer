@@ -1,0 +1,22 @@
+Phase 5 verification — Living Town Expansion
+
+Automated gate (final tree, commit d53e0cf):
+- pnpm check: 156 files, no fixes
+- pnpm typecheck: clean
+- CI=true pnpm test: 67 files, 869 tests passed
+- pnpm build: 112 modules, 49 precache entries (4,246.61 KiB), known chunk-size warning only
+
+Render budget (1500x1050, DPR 1, shadow pass on, same capture order):
+- Fresh spawn (representative window): 50,553 tri / 180 calls vs re-measured baseline 50,541 / 180 (+12 tri, 0 calls)
+- Worst window (settled junction): 49,832 tri / 222 calls vs baseline 46,742 / 210 (+3,090 tri, +12 calls)
+- Inventory: 317 -> 329 meshes, +3,084 estimated triangles, 0 unculled
+- First pass cost +25 calls (342 meshes); creature primitives are now merged per material via mergeGeometries, same picture, half the calls
+- Trade-off recorded in measurements.md
+
+Manual browser verification (Playwright Chromium 1243):
+- All six ambient actors move; hero bonked once and still finished its route; no page or console errors
+- Portrait 750x1050 and landscape 1050x750: vertical extent constant at 5.294 units, aspect tracks canvas, controls clear of play space, no visible text
+- Offline reopen against the production build: 46 cached entries (30 GLB, 9 audio), full offline reload booted the town from cache with no errors
+- Frame cost 4.14 ms average / 4.3 ms p95 per frame (uncapped rAF), settled and during a mission
+
+Device verification: user confirmed a pass on the iPad 9th-generation floor device over the LAN production preview (frame smoothness, cat and rabbit visible, harmless bonk, fire mission coexistence, portrait/landscape framing).
