@@ -1457,7 +1457,11 @@ export function createGame(deps: GameDeps): Game {
   async function mount(): Promise<void> {
     library = createModelLibrary();
     world.library = library;
-    const town = await mountTown(grid, library);
+    const town = await mountTown(grid, library, undefined, {
+      // Add the synchronous base as soon as the renderer has it. The later
+      // shadows, ducks, traffic actors, and car still join the same group.
+      onBaseReady: (group) => scene.add(group),
+    });
     world.town = town;
     // The parked cars' faked shadows join the town's own graph: one static mesh
     // seated above the kerb top, so a car reads as resting on the street the way
@@ -1499,7 +1503,7 @@ export function createGame(deps: GameDeps): Game {
     if (shadows !== undefined) {
       town.group.add(shadows.mesh);
     }
-    scene.add(town.group);
+    // The town group was added from the base-ready seam above.
 
     // Hitboxes come from the same measured models the town just mounted, so the
     // car cannot disagree with the art about where a wall is. The wanderers are

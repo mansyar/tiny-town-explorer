@@ -37,7 +37,7 @@ minute, then go offline (DevTools → Network → Offline, or airplane mode) and
 reload. The game must still start. If it does not, the service worker precache
 is the problem, not Cloudflare.
 
-The build should report `precache 42 entries` at roughly 3.3 MiB. That is the
+The build should report `precache 49 entries` at roughly 4.15 MiB. That is the
 whole game — the town, both kits' models, the audio and the code — and it is
 what makes the offline pillar work.
 
@@ -104,11 +104,19 @@ the DNS instructions. Nothing in the app depends on the hostname (`scope` and
 
 - **Build fails on Node version** — `NODE_VERSION` is missing or older than 24.
 - **Build fails resolving pnpm** — add `PNPM_VERSION` = `12.4.1`.
-- **The site loads but the game never appears** — open the browser console.
-  A single failed asset fetch during the first load leaves the loader waiting;
-  the console names the file. Since assets are emitted individually
-  (`assetsInlineLimit: 0`), a missing asset is a 404 in the Network tab rather
-  than a corrupted bundle.
+- **The site loads but the game never appears** — the page shows a bouncing toy
+  car that never goes away, and then a round-arrow retry button. A failed asset
+  fetch during the first load now stops the game on purpose rather than hanging:
+  tap the retry button to reload. To find out *which* file is missing, open the
+  browser console — the failed request is logged there. Since assets are emitted
+  individually (`assetsInlineLimit: 0`), a missing asset is a 404 in the Network
+  tab rather than a corrupted bundle.
+- **One sound is silent but everything else works** — a sampled sound failed to
+  load. Optional audio degrades to silence on purpose: the game still starts and
+  the synthesized sounds still play. A missing file shows up in the console as a
+  404 like any other asset; a file that downloads and then fails to decode is
+  swallowed by the loader, so the console is empty and the symptom is just the
+  one missing sound.
 - **A stale build keeps serving** — close the tab and reopen it. Pages keeps a
   deployment history, so you can also roll back to an older deployment from the
   project's Deployments tab if a release is bad.

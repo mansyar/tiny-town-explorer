@@ -1,3 +1,4 @@
+import type { Group } from 'three';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGame, type GameDeps } from './game';
 import { findPath } from './path/pathfinder';
@@ -192,6 +193,37 @@ describe('createGame controller seam (Phase 2)', () => {
     game.world.fleet.update(2);
     game.advance(0.016);
     expect(setBusy).toHaveBeenCalledWith(false);
+  });
+
+  it('attaches the town group as soon as its base is ready', async () => {
+    const attached = deps();
+    // The stand-in is typed as the real `Group` so the production signature of
+    // `mountTown`, and the seam this test exists to pin, stay fully type-checked.
+    const group = { add: vi.fn() } as unknown as Group;
+    const townMount = deferred<{
+      group: Group;
+      houseFootprints: Map<string, { halfX: number; halfZ: number }>;
+      dispose: () => void;
+    }>();
+    vi.mocked(mountTown).mockImplementationOnce(
+      async (_grid, _library, _plan, options) => {
+        options?.onBaseReady?.(group);
+        return townMount.promise;
+      },
+    );
+
+    const game = createGame(attached);
+    try {
+      await Promise.resolve();
+      expect(attached.scene.add).toHaveBeenCalledWith(group);
+    } finally {
+      townMount.resolve({
+        group,
+        houseFootprints: new Map<string, { halfX: number; halfZ: number }>(),
+        dispose: vi.fn(),
+      });
+      await game.ready;
+    }
   });
 
   it('uses the scene port for add/remove and nothing else', async () => {

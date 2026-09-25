@@ -1,8 +1,11 @@
 import { PCFShadowMap, WebGLRenderer } from 'three';
 import { createAudioEngine, type SampledSound } from './game/audio/audioEngine';
 import { SOUND_MODELS } from './game/audio/audioRegistry';
+import { loadSamples } from './game/audio/sampleLoader';
 import { createCameraRig } from './game/camera';
 import { createGame, type GameHud } from './game/game';
+import { createBootOverlay } from './game/hud/bootOverlay';
+import { createBootStatus } from './game/hud/bootStatus';
 import { createHoldGate } from './game/hud/holdGate';
 import {
   createInstallHint,
@@ -77,16 +80,42 @@ async function main(): Promise<void> {
   });
   observer.observe(container);
 
+  // The child-visible boot overlay goes up before any async work starts, so the
+  // first thing on screen is a calm, icon-only promise that something is
+  // happening. It owns the loading and failed presentations; the state that
+  // decides between them is the tested `bootStatus` contract.
+  const boot = createBootStatus(() => {
+    // Exactly one full-page reload: `retry()` only lets a tap through from the
+    // failed phase, and it moves straight to `retrying` before calling us.
+    window.location.reload();
+  });
+  const overlay = createBootOverlay({
+    onRetry: () => void boot.retry(),
+    // A tap during loading squashes the toy; the lifecycle decides whether the
+    // child is still owed an answer.
+    onTouch: () => boot.acknowledgeTouch(),
+  });
+  document.body.append(overlay.element);
+
   // Sound waits for a gesture. The context and its samples are prepared up
-  // front so the very first tap has something to play; only `unlock` (below,
-  // on the first pointerdown) makes any of it audible.
+  // front so the very first tap has something to play; only `unlock` below
+  // makes any of it audible.
   const audio = createAudioEngine();
-  void Promise.all(
+
+  // The overlay sits on top of the canvas while loading, so the first gesture
+  // a child makes belongs to the overlay rather than the world. Unlock from the
+  // first pointerdown anywhere in the page, and only the first one, so that tap
+  // still starts the audio context.
+  const onFirstGesture = (): void => {
+    void audio.unlock();
+  };
+  window.addEventListener('pointerdown', onFirstGesture, { once: true });
+
+  void loadSamples(
+    audio,
     // Object.entries widens every key to `string`; SOUND_MODELS keys are the
     // closed SampledSound union, so the assertion restores what the record knows.
-    (Object.entries(SOUND_MODELS) as [SampledSound, string][]).map(([id, url]) =>
-      audio.load(id, url),
-    ),
+    Object.entries(SOUND_MODELS) as [SampledSound, string][],
   );
 
   // The vehicle HUD only exists once the models are in, but the controller's
@@ -177,8 +206,8 @@ async function main(): Promise<void> {
   }
 
   // The loop starts as soon as the controller returns, so the sky is on screen
-  // while the models stream in.
-  startRenderLoop(
+  // while the models stream in. Its stop handle is kept for the failure path.
+  const stopRenderLoop = startRenderLoop(
     renderer,
     scene,
     rig.camera,
@@ -186,49 +215,94 @@ async function main(): Promise<void> {
     renderProbe?.afterRender,
   );
 
-  // The car and its motor arrive only once the town has been measured, because
-  // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
-  await game.driven;
-  rig.snapTo(spawn);
+  // One boundary catches both boot gates: a failure anywhere in the town,
+  // traffic, or hero-model mount lands the child on the retry icon instead of a
+  // blank screen or a console-only stack.
+  try {
+    // The car and its motor arrive only once the town has been measured, because
+    // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
+    await game.driven;
+    rig.snapTo(spawn);
 
-  // Every tap is answered: a destination becomes a route the car drives, and a
-  // tap under the car is a honk (its squish and sound join the feedback pass).
-  // Taps that arrive while a route is running simply replace it.
-  const router = createInputRouter({
-    camera: rig.camera,
-    grid,
-    getCarPosition: () => game.carPosition(),
-  });
-  renderer.domElement.addEventListener('pointerdown', (event) => {
-    // The first gesture is the only thing that lets the browser start audio.
-    void audio.unlock();
-    // Any touch at all is a kid playing, so the hand restarts its patience.
-    game.noteActivity();
-    const rect = renderer.domElement.getBoundingClientRect();
-    const command = router.tapAt(ndcFromPoint(event.clientX, event.clientY, rect));
-    if (command.kind === 'honk') {
-      game.honk(command.at);
-      return;
+    // The hero model is the last thing to arrive, and until it does the world
+    // is not ready to be played, so wait for it before handing the child any of
+    // the controls.
+    await game.ready;
+
+    // Only now does play start. The overlay is still on top, so every tap that
+    // arrived while loading was answered by the loading icon and none of them
+    // became a queued route, honk, mission claim, or vehicle selection.
+    //
+    // A ready boot is the only thing that clears the overlay. An optional sample
+    // that fails later cannot pull a ready game back into failure, and a settled
+    // failure keeps its retry icon up rather than blanking the screen.
+    if (boot.markReady()) {
+      overlay.dispose();
     }
-    if (!router.isCurrent(command)) {
-      return;
+
+    // Every tap is answered: a destination becomes a route the car drives, and a
+    // tap under the car is a honk (its squish and sound joins the feedback pass).
+    // Taps that arrive while a route is running simply replace it.
+    const router = createInputRouter({
+      camera: rig.camera,
+      grid,
+      getCarPosition: () => game.carPosition(),
+    });
+    renderer.domElement.addEventListener('pointerdown', (event) => {
+      // Any touch at all is a kid playing, so the hand restarts its patience.
+      game.noteActivity();
+      const rect = renderer.domElement.getBoundingClientRect();
+      const command = router.tapAt(ndcFromPoint(event.clientX, event.clientY, rect));
+      if (command.kind === 'honk') {
+        game.honk(command.at);
+        return;
+      }
+      if (!router.isCurrent(command)) {
+        return;
+      }
+      void game.tapAt(command.target, command.landed);
+    });
+
+    const hudControls = createVehicleHud({
+      onSelect: (id) => {
+        void game.selectVehicle(id);
+      },
+      onAbility: () => game.pressAbility(),
+      onMute: (muted) => audio.setMuted(muted),
+    });
+    hud = hudControls;
+    document.body.append(hudControls.element);
+    hudControls.setActive(game.activeVehicle());
+    hudControls.setAbility(game.activeVehicle());
+  } catch (error) {
+    // A failed initial load is a dead end by design, so clean up the things that
+    // keep the page alive behind the retry icon: no ticking loop, no resize
+    // work, no open audio graph, and no live listeners or frozen cards. The
+    // overlay itself stays up and owns the single reload. There is no
+    // child-facing text anywhere in this path.
+    //
+    // The child never sees a console, but the grown-up troubleshooting route in
+    // docs/cloudflare-pages.md does, and a 404 is not the only way this can fail:
+    // a GLB that downloads cleanly and then fails to parse logs nothing on its
+    // own. Record it here so that route is not a dead end.
+    console.error('Tiny Town Explorers failed to start', error);
+    stopRenderLoop();
+    observer.disconnect();
+    // The first-gesture unlock is `once`, so on the usual failure — a bad model
+    // before the child has touched anything — it is still registered. Leaving it
+    // would run `unlock()` on the retry tap and rebuild a fresh AudioContext on
+    // an engine that was just disposed.
+    window.removeEventListener('pointerdown', onFirstGesture);
+    audio.dispose();
+    // The loop has stopped, so anything the frame used to animate would freeze
+    // on screen. Put the parent controls and the one-time install nudge away and
+    // let the retry icon be the only thing left to look at.
+    panel.dispose();
+    installHint.dismiss();
+    if (boot.markFailed()) {
+      overlay.setPhase('failed');
     }
-    void game.tapAt(command.target, command.landed);
-  });
-
-  await game.ready;
-
-  const hudControls = createVehicleHud({
-    onSelect: (id) => {
-      void game.selectVehicle(id);
-    },
-    onAbility: () => game.pressAbility(),
-    onMute: (muted) => audio.setMuted(muted),
-  });
-  hud = hudControls;
-  document.body.append(hudControls.element);
-  hudControls.setActive(game.activeVehicle());
-  hudControls.setAbility(game.activeVehicle());
+  }
 
   /**
    * One frame of the whole game, in the order the pieces depend on it. Named

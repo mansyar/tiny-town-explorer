@@ -104,6 +104,167 @@ function stubLibrary(make: (url: string) => Group = boxModel): StubLibrary {
   };
 }
 
+interface Deferred<T> {
+  readonly promise: Promise<T>;
+  resolve(value: T): void;
+  reject(reason: unknown): void;
+}
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
+function progressiveLibrary(
+  requests: ReadonlyMap<string, Deferred<Group>>,
+  urls: string[],
+): ModelLibrary {
+  return {
+    load: async (url: string) => boxModel(url),
+    instantiate: async (url: string) => {
+      urls.push(url);
+      const request = requests.get(url);
+      if (request === undefined) {
+        throw new Error(`unexpected model ${url}`);
+      }
+      return (await request.promise).clone(true);
+    },
+    dispose: () => undefined,
+  };
+}
+
+async function flushPromises(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
+function progressivePlan(): TownPlan {
+  return {
+    placements: [
+      {
+        kind: 'model',
+        name: 'house-1',
+        url: 'house.glb',
+        position: { x: 1, z: 2 },
+        yaw: 0.25,
+        fitWithin: 1,
+        isBuilding: true,
+      },
+      {
+        kind: 'ground',
+        name: 'ground-first',
+        position: { x: 0, z: 0 },
+        size: 1,
+        color: 0x7cba45,
+      },
+      {
+        kind: 'model',
+        name: 'cone-1',
+        url: 'cone.glb',
+        position: { x: -1, z: 0 },
+        yaw: 0,
+      },
+      {
+        kind: 'ground',
+        name: 'ground-second',
+        position: { x: 0, z: 1 },
+        size: 1,
+        color: 0x7cba45,
+      },
+    ],
+  };
+}
+
+describe('mountTown progressive base', () => {
+  it('mounts every ground and signals the base before the first model resolves', async () => {
+    const house = deferred<Group>();
+    const cone = deferred<Group>();
+    const urls: string[] = [];
+    const baseReady = vi.fn<(group: Group) => void>();
+    const mountPromise = mountTown(
+      grid,
+      progressiveLibrary(
+        new Map([
+          ['house.glb', house],
+          ['cone.glb', cone],
+        ]),
+        urls,
+      ),
+      progressivePlan(),
+      { onBaseReady: baseReady },
+    );
+
+    try {
+      await flushPromises();
+
+      expect(baseReady).toHaveBeenCalledTimes(1);
+      const base = baseReady.mock.calls[0]?.[0];
+      expect(base?.children.map((child) => child.name)).toEqual([
+        'ground-first',
+        'ground-second',
+      ]);
+      expect(urls).toEqual(['house.glb']);
+      expect(base?.getObjectByName('house-1')).toBeUndefined();
+
+      house.resolve(boxModel('house-1'));
+      await flushPromises();
+      expect(base?.getObjectByName('house-1')).toBeDefined();
+      expect(urls).toEqual(['house.glb', 'cone.glb']);
+
+      cone.resolve(smallModel('cone-1'));
+      const town = await mountPromise;
+
+      expect(town.group.children.map((child) => child.name)).toEqual([
+        'ground-first',
+        'ground-second',
+        'house-1',
+        'cone-1',
+      ]);
+      const mountedHouse = town.group.getObjectByName('house-1');
+      expect(mountedHouse?.position.x).toBeCloseTo(1);
+      expect(mountedHouse?.position.z).toBeCloseTo(2);
+      expect(mountedHouse?.rotation.y).toBeCloseTo(0.25);
+      const rotatedHalfExtent = 0.5 * (Math.cos(0.25) + Math.sin(0.25));
+      expect(town.houseFootprints.get('house-1')?.halfX).toBeCloseTo(rotatedHalfExtent);
+      expect(town.houseFootprints.get('house-1')?.halfZ).toBeCloseTo(rotatedHalfExtent);
+
+      town.dispose();
+      expect(town.group.children).toHaveLength(0);
+    } finally {
+      house.resolve(boxModel('house-1'));
+      cone.resolve(smallModel('cone-1'));
+      await mountPromise.catch(() => undefined);
+    }
+  });
+
+  it('rejects the mount when a progressive model fails', async () => {
+    const house = deferred<Group>();
+    const baseReady = vi.fn<(group: Group) => void>();
+    const mountPromise = mountTown(
+      grid,
+      progressiveLibrary(new Map([['house.glb', house]]), []),
+      progressivePlan(),
+      { onBaseReady: baseReady },
+    );
+    const rejection = mountPromise.catch((error: unknown) => error);
+
+    try {
+      await flushPromises();
+      expect(baseReady).toHaveBeenCalledTimes(1);
+      house.reject(new Error('house failed'));
+      await expect(rejection).resolves.toEqual(new Error('house failed'));
+    } finally {
+      house.reject(new Error('house failed'));
+      await rejection;
+    }
+  });
+});
+
 describe('mountTown shadow casting', () => {
   it('leaves a placement that asks for nothing casting, as the library set it', async () => {
     const plan: TownPlan = {

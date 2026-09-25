@@ -287,6 +287,78 @@
       .hud-button--mute.is-muted {
         background: #9aa4b0;
       }
+      /*
+        The boot overlay (see game/hud/bootOverlay.ts). It covers the page while
+        the town mounts, so a touch on it is the first gesture that unlocks
+        audio, and it keeps those touches from reaching the world underneath
+        before there is a world to play. Icons only, like everything else a
+        three-year-old ever sees.
+      */
+      .boot {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        inset: 0;
+        justify-content: center;
+        pointer-events: auto;
+        position: fixed;
+      }
+      /* The loading toy wears the same chunky circular weight as the HUD
+         buttons, so it stays legible over sky, road, or grass instead of
+         washing out against whichever base happens to be behind it. */
+      .boot__toy {
+        align-items: center;
+        animation: boot-bounce 1.6s ease-in-out infinite;
+        background: #e1473e;
+        border: 4px solid #fff;
+        border-radius: 50%;
+        box-shadow:
+          0 6px 0 rgb(0 0 0 / 18%),
+          0 0 0 6px rgb(255 255 255 / 65%);
+        color: #fff;
+        display: flex;
+        height: 96px;
+        justify-content: center;
+        width: 96px;
+      }
+      /* The icon lives on an inner face so the touch squash can scale it on its
+         own, composing with the bounce on the circle instead of overwriting the
+         bounce's transform. */
+      .boot__toy-face {
+        align-items: center;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        width: 100%;
+      }
+      .boot__retry {
+        align-items: center;
+        background: #3f6fc4;
+        border: 4px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 6px 0 rgb(0 0 0 / 18%);
+        color: #fff;
+        display: flex;
+        height: 96px;
+        justify-content: center;
+        padding: 0;
+        pointer-events: auto;
+        width: 96px;
+      }
+      .boot__retry svg {
+        height: 52px;
+        width: 52px;
+      }
+      @keyframes boot-bounce {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+        50% {
+          transform: translateY(-10px) scale(1.04);
+        }
+      }
     </style>
   </head>
   <body>
