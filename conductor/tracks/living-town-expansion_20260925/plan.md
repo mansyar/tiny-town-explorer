@@ -97,13 +97,15 @@
   - [x] Confirm teardown/disposal behavior covers all new scene nodes and resources.
   - **Lifecycle decision:** Traffic continues to update before actor sync; primitive nodes use the existing scene ownership/disposal path and introduce no new ownership surface.
 
-- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [x] Manually inspect actor scale, seating, facing, animation, shadows, and visual calmness.
   - [x] Verify no new visible text, audio requirement, or blocking interaction was introduced.
   - [x] Announce and run the exact automated test/build checks for this phase.
-  - [ ] Obtain explicit user confirmation and record the verification checkpoint.
+  - [x] Obtain explicit user confirmation and record the verification checkpoint.
   - **Manual result:** Headless browser verification at DPR 1 showed no page errors or console errors. The cat and rabbit were visibly readable, grounded, calm, and free of clipping in focused crops; the SUV was readable on the road with no building intersection. The dev probe reported 342 meshes (25 more than the 317-mesh baseline), zero frustum-culling overrides, and a live average of 49,452 triangles / 177.24 calls over 3,458 samples at 1500×1050.
   - **Automated result:** The first invocation used the POSIX spelling `CI=true` and failed before tests on PowerShell; rerunning with `$env:CI='true'` exposed one stale input-parity ID assertion. After widening that test to the documented traffic/creature ID contract, the corrected gate passed: 67 test files / 866 tests, `pnpm typecheck`, `pnpm check` (156 files), and `pnpm build` (49 precache entries, 4,242.72 KiB). The existing Vite >500 kB chunk warning remains.
+  - **Checkpoint:** `5532618` — user-approved Phase 3 scene mounting and integration; the earlier scene implementation is in `cd89651`.
+  - **Verification note:** `git notes show 5532618`
 
 ## Phase 4 — Harmless interaction and mission coexistence
 
