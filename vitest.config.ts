@@ -21,6 +21,9 @@ export default defineConfig({
         // panel and button chrome. The HUD's pure logic (holdGate, installHint)
         // stays measured.
         'src/main.ts',
+        // The dev-only WebGL probe is browser/scene glue; its pure measurement
+        // contract remains measured in renderMetrics.test.ts.
+        'src/game/renderProbe.ts',
         'src/game/hud/parentPanel.ts',
         'src/game/hud/vehicleHud.ts',
       ],

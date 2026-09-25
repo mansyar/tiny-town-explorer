@@ -81,6 +81,24 @@ describe('startRenderLoop', () => {
     expect(frame.elapsed).toBeGreaterThanOrEqual(0);
   });
 
+  it('runs the post-render hook after WebGL has drawn the same frame', () => {
+    const frames = installAnimationFrameStub();
+    const order: string[] = [];
+    const renderer = {
+      render: vi.fn(() => order.push('render')),
+    } as unknown as WebGLRenderer;
+    const before = vi.fn(() => order.push('before'));
+    const after = vi.fn(() => order.push('after'));
+
+    startRenderLoop(renderer, new Scene(), makeCamera(), before, after);
+    frames.flushFrame();
+
+    expect(order).toEqual(['before', 'render', 'after']);
+    expect(after).toHaveBeenCalledWith(
+      expect.objectContaining({ delta: expect.any(Number) }),
+    );
+  });
+
   it('stop cancels the pending frame and halts rendering', () => {
     const frames = installAnimationFrameStub();
     const renderer = makeRenderer();

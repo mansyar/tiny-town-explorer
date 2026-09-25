@@ -17,6 +17,7 @@ export interface FrameInfo {
  * available, so backgrounding the app never produces an oversized delta
  * (one enormous simulation step) when play resumes.
  *
+ * @param onAfterRender Optional hook after the current frame has been drawn.
  * @returns A stop function that cancels the pending frame.
  */
 export function startRenderLoop(
@@ -24,6 +25,7 @@ export function startRenderLoop(
   scene: Scene,
   camera: Camera,
   onFrame?: (frame: FrameInfo) => void,
+  onAfterRender?: (frame: FrameInfo) => void,
 ): () => void {
   const timer = new Timer();
   if (typeof document !== 'undefined') {
@@ -33,8 +35,10 @@ export function startRenderLoop(
 
   const renderFrame = (timestamp: number): void => {
     timer.update(timestamp);
-    onFrame?.({ delta: timer.getDelta(), elapsed: timer.getElapsed() });
+    const frame = { delta: timer.getDelta(), elapsed: timer.getElapsed() };
+    onFrame?.(frame);
     renderer.render(scene, camera);
+    onAfterRender?.(frame);
     frameHandle = requestAnimationFrame(renderFrame);
   };
 

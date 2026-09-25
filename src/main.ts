@@ -15,6 +15,7 @@ import { createVehicleHud, type VehicleHud } from './game/hud/vehicleHud';
 import { createInputRouter, ndcFromPoint } from './game/input/inputRouter';
 import { calmGapOverride } from './game/mission/devCalmGap';
 import { startRenderLoop } from './game/renderLoop';
+import { installRenderProbe } from './game/renderProbe';
 import { createScene } from './game/scene';
 import { createTownGrid } from './game/town/townGrid';
 
@@ -51,6 +52,19 @@ async function main(): Promise<void> {
   const spawn = grid.spawnPoints[0] ?? { x: 0, z: 0 };
   const rig = createCameraRig(container.clientWidth / container.clientHeight);
   rig.snapTo(spawn);
+
+  // A dev-only probe makes the real post-render counters addressable from a
+  // browser session. It has no production branch, no UI, and no per-frame work
+  // when `import.meta.env.DEV` is false.
+  const renderProbe = import.meta.env.DEV
+    ? installRenderProbe({
+        renderer,
+        scene,
+        camera: rig.camera,
+        focus: rig.focus,
+        target: window,
+      })
+    : undefined;
 
   // ResizeObserver covers window resizes and orientation changes alike,
   // including the initial layout pass.
@@ -164,7 +178,13 @@ async function main(): Promise<void> {
 
   // The loop starts as soon as the controller returns, so the sky is on screen
   // while the models stream in.
-  startRenderLoop(renderer, scene, rig.camera, ({ delta }) => advance(delta));
+  startRenderLoop(
+    renderer,
+    scene,
+    rig.camera,
+    ({ delta }) => advance(delta),
+    renderProbe?.afterRender,
+  );
 
   // The car and its motor arrive only once the town has been measured, because
   // the hitboxes *are* the mounted art. Until then the loop just holds the sky.
