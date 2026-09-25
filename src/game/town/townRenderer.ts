@@ -45,6 +45,11 @@ export interface TownMount {
   dispose(): void;
 }
 
+/** Optional seam for showing the synchronous town base before models load. */
+export interface TownMountOptions {
+  readonly onBaseReady?: (group: Group) => void;
+}
+
 /**
  * Builds the town's scene graph.
  *
@@ -56,6 +61,7 @@ export async function mountTown(
   grid: TownGrid,
   library: ModelLibrary,
   plan: TownPlan = planTown(grid),
+  options: TownMountOptions = {},
 ): Promise<TownMount> {
   const group = new Group();
   group.name = 'town';
@@ -76,12 +82,22 @@ export async function mountTown(
   };
 
   const houseFootprints = new Map<string, HouseFootprint>();
+  const modelPlacements: ModelPlacement[] = [];
 
+  // Ground is synchronous, so mount every base quad before the first awaited
+  // model. Keeping the model list preserves authored model order while letting
+  // the browser edge add this group to the scene as soon as the base is ready.
   for (const placement of plan.placements) {
     if (placement.kind === 'ground') {
       group.add(mountGround(placement, groundGeometry, groundMaterial(placement.color)));
-      continue;
+    } else {
+      modelPlacements.push(placement);
     }
+  }
+
+  options.onBaseReady?.(group);
+
+  for (const placement of modelPlacements) {
     const object = await mountModel(placement, library);
     group.add(object);
     // Measured after fitting and turning, so the footprint is the mounted art

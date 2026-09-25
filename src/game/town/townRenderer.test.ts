@@ -12,7 +12,7 @@ import { createTownGrid } from './townGrid';
 import type { TownPlan } from './townLayout';
 import { planTown } from './townLayout';
 import { TOWN_MAP } from './townMap';
-import { mountTown, type TownMount } from './townRenderer';
+import { mountTown } from './townRenderer';
 
 const grid = createTownGrid(TOWN_MAP);
 
@@ -120,17 +120,6 @@ function deferred<T>(): Deferred<T> {
   return { promise, resolve, reject };
 }
 
-type ProgressiveMount = (
-  grid: typeof grid,
-  library: ModelLibrary,
-  plan: TownPlan,
-  options: { readonly onBaseReady: (group: Group) => void },
-) => Promise<TownMount>;
-
-// The production signature gains this optional seam in the green phase. The
-// cast keeps the red test runnable while preserving the existing public calls.
-const progressiveMount = mountTown as unknown as ProgressiveMount;
-
 function progressiveLibrary(
   requests: ReadonlyMap<string, Deferred<Group>>,
   urls: string[],
@@ -197,7 +186,7 @@ describe('mountTown progressive base', () => {
     const cone = deferred<Group>();
     const urls: string[] = [];
     const baseReady = vi.fn<(group: Group) => void>();
-    const mountPromise = progressiveMount(
+    const mountPromise = mountTown(
       grid,
       progressiveLibrary(
         new Map([
@@ -240,8 +229,9 @@ describe('mountTown progressive base', () => {
       expect(mountedHouse?.position.x).toBeCloseTo(1);
       expect(mountedHouse?.position.z).toBeCloseTo(2);
       expect(mountedHouse?.rotation.y).toBeCloseTo(0.25);
-      expect(town.houseFootprints.get('house-1')?.halfX).toBeCloseTo(0.5);
-      expect(town.houseFootprints.get('house-1')?.halfZ).toBeCloseTo(0.5);
+      const rotatedHalfExtent = 0.5 * (Math.cos(0.25) + Math.sin(0.25));
+      expect(town.houseFootprints.get('house-1')?.halfX).toBeCloseTo(rotatedHalfExtent);
+      expect(town.houseFootprints.get('house-1')?.halfZ).toBeCloseTo(rotatedHalfExtent);
 
       town.dispose();
       expect(town.group.children).toHaveLength(0);
@@ -255,7 +245,7 @@ describe('mountTown progressive base', () => {
   it('rejects the mount when a progressive model fails', async () => {
     const house = deferred<Group>();
     const baseReady = vi.fn<(group: Group) => void>();
-    const mountPromise = progressiveMount(
+    const mountPromise = mountTown(
       grid,
       progressiveLibrary(new Map([['house.glb', house]]), []),
       progressivePlan(),
