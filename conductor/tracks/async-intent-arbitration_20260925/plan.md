@@ -50,8 +50,8 @@
 
 ## Phase 2 — Implement controller-level arbitration (TDD green)
 
-- [ ] **Task: Add controller-owned intent generations**
-  - [ ] Add monotonic destination and vehicle request generations inside `createGame` or a small controller-local helper.
+- [~] **Task: Add controller-owned intent generations**
+  - [~] Add monotonic destination and vehicle request generations inside `createGame` or a small controller-local helper.
   - [ ] Store only the latest pending destination/request; do not build a general-purpose event bus or queue every historical intent.
   - [ ] Keep `inputRouter` synchronous and unchanged unless a red test proves it is the required authority.
   - [ ] Document ownership, commit points, and the fact that mission claims are not cancelled.
