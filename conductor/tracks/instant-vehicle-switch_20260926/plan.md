@@ -191,13 +191,14 @@ was created.
 
 ## Phase 4 — Integration, documentation, and device verification
 
-- [ ] **Task: Run the full automated quality gates** []
-  - [ ] Run `pnpm check`.
-  - [ ] Run `pnpm typecheck`.
-  - [ ] Run `$env:CI='true'; pnpm test`.
-  - [ ] Run `$env:CI='true'; pnpm test:coverage` and confirm the new logic is above 80%.
-  - [ ] Run `pnpm build` and confirm the precache is still 49 entries.
-  - [ ] **Commit:** `chore(conductor): record instant-switch quality gates`
+- [~] **Task: Run the full automated quality gates** []
+  - [x] Run `pnpm check`.
+  - [x] Run `pnpm typecheck`.
+  - [x] Run `$env:CI='true'; pnpm test`.
+  - [x] Run `$env:CI='true'; pnpm test:coverage` and confirm the new logic is above 80%.
+  - [x] Run `pnpm build` and confirm the precache is still 49 entries.
+  - [x] **Run:** all five clean. `pnpm check` 163 files; `pnpm typecheck` clean; **892 tests / 69 files**; coverage **92.05% stmts / 87.76% branch / 93.57% funcs / 91.93% lines** with `game.ts` at **94.89 / 86.66 / 91.86 / 94.81**; `pnpm build` → **precache 49 entries / 4250.34 KiB**. Gate 4 detail: the track's new logic is `pendingSelectionGeneration`, `settlePendingSelection` and the three `setPending` call sites, all of which are covered by the five Phase 1 cases and the five Phase 2 cases; `game.ts` rose from the 94.5 / 86.6 recorded for game-controller-extraction to 94.89 / 86.66. Gate 5 detail: still 49 entries, so AC7 holds; the 1.31 KiB growth over the 4,249.03 KiB on record is the new CSS and controller code, not new assets.
+  - [x] **Commit:** `chore(conductor): record instant-switch quality gates`
 
 - [ ] **Task: Update affected documentation** []
   - [ ] Record the prewarm and pending-answer behavior in `conductor/tech-stack.md` with a dated note.
