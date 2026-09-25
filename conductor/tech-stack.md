@@ -61,10 +61,17 @@
   input router, audio construction and first-gesture unlock, plus the wiring;
   it went from 1,253 lines to 236, and `import.meta.env.DEV` and
   `window.location.search` stay there (FR9), with the dev calm-gap override
-  passed in as data. Costs nothing at runtime: the same objects, the same calls
-  in the same frame order, and `game.ts` measures 94.8% statements / 86.6%
-  branches against the 794-test suite the track started from, plus 48 new
-  controller cases (842 total).
+  passed in as data. The edge's whole surface is
+  `{ advance, tapAt, honk, noteActivity, selectVehicle, pressAbility,
+  carPosition, activeVehicle, setHelperEnabled, ready, driven }` — two entries
+  beyond the plan's four were provably required, because the input router and
+  the vehicle HUD both stay at the edge. `GameCamera` is the one port that grew
+  with the frame: it now carries `setTarget` and `followSun` alongside its
+  `facing` slice, and deliberately has no `update`, so the rig's easing stays
+  at the edge and the camera can never lag a frame behind the car. Costs
+  nothing at runtime: the same objects, the same calls in the same frame order,
+  and `game.ts` measures 94.5% statements / 86.6% branches against the 794-test
+  suite the track started from, plus 48 new controller cases (842 total).
 - **Park clean-up and lost puppy (added 2026-09-22):** primitives plus one
   newly mounted vendored GLB — measured from the geometries, not estimated.
   Litter is eight pieces of tied bag (90 triangles each) or crumpled paper
