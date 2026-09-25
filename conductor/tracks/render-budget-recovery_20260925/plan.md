@@ -50,11 +50,11 @@
   - [ ] Run `pnpm typecheck`.
   - [ ] Run `CI=true pnpm test`.
   - [ ] Run `pnpm build` and verify the PWA output remains complete and offline-capable.
-- [~] Task: Complete the desktop gameplay sweep
-  - [ ] Verify spawn, transit, and junction rendering windows.
-  - [ ] Drive through all four missions with the existing traffic and parked cars.
-  - [ ] Confirm camera edges, markers, pond effects, target rings, bonks, shadows, and newest-tap behavior.
-  - [ ] Record before/after measurements and any visual differences.
+- [x] Task: Complete the desktop gameplay sweep
+  - [x] Verify spawn, transit, and junction rendering windows.
+  - [x] Drive through all four missions with the existing traffic and parked cars.
+  - [x] Confirm camera edges, markers, pond effects, target rings, bonks, shadows, and newest-tap behavior.
+  - [x] Record before/after measurements and any visual differences.
 - [ ] Task: Complete the iPad 9th-generation pass
   - [ ] Load the built/previewed app and check first-load behavior.
   - [ ] Drive both districts and all four missions.
