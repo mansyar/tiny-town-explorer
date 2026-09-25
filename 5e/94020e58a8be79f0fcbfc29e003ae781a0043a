@@ -117,3 +117,20 @@ Production/offline verification:
 - The browser bridge exposes no offline toggle, so the cache-backed startup was verified by stopping the origin server and reloading rather than by a network-emulation switch.
 
 Verdict: automated quality gates and production/offline-capable output pass; proceed to the desktop and device verification tasks.
+
+Phase 3 desktop gameplay sweep report
+
+Automated desktop evidence:
+- pnpm check; pnpm typecheck; $env:CI="true"; pnpm test; pnpm build passed (851 tests across 67 files; 49 precache entries / 4238.99 KiB).
+- A controlled Playwright/Chromium pass at 1280x720 / DPR 1, after the authored town and seeded traffic settled, measured 48,463 peak triangles / 180 peak calls over a six-second window.
+- Road-route windows from the same pass measured 48,709 / 199, 48,343 / 198, 46,473 / 174, and 41,829 / 132; the previously recorded settled-junction reference remains 45,797 / 154.
+- The dev-paced mission path and the screenshot review retained the four vehicle controls, traffic, parked cars, house directional shadows, target/effect presentation, and intact town geometry without console errors.
+- All four vehicle buttons and their ability buttons were exercised through the real DOM; the newest-tap route was exercised with two rapid canvas taps; the three-second parent hold opened the settings panel.
+- A responsive 810x1080 CSS / DPR 2 smoke pass kept the canvas, HUD, controls, and safe-area layout within bounds without errors. This is supplementary evidence; the physical-device result below is the acceptance evidence.
+
+Manual desktop result:
+- Fresh load, both-district driving, camera edges, traffic, parked cars, pond effects, target rings, bonks, shadows, newest-tap behavior, and all four missions (fire, ice cream/order, park/litter, and puppy) were checked.
+- No missing markers, shadows, pond/traffic content, clipping, or regression was observed.
+- User confirmation: Yes, confirm (2026-09-25).
+
+Verdict: desktop gameplay sweep accepted; proceed to the iPad and final technical-record tasks.
