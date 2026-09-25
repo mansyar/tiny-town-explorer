@@ -39,13 +39,15 @@
 
 ## Phase 2 — Deterministic ambient movement and collision contracts
 
-- [ ] **Task: Write failing tests for the ambient profile contract**
-  - [ ] Add tests for profile count, stable IDs, required road-wanderer and creature categories, and finite configuration values.
-  - [ ] Add tests for deterministic starts and seeded replay/divergence.
-  - [ ] Add tests for valid road routes, lane placement, town bounds, and no stacked initial actors.
-  - [ ] Add tests for non-solid footprints and pose/footprint parity.
-  - [ ] Add tests proving the traffic system exposes only `update`, `poses`, and `footprints`.
-  - [ ] Run the targeted traffic tests and confirm the new assertions fail for the expected missing behavior.
+- [x] **Task: Write failing tests for the ambient profile contract**
+  - [x] Add tests for profile count, stable IDs, required road-wanderer and creature categories, and finite configuration values.
+  - [x] Add tests for deterministic starts and seeded replay/divergence.
+  - [x] Add tests for valid road routes, lane placement, town bounds, and no stacked initial actors.
+  - [x] Add tests for non-solid footprints and pose/footprint parity.
+  - [x] Add tests proving the traffic system exposes only `update`, `poses`, and `footprints`.
+  - [x] Run the targeted traffic tests and confirm the new assertions fail for the expected missing behavior.
+  - **Red result:** `pnpm test -- src/game/traffic/trafficSystem.test.ts src/game/vehicle/vehicleMotor.test.ts` failed only on the new six-instance roster assertions and fitted-creature capsule assertion; 51 existing assertions passed.
+  - **Commit:** `20b9be0` — `test(traffic): specify ambient roster contracts`
 
 - [ ] **Task: Implement the minimal typed ambient profile and movement extension**
   - [ ] Reuse `createTrafficBrain`, `createVehicleMotor`, and the existing seeded RNG.
