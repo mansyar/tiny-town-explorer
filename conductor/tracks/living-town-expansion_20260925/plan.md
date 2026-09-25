@@ -128,10 +128,13 @@
   - [x] Run coverage for the new/changed logic modules and confirm the project’s >80% target.
   - **Regression result:** 67 test files and 869 tests passed. Coverage is 88.69% statements / 85.95% branches / 92.02% functions / 88.49% lines overall. Changed logic remains above 80%: `trafficSystem.ts` 98.48% statements, `trafficBrain.ts` 94.54%, `trafficShadows.ts` 97.67%, and `vehicleMotor.ts` 100%; `trafficActors.ts` is scene-only visual code and remains covered by the manual visual gate.
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
-  - [ ] Perform a manual free-play and mission coexistence pass.
-  - [ ] Obtain explicit user confirmation.
-  - [ ] Attach the verification report as a Git note and record the checkpoint SHA.
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+  - [x] Perform a manual free-play and mission coexistence pass.
+  - [x] Obtain explicit user confirmation.
+  - [x] Attach the verification report as a Git note and record the checkpoint SHA.
+  - **Manual result:** A real headless browser pass at 1500×1050/DPR 1 exercised free play plus fire, ice-cream, park, and puppy contexts. Each pass kept all six ambient IDs present, produced one harmless cat bonk, reached the route destination without remaining blocked, and reported no page or console errors. Temporary dev inspection wiring was removed after the pass.
+  - **Checkpoint:** `661eee4` — user-approved Phase 4 interaction, feedback, coexistence, regression, coverage, and browser results.
+  - **Verification note:** `git notes show 661eee4`
 
 ## Phase 5 — Render, offline, and device verification
 
