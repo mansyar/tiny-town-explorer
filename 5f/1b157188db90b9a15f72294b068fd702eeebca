@@ -1,0 +1,1 @@
+Phase 1 verification approved by user. Baseline captured in measurements.md; roster is three existing cars plus SUV, cat, and rabbit (six total); scope preserves mission/input/persistence/UI contracts. Announced command pnpm check passed: 156 files, no fixes. Manual checkpoint approval recorded in this session.
