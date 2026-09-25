@@ -32,11 +32,11 @@
   - [x] Run the tests and confirm the expected red phase before implementation.
   - [x] Implement the minimum code needed to satisfy the approved contract.
   - [x] Run the focused tests green, then refactor and verify coverage remains above the project threshold.
-- [~] Task: Integrate the optimization with the existing scene
-  - [ ] Preserve the current six parked cars, three wanderers, four playable vehicles, town art, mission markers, pond, and shadows.
-  - [ ] Preserve camera follow/frame ordering, input routing, collision, traffic, mission, and audio behavior.
-  - [ ] Verify resource ownership, cloning, teardown, and disposal for any changed scene objects.
-  - [ ] Re-measure all representative windows; confirm the worst fresh-spawn window is at or below 50,000 triangles and draw calls do not increase.
+- [x] Task: Integrate the optimization with the existing scene `5e94020`
+  - [x] Preserve the current six parked cars, three wanderers, four playable vehicles, town art, mission markers, pond, and shadows.
+  - [x] Preserve camera follow/frame ordering, input routing, collision, traffic, mission, and audio behavior.
+  - [x] Verify resource ownership, cloning, teardown, and disposal for any changed scene objects.
+  - [x] Re-measure all representative windows; confirm the worst fresh-spawn window is at or below 50,000 triangles and draw calls do not increase.
 - [ ] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
   - [ ] List changed code files and verify required test coverage for each.
   - [ ] Announce and run the exact automated test command.
