@@ -1,0 +1,11 @@
+Task: Ability, siren, helper hand and the tap surface (Phase 3 task 2).
+
+Moved into game.ts: pressAbility, applyAbilityEvent, onSirenCast, tapAt, answerMissions, tickHelperHand, demoSiren and the pending-demo state. main.ts is down to 280 lines and now holds no game rules: renderer, scene, camera rig and ResizeObserver, the hold gate / parent panel / install hint, the audio engine and first-gesture unlock, the input router, the frame shell (advance + tickVehicle + tickMissions as three-line delegations) and the wiring. The three-frame shims are what Phase 4 folds into advance when the API closes to { advance, tapAt, honk, noteActivity }.
+
+tickHelperHand took the two blocks that used to sit in tickMissions (drop the trace and the announced demo when the town stops needing the kid, and make the demo once the trace is done) so the hand's whole lifecycle is one call; the order inside the frame is unchanged.
+
+Red/green: 8 tests written first and failing (the per-vehicle casts, the hose in reach, the siren latch once, the hand pointing at the siren button, one demo then cooldown, aim vs target for both the hose and the serve, the dropped demo), then a second block for the tap surface and round edges (claim-without-morph for fire and iceCream, a tap every mission ignores, the park piece tap, empty pickup, ghosted deliver, a press ignored mid-burst, an unreachable route, a replaced litter field, a refused second fire/order, the litter frame, the cleared pup stage, and the fire/order celebrations). Green at 43 tests in the file.
+
+Four of my first assertions were wrong, not the code: the ability event carries seconds, the fire and order FSMs need their respond() before proximity arms them, serve additionally needs the jingle, and the demo tap is fire-and-forget so it settles across microtasks.
+
+Coverage game.ts: 97.1% stmts / 87.06% branches / 96.66% funcs / 97.05% lines. Gates: biome 150 files clean, tsc clean, 837/837 tests (66 files).
