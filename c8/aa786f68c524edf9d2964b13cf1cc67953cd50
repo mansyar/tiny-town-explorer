@@ -15,3 +15,7 @@ Verification:
 Results: Biome checked 154 files; TypeScript passed; 852 tests across 67 files passed; production build passed; PWA generated 49 precache entries / 4,238.99 KiB. The existing JavaScript chunk-size warning is unchanged. Production output still contains no dev-probe identifiers.
 
 No controlled triangle/draw-call measurements changed; the recorded render-budget figures remain 48,463/180 fresh spawn, 46,477/176 transit, 45,797/154 settled junction, and 49,080/203 dev-paced mission.
+
+Re-review result
+
+The corrected implementation was re-reviewed against the same track scope. Both findings are resolved: the shadow experiment API now names the shared vehicle wrapper accurately, and render windows now detect viewport-aspect changes. No new correctness, security, style, or production-bundle issues were found. The current gate result is 852 tests across 67 files, with check, typecheck, and build passing.
