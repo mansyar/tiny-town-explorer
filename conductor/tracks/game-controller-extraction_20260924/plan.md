@@ -52,7 +52,7 @@
 
 ## Phase 4 - Frame, thinning, freeze proof and docs (mixed)
 
-- [ ] Task: The frame and the camera order (FR5, AC5)
+- [~] Task: The frame and the camera order (FR5, AC5)
   - [ ] Write failing tests in `game.test.ts`: the camera target is set inside the vehicle frame and the rig update runs *after* the game frame; `followSun` keeps its slot so the shadow map stays texel-still and the camera never lags a frame; the HUD ability-busy edge (the `fleet.isBursting()` comparison) fires exactly as today; the render loop starts before mounting resolves so the sky is on screen while the models stream in (red first)
   - [ ] Move `advance`, `tickMissions` and `tickVehicle` into `game.ts`, and close `createGame()`'s API to `{ advance, tapAt, honk, noteActivity }` — dropping the temporary `world` and rule handles
   - [ ] Refactor + coverage
