@@ -2,6 +2,4 @@
 
 ---
 
-No tracks in progress. Finished tracks are archived under
-[`conductor/archive/`](./archive/), each keeping its specification, plan,
-checkpoints and git notes as the permanent record.
+- [ ] **Track: Render Budget Recovery** *Link: [./tracks/render-budget-recovery_20260925/index.md](./tracks/render-budget-recovery_20260925/index.md)*
