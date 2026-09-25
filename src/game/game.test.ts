@@ -1225,7 +1225,7 @@ describe('the frame, the camera order and the boot window (Phase 4)', () => {
   it('rejects `driven` when the mount dies before the car exists', async () => {
     // A model fetch failing is the realistic case: offline-first means the
     // first visit really can fail. The edge awaits `driven` before `ready`, so
-    // a mount that never reaches the motor must reject it — otherwise the boot
+    // a mount that never reaches the motor must reject it - otherwise the boot
     // parks on a promise nobody will ever settle and the failure is swallowed.
     const boom = new Error('model fetch failed');
     vi.mocked(mountTown).mockRejectedValueOnce(boom);
@@ -1233,5 +1233,74 @@ describe('the frame, the camera order and the boot window (Phase 4)', () => {
 
     await expect(game.driven).rejects.toThrow('model fetch failed');
     await expect(game.ready).rejects.toThrow('model fetch failed');
+  });
+});
+
+describe('async intent arbitration (TDD red)', () => {
+  it('keeps the newest destination when taps resume out of order', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const [firstPoint, secondPoint] = attached.grid.spawnPoints;
+    if (motor === undefined || firstPoint === undefined || secondPoint === undefined) {
+      throw new Error('The car or spawn points are missing');
+    }
+
+    const firstMission = deferred<boolean>();
+    const secondMission = deferred<boolean>();
+    vi.spyOn(game.world.missions, 'tap')
+      .mockReturnValueOnce(firstMission.promise)
+      .mockReturnValueOnce(secondMission.promise);
+    const onRing = vi.spyOn(game.world.ring, 'show');
+    const onPlay = attached.audio.play as ReturnType<typeof vi.fn>;
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    onRing.mockClear();
+    onPlay.mockClear();
+
+    const firstTap = game.tapAt(firstPoint, firstPoint);
+    const secondTap = game.tapAt(secondPoint, secondPoint);
+
+    expect(onRing).toHaveBeenNthCalledWith(1, firstPoint);
+    expect(onRing).toHaveBeenNthCalledWith(2, secondPoint);
+    expect(onPlay).toHaveBeenCalledTimes(2);
+
+    secondMission.resolve(false);
+    await secondTap;
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+
+    firstMission.resolve(false);
+    await firstTap;
+
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+    expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(secondPoint);
+  });
+
+  it('does not resurrect an older route when the newest destination is unreachable', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const [firstPoint, secondPoint] = attached.grid.spawnPoints;
+    if (motor === undefined || firstPoint === undefined || secondPoint === undefined) {
+      throw new Error('The car or spawn points are missing');
+    }
+
+    const firstMission = deferred<boolean>();
+    const secondMission = deferred<boolean>();
+    vi.spyOn(game.world.missions, 'tap')
+      .mockReturnValueOnce(firstMission.promise)
+      .mockReturnValueOnce(secondMission.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    // The newer tap resolves first and has no route; the older tap then finds
+    // one, but it must not resurrect that superseded destination.
+    vi.mocked(findPath)
+      .mockReturnValueOnce(undefined)
+      .mockReturnValueOnce({ waypoints: [firstPoint], destination: firstPoint });
+
+    const firstTap = game.tapAt(firstPoint, firstPoint);
+    const secondTap = game.tapAt(secondPoint, secondPoint);
+    secondMission.resolve(false);
+    await secondTap;
+    firstMission.resolve(false);
+    await firstTap;
+
+    expect(onSetPath).not.toHaveBeenCalled();
   });
 });

@@ -8,13 +8,13 @@
   - [x] Keep all controls test-only; do not add runtime configuration or production hooks.
   - [x] **Commit:** `test(game): add async intent race harness`
 
-- [~] **Task: Write red tests for stale destination commits**
-  - [ ] Hold a mission/vehicle promise, issue destination A, then destination B, and assert that only B calls `motor.setPath` after resolution.
-  - [ ] Assert that both taps retain their immediate ring/audio feedback.
-  - [ ] Assert that an unreachable/stale route is not committed after a newer tap supersedes it.
-  - [ ] **Commit:** include the red regression tests in the test commit.
+- [x] **Task: Write red tests for stale destination commits**
+  - [x] Hold a mission/vehicle promise, issue destination A, then destination B, and assert that only B calls `motor.setPath` after resolution.
+  - [x] Assert that both taps retain their immediate ring/audio feedback.
+  - [x] Assert that an unreachable/stale route is not committed after a newer tap supersedes it.
+  - [x] **Commit:** include the red regression tests in the test commit.
 
-- [ ] **Task: Write red tests for atomic mission claims**
+- [~] **Task: Write red tests for atomic mission claims**
   - [ ] Fire mission: hold the required fire-truck actor, issue a newer destination, and assert the mission claim survives while the newer destination is eventually applied.
   - [ ] Ice-cream and park paths: assert their required morphs are not undone by a later tap.
   - [ ] Failed mission morph: assert the old actor remains and no route is committed until a later retry can mount the required vehicle.
