@@ -40,13 +40,13 @@
   - [x] Assert that a rejected model rejects the mount and never produces a ready town.
   - [x] **Run:** `CI=true pnpm test -- src/game/town/townRenderer.test.ts`; recorded 14 passing existing tests and 2 intentional progressive-seam failures. **Commit:** `ce3af40`
 
-- [ ] **Task: Implement the two-phase town mount**
-  - [ ] Add the smallest optional base/progress seam needed by `mountTown`; do not add a second town or a general asset scheduler.
-  - [ ] Mount all synchronous ground/base geometry first.
-  - [ ] Invoke the base-ready seam once before the first awaited GLB.
-  - [ ] Continue mounting the remaining authored placements with the existing fit, seating, shadow, naming, and footprint logic.
-  - [ ] Preserve the `TownMount` return contract and model-library cache behavior.
-  - [ ] **Run:** the targeted town-renderer tests and confirm they are green.
+- [x] **Task: Implement the two-phase town mount** [e585de5]
+  - [x] Add the smallest optional base/progress seam needed by `mountTown`; do not add a second town or a general asset scheduler.
+  - [x] Mount all synchronous ground/base geometry first.
+  - [x] Invoke the base-ready seam once before the first awaited GLB.
+  - [x] Continue mounting the remaining authored placements with the existing fit, seating, shadow, naming, and footprint logic.
+  - [x] Preserve the `TownMount` return contract and model-library cache behavior.
+  - [x] **Run:** the targeted town-renderer tests and confirm they are green. **Commit:** `e585de5`
 
 - [ ] **Task: Attach the progressive town at the game boundary**
   - [ ] Pass the base-ready seam from `game.mount` so the town group enters the scene before model completion.
