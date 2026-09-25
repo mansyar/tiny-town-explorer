@@ -89,7 +89,12 @@ async function main(): Promise<void> {
     // failed phase, and it moves straight to `retrying` before calling us.
     window.location.reload();
   });
-  const overlay = createBootOverlay({ onRetry: () => void boot.retry() });
+  const overlay = createBootOverlay({
+    onRetry: () => void boot.retry(),
+    // A tap during loading squashes the toy; the lifecycle decides whether the
+    // child is still owed an answer.
+    onTouch: () => boot.acknowledgeTouch(),
+  });
   document.body.append(overlay.element);
 
   // Sound waits for a gesture. The context and its samples are prepared up
@@ -101,7 +106,10 @@ async function main(): Promise<void> {
   // a child makes belongs to the overlay rather than the world. Unlock from the
   // first pointerdown anywhere in the page, and only the first one, so that tap
   // still starts the audio context.
-  window.addEventListener('pointerdown', () => void audio.unlock(), { once: true });
+  const onFirstGesture = (): void => {
+    void audio.unlock();
+  };
+  window.addEventListener('pointerdown', onFirstGesture, { once: true });
 
   void loadSamples(
     audio,
@@ -266,14 +274,31 @@ async function main(): Promise<void> {
     document.body.append(hudControls.element);
     hudControls.setActive(game.activeVehicle());
     hudControls.setAbility(game.activeVehicle());
-  } catch {
+  } catch (error) {
     // A failed initial load is a dead end by design, so clean up the things that
     // keep the page alive behind the retry icon: no ticking loop, no resize
-    // work, and no open audio graph. The overlay itself stays up and owns the
-    // single reload. There is no child-facing text anywhere in this path.
+    // work, no open audio graph, and no live listeners or frozen cards. The
+    // overlay itself stays up and owns the single reload. There is no
+    // child-facing text anywhere in this path.
+    //
+    // The child never sees a console, but the grown-up troubleshooting route in
+    // docs/cloudflare-pages.md does, and a 404 is not the only way this can fail:
+    // a GLB that downloads cleanly and then fails to parse logs nothing on its
+    // own. Record it here so that route is not a dead end.
+    console.error('Tiny Town Explorers failed to start', error);
     stopRenderLoop();
     observer.disconnect();
+    // The first-gesture unlock is `once`, so on the usual failure — a bad model
+    // before the child has touched anything — it is still registered. Leaving it
+    // would run `unlock()` on the retry tap and rebuild a fresh AudioContext on
+    // an engine that was just disposed.
+    window.removeEventListener('pointerdown', onFirstGesture);
     audio.dispose();
+    // The loop has stopped, so anything the frame used to animate would freeze
+    // on screen. Put the parent controls and the one-time install nudge away and
+    // let the retry icon be the only thing left to look at.
+    panel.dispose();
+    installHint.dismiss();
     if (boot.markFailed()) {
       overlay.setPhase('failed');
     }

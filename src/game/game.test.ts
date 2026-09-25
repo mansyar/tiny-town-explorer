@@ -1,3 +1,4 @@
+import type { Group } from 'three';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGame, type GameDeps } from './game';
 import { findPath } from './path/pathfinder';
@@ -196,22 +197,20 @@ describe('createGame controller seam (Phase 2)', () => {
 
   it('attaches the town group as soon as its base is ready', async () => {
     const attached = deps();
-    const group = { add: vi.fn() };
+    // The stand-in is typed as the real `Group` so the production signature of
+    // `mountTown`, and the seam this test exists to pin, stay fully type-checked.
+    const group = { add: vi.fn() } as unknown as Group;
     const townMount = deferred<{
-      group: typeof group;
+      group: Group;
       houseFootprints: Map<string, { halfX: number; halfZ: number }>;
       dispose: () => void;
     }>();
-    const progressiveMount = mountTown as unknown as (
-      ...args: unknown[]
-    ) => Promise<typeof townMount extends Deferred<infer T> ? T : never>;
-    vi.mocked(progressiveMount).mockImplementationOnce(async (...args) => {
-      const options = args[3] as
-        | { readonly onBaseReady?: (value: typeof group) => void }
-        | undefined;
-      options?.onBaseReady?.(group);
-      return townMount.promise;
-    });
+    vi.mocked(mountTown).mockImplementationOnce(
+      async (_grid, _library, _plan, options) => {
+        options?.onBaseReady?.(group);
+        return townMount.promise;
+      },
+    );
 
     const game = createGame(attached);
     try {

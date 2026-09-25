@@ -2,11 +2,12 @@
  * The child-visible boot overlay: what a three-year-old sees between tapping
  * the icon and getting the town.
  *
- * Two pictures, never a word. While the world mounts it is a soft bouncing toy
- * car; if that mount fails it becomes one big round arrow, because the only
- * thing left to offer is another go. `zero text` is a product pillar, so the
- * retry button carries an `aria-label` for a screen reader and nothing a child
- * could read on the glass.
+ * Three pictures, never a word. While the world mounts it is a soft bouncing
+ * toy car; a tap on it squashes that toy so a loading screen still answers;
+ * and if the mount fails it becomes one big round arrow, because the only thing
+ * left to offer is another go. `zero text` is a product pillar, so the retry
+ * button carries an `aria-label` for a screen reader and nothing a child could
+ * read on the glass.
  *
  * The overlay covers the page, which is deliberate and load-bearing: it is the
  * first thing on screen, so it takes the tap that unlocks audio, and it keeps
@@ -24,9 +25,27 @@ const LOADING_ICON =
 const RETRY_ICON =
   '<path d="M12 4.2a7.8 7.8 0 1 1-7.5 10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2.6"/><path d="M11.6 1.2 15 4.2l-3.4 3z"/>';
 
+/**
+ * How long the toy stays squashed after a tap. Long enough to read as an
+ * answer, short enough that a child tapping again never waits on the last one.
+ */
+const TOUCH_SQUASH_MS = 220;
+
+/** The squash itself: a soft wooden-toy press, never a flash or a shake. */
+const TOUCH_SQUASH_KEYFRAMES: Keyframe[] = [
+  { transform: 'scale(1, 1)' },
+  { transform: 'scale(1.14, 0.86)', offset: 0.4 },
+  { transform: 'scale(1, 1)' },
+];
+
 export interface BootOverlayOptions {
   /** A grown-up asked to try the whole page again. */
   readonly onRetry: () => void;
+  /**
+   * A touch landed on the overlay. Returns true when the lifecycle still owes
+   * the child an answer, which is the cue to squash the toy.
+   */
+  readonly onTouch?: () => boolean;
 }
 
 export interface BootOverlay {
@@ -64,10 +83,27 @@ export function createBootOverlay(options: BootOverlayOptions): BootOverlay {
   retry.append(icon(RETRY_ICON));
   retry.style.display = 'none';
 
-  const onPointerDown = (): void => {
+  const onRetryPointerDown = (): void => {
     options.onRetry();
   };
-  retry.addEventListener('pointerdown', onPointerDown);
+  retry.addEventListener('pointerdown', onRetryPointerDown);
+
+  // A three-year-old taps to see whether the world heard them. The overlay takes
+  // that tap so it never becomes a queued route, and answers it here with a
+  // squash, so a loading screen is never a dead one.
+  let squash: Animation | undefined;
+  const onOverlayPointerDown = (): void => {
+    if (options.onTouch?.() !== true) {
+      return;
+    }
+    // Restart rather than queue, so rapid taps each land as their own answer.
+    squash?.cancel();
+    squash = toy.animate(TOUCH_SQUASH_KEYFRAMES, {
+      duration: TOUCH_SQUASH_MS,
+      easing: 'ease-out',
+    });
+  };
+  element.addEventListener('pointerdown', onOverlayPointerDown);
 
   element.append(toy, retry);
 
@@ -81,7 +117,9 @@ export function createBootOverlay(options: BootOverlayOptions): BootOverlay {
     },
 
     dispose: () => {
-      retry.removeEventListener('pointerdown', onPointerDown);
+      squash?.cancel();
+      element.removeEventListener('pointerdown', onOverlayPointerDown);
+      retry.removeEventListener('pointerdown', onRetryPointerDown);
       element.remove();
     },
   };
