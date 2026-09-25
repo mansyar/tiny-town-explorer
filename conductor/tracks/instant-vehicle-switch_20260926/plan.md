@@ -17,12 +17,12 @@ hand instead. Phase 4 runs the gates and the device check.
   - [ ] Assert the arbitration tests' existing expectations still hold unmodified.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — recorded 66 pre-existing cases passing and the intentional red baseline: 4 of the 5 new cases fail because `hud.setPending` is never called. The fifth asserts a negative and passes vacuously by design, becoming load-bearing once the feature exists. **Commit:** `3ad937a`
 
-- [ ] **Task: Implement the minimal pending-answer state** []
+- [x] **Task: Implement the minimal pending-answer state** [f995d39]
   - [ ] Track the pending vehicle id in `game.ts` alongside the existing request generation; clear it on commit, on skip, and on failure.
   - [ ] Raise it only for `selection` mode, at the point the request is enqueued, with no `await` between the tap and the raise.
   - [ ] Leave a newer pending state untouched when an older request settles.
   - [ ] Do not change the queue, the generation scheme, `commitVehicleActor`, `restoreVehicleActor`, or `activate`.
-  - [ ] **Run:** the targeted test command and confirm the new contract is green.
+  - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — **70/70 passed**, including the 4 cases that were red. The pending answer reuses the arbitration's own generation counter rather than introducing a second one. **Commit:** `f995d39`
 
 - [ ] **Task: Expose the pending state through the HUD port** []
   - [ ] Add one `GameHud` method carrying the pending vehicle id, or `undefined` for none.
