@@ -1,1 +1,44 @@
 Task: Narrow port interfaces and createGame() over the world (FR1-FR4, AC2). Controller seam only: GameAudio/GameHud/GameScene/GameCamera narrow ports, createGame() builds every mission subsystem and feedback object synchronously, mounts library/town/motor/actors/traffic/pond/shadows in the background, advance() guards all pre-mount handles. No rules moved yet (Phases 3-4); main.ts untouched, zero child-visible change. Red-first: 6 failing tests (no game.ts), green at 10 tests. Coverage game.ts: 99.08% stmts / 87.5% branches / 85.71% funcs. Gates: biome 150 files clean, tsc clean, 804/804 tests (66 files).
+
+Phase Verification & Checkpoint Report — Phase 2: The controller seam, ports and world ownership (TDD)
+Track: game-controller-extraction_20260924
+
+SCOPE (workflow step 2)
+Target functional commit: 623e5ce "refactor(game): Extract the controller seam with narrow ports and world ownership"
+Changed files in phase: src/game/game.ts (new), src/game/game.test.ts (new). main.ts untouched — the live path is byte-identical, so the manual pass is a boot-identity check, not a behaviour change.
+Previous checkpoint: ea3cfb8 (Phase 1).
+
+TEST-FILE COVERAGE PER CHANGED CODE FILE (workflow step 2.3)
+- game.ts -> game.test.ts (10 tests, the phase's own contract suite).
+- game.test.ts -> the test file itself.
+No file in this phase lacks a corresponding test.
+
+AUTOMATED TESTS (workflow step 3)
+Commands: pnpm check && pnpm typecheck && $env:CI='true'; pnpm test
+(Note: "CI=true pnpm test" is sh syntax; on this Windows/pwsh machine the env var is set via $env:CI='true' before pnpm test.)
+Results (2026-09-25):
+- Biome: 150 files checked, no fixes applied.
+- tsc --noEmit: clean.
+- Vitest v5.0.1: 804/804 tests passing across 66 files, including the 10 new game.test.ts cases and the five frozen suites (missionStateMatrix, missionAbortParity, missionBusy, missionFocus, missionMarkers) — green and unmodified.
+- Coverage on game.ts: 99.08% statements, 87.5% branches, 85.71% functions, 99.04% lines (plan requires >80% statements and branches). The two uncovered branches are defensive guards that cannot fire through the public API (the wanderer-feed `?? []` fallback needs traffic to be undefined after the mount, and its `?.` guard needs the same); both are exercised in the other direction by the suite.
+
+RED/GREEN EVIDENCE (NFR3)
+Red: game.test.ts was written first and failed with "Cannot find module '/src/game/game'". Green: after src/game/game.ts landed, 10/10 pass. A first green run exposed a full-module mock casualty (trafficShadows imports ROAD_SURFACE_HEIGHT from the mocked vehicleActor); fixed by switching the model-loading mocks to partial mocks via importOriginal, so real modules keep their constants.
+
+WHAT LANDED (intermediate surface, per the plan header)
+- Four narrow ports (GameAudio, GameHud, GameScene, GameCamera) — FR2/AC2. Each port fake in the suite is a Proxy that throws on any member outside the declared set, so the narrowness is enforced at runtime, not just by typecheck.
+- createGame() builds every mission subsystem and feedback object synchronously (ring, fx, fire, sun, helper trace/hand, the four celebrations, the four mission FSMs, pacers, rotation, serve gate, order beats/marker, paw/heart markers, both pup instances) and mounts the model pipeline (library, town, parked shadows, pond watcher/ducks, traffic + actors + shadows, obstacles, motor, car actor) in the background, exposed as game.ready.
+- advance(delta) holds the pre-mount motor/actor/traffic/pond guards and reproduces today's frame head in order: wanderers -> motor -> actor -> ring/fx/ducks/fire/orderMarker/helperTrace/sun -> fleet clock -> HUD ability-busy edge. The DOM chrome (hold gate, parent panel, install hint) and the vehicle frame (tickVehicle, rig.update) stay in main.ts until Phase 4, so frame order is byte-exact at this checkpoint.
+- The calm-gap override arrives as data via GameDeps.calmGap, so this module never reads window or import.meta (FR9).
+
+MANUAL VERIFICATION STEPS (workflow step 4, presented to owner)
+1. pnpm dev; open the printed URL (usually http://localhost:5173).
+2. Confirm the boot/sky window is as before while the models stream in.
+3. Drive a tap and press a vehicle ability; confirm they behave exactly as before.
+Expected outcome: no change of any kind — main.ts is untouched at this checkpoint, which is the point of the seam-first slicing.
+
+OWNER CONFIRMATION (workflow step 5)
+"Yes, checkpoint it" — confirmed 2026-09-25, with the note that main.ts is untouched so the manual pass is an identity check.
+
+CHECKPOINT ANCHOR (workflow steps 6-8)
+Per step 6 no empty commit was created; the checkpoint is anchored to the phase's last functional commit, 623e5ce, recorded in plan.md as [checkpoint: 623e5ce].
