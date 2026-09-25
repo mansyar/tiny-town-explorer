@@ -9,12 +9,11 @@
   - [x] Test that a late failure cannot replace a successful ready state.
   - [x] **Run:** `CI=true pnpm test -- src/game/hud/bootStatus.test.ts`; recorded the intentional red baseline (module missing). **Commit:** `aa92ce9`
 
-- [ ] **Task: Implement the minimal boot-status state contract**
-  - [ ] Add the pure transition/state helpers and a thin DOM-facing wrapper.
-  - [ ] Keep visible output icon-only; use non-visible accessibility metadata only.
-  - [ ] Inject the reload callback so the one-shot retry behavior is testable without a real page reload.
-  - [ ] **Run:** the targeted test command and confirm the new contract is green.
-  - [ ] **Commit:** `feat(boot): add boot status state contract`
+- [x] **Task: Implement the minimal boot-status state contract** [e32650b]
+  - [x] Add the pure transition/state helpers and a thin DOM-facing wrapper.
+  - [x] Keep visible output icon-only; use non-visible accessibility metadata only.
+  - [x] Inject the reload callback so the one-shot retry behavior is testable without a real page reload.
+  - [x] **Run:** the targeted test command and confirm the new contract is green. **Commit:** `e32650b`
 
 - [ ] **Task: Verify Phase 1**
   - [ ] Confirm the state logic has coverage above the project’s 80% threshold for logic-bearing code.
