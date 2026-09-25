@@ -18,7 +18,7 @@ function firstMover(obstacles: readonly Obstacle[]): { x: number; z: number } {
   return { x: shape.centre.x, z: shape.centre.z };
 }
 
-describe('movers are not town props (FR6)', () => {
+describe('ambient actors are not town props (FR6)', () => {
   it('publishes no prop identity, so the 0.45 tap-snap can never select one', () => {
     const traffic = createTrafficSystem({ grid, seed: 7 });
     for (const obstacle of traffic.footprints()) {
@@ -27,7 +27,7 @@ describe('movers are not town props (FR6)', () => {
       // never become one however it is wired.
       expect(Object.keys(obstacle).sort()).toEqual(['id', 'shape', 'solid']);
       expect('snappable' in obstacle).toBe(false);
-      expect(obstacle.id).toMatch(/^traffic-\d$/);
+      expect(obstacle.id).toMatch(/^(?:traffic-\d|creature-(?:cat|rabbit)-\d)$/);
     }
   });
 
