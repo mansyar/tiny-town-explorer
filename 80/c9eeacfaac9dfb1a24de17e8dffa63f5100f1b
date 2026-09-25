@@ -1,0 +1,1 @@
+Task 3 red baseline: added fire, ice-cream, and park required-morph races plus failed-morph rollback/retry coverage. The existing controller suite remains green; the six new arbitration assertions intentionally fail against the unguarded implementation. Biome and TypeScript pass.
