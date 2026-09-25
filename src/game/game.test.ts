@@ -1303,4 +1303,132 @@ describe('async intent arbitration (TDD red)', () => {
 
     expect(onSetPath).not.toHaveBeenCalled();
   });
+
+  it('keeps a claimed fire morph atomic while applying the newest destination', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || newerPoint === undefined) {
+      throw new Error('The town or spawn points are missing');
+    }
+
+    game.activate('police');
+    game.lightFire(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(house.position, house.position);
+
+    await Promise.resolve();
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await newerTap;
+    actor.resolve(testActor('fire'));
+    await missionTap;
+
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('fire');
+    const finalPath = onSetPath.mock.calls[onSetPath.mock.calls.length - 1]?.[0];
+    expect(finalPath?.destination).toEqual(newerPoint);
+  });
+
+  it('keeps a claimed ice-cream morph atomic while applying a later tap', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (house === undefined || motor === undefined || newerPoint === undefined) {
+      throw new Error('The town or spawn points are missing');
+    }
+
+    game.activate('police');
+    game.lightOrder(house.id);
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(house.position, house.position);
+
+    await Promise.resolve();
+    expect(game.world.orders.snapshot().state).not.toBe('spawned');
+
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await newerTap;
+    actor.resolve(testActor('iceCream'));
+    await missionTap;
+
+    expect(game.world.orders.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+    const finalPath = onSetPath.mock.calls[onSetPath.mock.calls.length - 1]?.[0];
+    expect(finalPath?.destination).toEqual(newerPoint);
+  });
+
+  it('keeps a claimed park morph atomic while applying a later tap', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const [newerPoint] = attached.grid.spawnPoints;
+    if (motor === undefined || newerPoint === undefined) {
+      throw new Error('The town or spawn points are missing');
+    }
+
+    game.startPark();
+    const piece = game.world.litter[0];
+    if (piece === undefined) {
+      throw new Error('The park round laid no litter');
+    }
+    game.activate('police');
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const missionTap = game.tapAt(piece.position, piece.position);
+
+    await settle();
+    expect(game.world.park.snapshot().state).not.toBe('spawned');
+
+    const newerTap = game.tapAt(newerPoint, newerPoint);
+    await newerTap;
+    actor.resolve(testActor('garbage'));
+    await missionTap;
+
+    expect(game.world.park.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('garbage');
+    const finalPath = onSetPath.mock.calls[onSetPath.mock.calls.length - 1]?.[0];
+    expect(finalPath?.destination).toEqual(newerPoint);
+  });
+
+  it('rolls back a failed mission morph and permits a later retry', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    const beforeActor = game.world.actor;
+    if (house === undefined || motor === undefined || beforeActor === undefined) {
+      throw new Error('The town or car is missing');
+    }
+
+    game.activate('police');
+    const activeBefore = game.world.fleet.activeId();
+    const onRemove = vi.spyOn(attached.scene, 'remove');
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    game.lightFire(house.id);
+    const failedTap = game.tapAt(house.position, house.position);
+
+    await settle();
+    actor.reject(new Error('actor load failed'));
+
+    await expect(failedTap).resolves.toBeUndefined();
+    expect(game.world.actor).toBe(beforeActor);
+    expect(game.world.fleet.activeId()).toBe(activeBefore);
+    expect(onSetPath).not.toHaveBeenCalled();
+    expect(onRemove).not.toHaveBeenCalledWith(beforeActor.object);
+
+    const retryActor = testActor('fire-retry');
+    vi.mocked(createVehicleActor).mockResolvedValueOnce(retryActor);
+    await game.selectVehicle('fire');
+
+    expect(game.world.actor).toBe(retryActor);
+    expect(game.world.fleet.activeId()).toBe('fire');
+  });
 });

@@ -14,13 +14,13 @@
   - [x] Assert that an unreachable/stale route is not committed after a newer tap supersedes it.
   - [x] **Commit:** include the red regression tests in the test commit.
 
-- [~] **Task: Write red tests for atomic mission claims**
-  - [ ] Fire mission: hold the required fire-truck actor, issue a newer destination, and assert the mission claim survives while the newer destination is eventually applied.
-  - [ ] Ice-cream and park paths: assert their required morphs are not undone by a later tap.
-  - [ ] Failed mission morph: assert the old actor remains and no route is committed until a later retry can mount the required vehicle.
-  - [ ] **Commit:** include the atomic-mission red tests in the test commit.
+- [x] **Task: Write red tests for atomic mission claims**
+  - [x] Fire mission: hold the required fire-truck actor, issue a newer destination, and assert the mission claim survives while the newer destination is eventually applied.
+  - [x] Ice-cream and park paths: assert their required morphs are not undone by a later tap.
+  - [x] Failed mission morph: assert the old actor remains and no route is committed until a later retry can mount the required vehicle.
+  - [x] **Commit:** include the atomic-mission red tests in the test commit.
 
-- [ ] **Task: Write red tests for serialized vehicle selection**
+- [~] **Task: Write red tests for serialized vehicle selection**
   - [ ] Select A then B while actor creation is delayed; assert final fleet ID, HUD active ID, and mounted actor are all B.
   - [ ] Assert only one swap is in flight at a time.
   - [ ] Assert no superseded actor remains mounted in the scene.
