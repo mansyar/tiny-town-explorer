@@ -65,3 +65,16 @@
   - [x] Confirm `?calmGap=2` works in dev and a production build carries no trace of it — grep `dist` (AC8) — `pnpm build` emits a 49-entry / 4,238.80 KiB precache; the bundle contains no `URLSearchParams`, no `calmGapOverride` and no `devCalmGap`, so the override parser is tree-shaken out. The only surviving `calmGap` is the deps property name, which is FR9's data channel
   - [x] Update live docs (`README.md`, live `tech-stack.md` prose) to the new shape; leave `docs/playtest.md` and `conductor/archive/*` as written (NFR5) — the README's module map gained `game.ts` with a paragraph on the controller/edge split, and the tech stack gained a dated entry naming the moved identifiers; both historical paths are byte-identical
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `4cde835`
+
+## Phase: Review Fixes
+
+- [x] Task: Apply review suggestions `956eadf`
+  - [x] `driven` rejects when the mount fails before the car exists, so a failed
+    model load surfaces through the await the edge is actually waiting on
+    instead of hanging `main()` on a promise nobody settles (Medium)
+  - [x] A regression test pins that contract: a rejected `mountTown` rejects
+    `game.driven` rather than leaving it pending — verified red-first (the test
+    times out on the unfixed code, which is the hang itself)
+  - [x] Record the one-object-in-two-places invariant on the mirrored mount
+    slots, and note why the ability-busy edge no longer needs the pre-HUD guard
+    (Low x2)
