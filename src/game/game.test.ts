@@ -91,7 +91,6 @@ function deps(): GameDeps {
     hud: strict(
       {
         setActive: vi.fn(),
-        setAbility: vi.fn(),
         setAbilityBusy: vi.fn(),
         setAbilityVisible: vi.fn(),
         setPolicePulse: vi.fn(),
@@ -268,7 +267,6 @@ describe('createGame controller seam (Phase 2)', () => {
       'sploosh',
     ]);
     expect(Object.keys(attached.hud).sort()).toEqual([
-      'setAbility',
       'setAbilityBusy',
       'setAbilityVisible',
       'setActive',
@@ -811,13 +809,15 @@ describe('session rules: the closures Phase 3 had to bring with them', () => {
   it('activates the fleet and tells the serve latch which truck is driving', async () => {
     const { game, attached } = await booted();
     const setActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
-    const setAbility = attached.hud.setAbility as ReturnType<typeof vi.fn>;
 
     game.activate('garbage');
 
     expect(game.world.fleet.activeId()).toBe('garbage');
+    // One call, not two. The HUD derives the ability button from the committed
+    // vehicle, so a second writer would be a second thing able to disagree
+    // about which truck is driving.
     expect(setActive).toHaveBeenCalledWith('garbage');
-    expect(setAbility).toHaveBeenCalledWith('garbage');
+    expect(setActive).toHaveBeenCalledOnce();
   });
 
   it('builds the replacement car before removing the old one', async () => {

@@ -112,8 +112,6 @@ export interface GameAudio {
 export interface GameHud {
   /** Light up the vehicle the kid is driving. */
   setActive(id: VehicleId): void;
-  /** Point the ability button at the active vehicle's trick. */
-  setAbility(id: VehicleId): void;
   /** Dim the ability button while its one-shot is running. */
   setAbilityBusy(busy: boolean): void;
   /** Show or hide the ability button; it doubles as the hose button. */
@@ -659,8 +657,11 @@ export function createGame(deps: GameDeps): Game {
   function activate(id: VehicleId): void {
     fleet.setActive(id);
     serveGate.noteActiveVehicle(id);
+    // One call, because the HUD derives the ability button from the committed
+    // vehicle. It used to take a second `hud.setAbility(id)` alongside this one;
+    // that left two functions able to write the same state, which is the defect
+    // class the pending answer's review fix removed.
     hud.setActive(id);
-    hud.setAbility(id);
   }
 
   /**
@@ -849,7 +850,14 @@ export function createGame(deps: GameDeps): Game {
       // not sit mute through it. Only a real tap answers — a mission's own morph
       // and a direct swap are things the child did not ask for.
       pendingSelectionGeneration = generation;
-      hud.setPending(id);
+      try {
+        hud.setPending(id);
+      } catch {
+        // Same reasoning as the guard in `runVehicleRequest`: a port that throws
+        // here would strand the request before it ever reaches the queue, so the
+        // tap would neither commit nor resolve. The answer is worth losing.
+        pendingSelectionGeneration = undefined;
+      }
     }
 
     let resolveRequest!: (committed: boolean) => void;

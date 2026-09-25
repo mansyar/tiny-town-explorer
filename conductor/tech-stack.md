@@ -270,8 +270,8 @@
   preloaded the fleet, so the first tap of each of the four vehicles was silent
   while the model fetched. That is the `product.md` "repeated ineffective taps"
   frustration marker arriving through the largest, brightest, most tempting
-  control in the game. Three additions, no new module, no new dependency, asset
-  or text surface:
+  control in the game. Three additions, no new module, no new asset or text
+  surface:
   - `GameHud` gains `setPending(id)`, answered from `enqueueVehicleRequest` in
     the same synchronous turn as the pointer event — no `await` stands between
     the tap and the answer. It is raised only for `selection` mode, so a
@@ -282,8 +282,8 @@
     that supersedes it cannot disagree about who is newest. `settlePendingSelection`
     withdraws it on commit, on the stale-skip path, and in a `finally` covering
     failure, each guarded so a superseded settle leaves the newest answer
-    standing. The queue, the generation scheme, `commitVehicleActor`,
-    `restoreVehicleActor` and `activate` are untouched, and the five
+    standing. The queue, the generation scheme, `commitVehicleActor` and
+    `restoreVehicleActor` are untouched, and the five
     `async-intent-arbitration` regression cases pass unmodified.
   - `warmFleet()` in `mount()` calls `ModelLibrary.load` for all four hero
     models, fired once the town base is on screen and never awaited. It uses
@@ -320,6 +320,43 @@
     switch's "no second network request" guarantee is `ModelLibrary`'s
     fetch-once-and-cache path, already pinned by `modelLibrary.test.ts`; it is
     not observable from `game.test.ts`, where `createVehicleActor` is mocked.
+
+**Instant-answer vehicle switching, review fix (2026-09-26)** — a review found
+the ability button naming a truck nobody was driving, in the two states the
+pending answer created. Review found it in the presentation layer, so a
+controller-level test could not have seen it, and `vehicleHud.ts` had no test at
+all. Four consequences, all recorded because each contradicts something written
+above:
+  - **The ability button is now derived, not pushed.** `vehicleHud.ts` holds
+    `pendingId` and `committedId` and repaints from `pendingId ?? committedId`,
+    on raise, on withdrawal, and on every commit. The previous push-once shape
+    could not correct itself: a failed switch never re-published the committed
+    vehicle's trick, and a superseding commit published the *older* vehicle's
+    trick over a newer tap's ring. Two reachable states, one cause.
+  - **`GameHud.setAbility` and `VehicleHud.setAbility` are removed**, and
+    `activate()`'s second call alongside `hud.setActive(id)` is gone with them.
+    This is the one place the review fix contradicts the note above: `activate`
+    is no longer untouched. It is no longer *reachable twice*, which was the
+    point. `setActive` is now the single writer of the committed id, so one
+    state cannot have two owners — the same defect class as the bug itself.
+  - **`src/game/hud/vehicleHud.ts` is no longer excluded from coverage**, and
+    gains `vehicleHud.test.ts` at 14 jsdom cases measuring **100% statements /
+    100% branches / 100% functions / 100% lines**. The chrome is still verified
+    by hand; the pending-answer state machine is no longer verified by nothing.
+  - **jsdom 30.1.1 is a new devDependency**, which this track's own stop
+    conditions named as forbidden. The stop condition was written for the
+    implementation; a review fix that leaves a confirmed bug unfixed to avoid a
+    dev-only package would be the wrong trade, and the choice is recorded here
+    rather than made silently. The rest of the stop conditions were honoured —
+    still **no new precache entry (49)**, no new asset, no framework, and no
+    visible text. Gates after the fix: **906 tests across 70 files** at 91.72%
+    statements / 87.56% branches, Biome and TypeScript clean, precache
+    **4,250.30 KiB**. `game.ts` 94.71 / 86.66.
+  - The unguarded `hud.setPending(id)` in `enqueueVehicleRequest` is now wrapped,
+    matching the guard `runVehicleRequest` already carried for the same reason:
+    a port that throws there would strand the request before it reached the
+    queue, so the tap would neither commit nor resolve. The answer is worth
+    losing; the request is not.
 
 ## Audio
 - **Web Audio API, no wrapper library** — synthesized ice-cream jingle via

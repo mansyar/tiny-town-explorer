@@ -285,3 +285,94 @@ the following:
 - A measurable regression in the render inventory, draw calls, or boot wall-clock.
 - An unavailable iPad or device verification step; the phase remains incomplete
   rather than being marked by proxy.
+
+## Phase: Review Fixes
+
+A formal review of `a8a68e6..HEAD` found one High and one Low issue, both in
+the same code the track added. The owner approved fixing both.
+
+- [x] **Task: Derive the ability button from the pending answer instead of pushing it** []
+  - [x] Prove the defect before changing anything, by writing the failing test.
+  - [x] Replace the push-once ability state with `pendingId ?? committedId`.
+  - [x] Repaint on raise, on withdrawal, and on every commit.
+  - [x] Remove the second writer: `GameHud.setAbility`, `VehicleHud.setAbility`,
+        `activate()`'s call beside `hud.setActive`, and `main.ts`'s closure.
+  - [x] **Run:** `pnpm typecheck` clean; `pnpm check` clean (164 files);
+        906 tests across 70 files; `pnpm test:coverage` -> all files 91.72%
+        statements / 87.56% branches, `vehicleHud.ts` **100 / 100 / 100 / 100**,
+        `game.ts` 94.71 / 86.66; `pnpm build` -> 49 precache entries /
+        4,250.30 KiB.
+  - [x] **Commit:** <pending>
+
+- [x] **Task: Cover the layer the bug actually lived in** []
+  - [x] Add `jsdom` as a devDependency, which the stop conditions forbade.
+        Recorded as a deviation in `tech-stack.md` rather than taken silently.
+  - [x] Add `src/game/hud/vehicleHud.test.ts`: 14 jsdom cases, 7 of them for the
+        pending answer and 7 for the controls.
+  - [x] Remove `src/game/hud/vehicleHud.ts` from the `vitest.config.ts` coverage
+        exclusion list, with the finding recorded as the reason.
+  - [x] **Verify the new tests are not vacuous:** stashed the fix and re-ran,
+        confirming exactly 2 of the 7 fail against the buggy `vehicleHud.ts` and
+        pass against the fixed one. A test that cannot fail proves nothing.
+  - [x] **Commit:** <pending>
+
+- [x] **Task: Guard the bare port call in `enqueueVehicleRequest`** []
+  - [x] Wrap `hud.setPending(id)` so a throwing port cannot strand the request
+        before it reaches the queue, matching `runVehicleRequest`.
+  - [x] Clear `pendingSelectionGeneration` in the guard's body, so a failed
+        answer does not leave a phantom pending state with nothing to settle it.
+  - [x] **Commit:** <pending>
+
+- [x] **Task: Record the fix in the documentation** []
+  - [x] Correct two claims the fix falsified: the note said "no new dependency"
+        and that `activate` was untouched.
+  - [x] Record the derived-state design, the removed port member, the coverage
+        change, the jsdom deviation and why, and the new gate numbers.
+  - [x] **Commit:** <pending>
+
+### Review Fixes record (2026-09-26)
+
+**The finding.** `setPending` pushed the ability button toward the pending
+vehicle's trick and nothing ever pulled it back. Two reachable states followed
+from that single cause:
+
+1. **A failed switch left the ability button advertising the wrong truck.**
+   `commitVehicleActor` never runs on a failure, so `activate()` never runs, so
+   nothing re-published the committed vehicle's trick. The fire truck is
+   driving; the button is the police car's colour and siren icon, until the
+   next *successful* switch. This is AC4's own case, and it is reachable exactly
+   when a child is most likely to notice.
+2. **A superseding commit pointed the button at the older tap's vehicle.** In
+   `fire -> garbage -> police`, fire's in-flight request commits and publishes
+   fire's trick, and nothing re-asserts police, so the ring sits on police while
+   the ability offers fire's trick.
+
+**The wrong part of the first fix attempt, recorded because it shaped the
+second.** The obvious repair is to restore the committed vehicle on
+withdrawal. That is not sufficient: a superseded commit never *withdraws*, so
+it is not covered. The second manifestation survives. The repair had to remove
+the push/withdraw asymmetry, not add a rewind.
+
+**Why a controller test could not have caught either one.** The controller
+calling `hud.setAbility('fire')` when fire commits is correct behaviour. The bug
+was entirely in how the HUD interpreted the pair of calls. And `vehicleHud.ts`
+had **no test file at all** — it sat on the `vitest.config.ts` coverage
+exclusion list as DOM glue, manual-verified by design. This review was already
+flagged during Phase 1, with the offer to add a jsdom test and lift the
+exclusion. That offer is what this finding is the cost of declining.
+
+**The consequence nobody planned for.** Making `setActive` the single writer of
+the committed id made the old `setAbility` a second writer of the same state,
+called back to back. v8 coverage pointed straight at it — the only uncovered
+lines in the file were `setAbility`'s own body. Two functions able to write one
+piece of state is the defect class this fix exists to remove, so the member was
+deleted rather than left redundant: `GameHud.setAbility`,
+`VehicleHud.setAbility`, the call in `activate()`, the closure in `main.ts`, and
+the key in the AC2 port-surface assertion. `activate` is therefore no longer
+untouched, which the `tech-stack.md` note claimed and now corrects.
+
+**Two type errors the deletion surfaced**, both caught by `pnpm typecheck` and
+not by the suite, which does not typecheck: `let committedId = VEHICLE_IDS[0]`
+inferred the literal type `"fire"` from the `as const` tuple, and `main.ts` still
+called `hudControls.setAbility` when seeding the freshly created HUD. Both
+fixed; a green suite did not imply a green build, which is worth remembering.

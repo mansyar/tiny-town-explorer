@@ -51,10 +51,12 @@ export interface VehicleHudOptions {
 
 export interface VehicleHud {
   readonly element: HTMLElement;
-  /** Light up the vehicle the kid is driving. */
+  /**
+   * Light up the vehicle the kid is driving. Also the single writer of the
+   * committed id, so the ability button has one owner rather than two call
+   * sites that could disagree about which truck is driving.
+   */
   setActive(id: VehicleId): void;
-  /** Point the ability button at the active vehicle's trick. */
-  setAbility(id: VehicleId): void;
   /** Dim the ability button while its one-shot is running. */
   setAbilityBusy(busy: boolean): void;
   /** Show or hide the ability button; it doubles as the hose button. */
@@ -64,8 +66,8 @@ export interface VehicleHud {
   /**
    * Answer a switch tap before its model has loaded: ring the tapped button in
    * its own colour and point the ability button at the same vehicle, so the HUD
-   * never advertises the old trick while the child is choosing. `undefined`
-   * withdraws the answer.
+   * never advertises a trick for a truck nobody is in. `undefined` withdraws the
+   * answer and hands the ability button back to the committed vehicle.
    */
   setPending(id: VehicleId | undefined): void;
   setMuted(muted: boolean): void;
@@ -128,24 +130,38 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
     options.onMute(muted);
   });
 
-  /** Points the ability button at one vehicle's trick. Shared by the committed
-   * state and by the pending answer, which must agree on what is being offered. */
-  const setAbility = (id: VehicleId): void => {
+  /**
+   * The vehicle whose trick the ability button is currently offering: the
+   * pending one while a switch is answering, and the committed one otherwise.
+   *
+   * Derived rather than pushed, and that is the whole point. Pushing it left
+   * two reachable states where the button named a truck nobody was driving: a
+   * failed switch, which never re-publishes the committed vehicle's trick, and
+   * a superseding commit, which publishes the older vehicle's trick over a newer
+   * tap's ring. Both are now the same question asked in one place.
+   */
+  let pendingId: VehicleId | undefined;
+  let committedId: VehicleId = VEHICLE_IDS[0];
+  const paintAbility = (): void => {
+    const shown = pendingId ?? committedId;
     for (const vehicle of VEHICLE_IDS) {
-      abilityButton.classList.toggle(`hud-button--${vehicle}`, vehicle === id);
+      abilityButton.classList.toggle(`hud-button--${vehicle}`, vehicle === shown);
     }
-    abilityButton.replaceChildren(icon(ABILITY_ICONS[id]));
+    abilityButton.replaceChildren(icon(ABILITY_ICONS[shown]));
   };
 
   return {
     element,
     setActive(id): void {
+      // Recorded before the paint, so a pending answer still wins on the
+      // ability button while the committed state owns the active ring.
+      committedId = id;
       for (const [vehicle, button] of buttons) {
         button.classList.toggle('is-active', vehicle === id);
         button.setAttribute('aria-pressed', String(vehicle === id));
       }
+      paintAbility();
     },
-    setAbility,
     setAbilityBusy(busy): void {
       abilityButton.classList.toggle('is-busy', busy);
     },
@@ -156,6 +172,7 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
       buttons.get('police')?.classList.toggle('is-pulsing', pulsing);
     },
     setPending(id): void {
+      pendingId = id;
       for (const [vehicle, button] of buttons) {
         const pending = vehicle === id;
         button.classList.toggle('is-pending', pending);
@@ -163,14 +180,9 @@ export function createVehicleHud(options: VehicleHudOptions): VehicleHud {
         // tech the button is answering a tap that has not committed yet.
         button.setAttribute('aria-busy', String(pending));
       }
-      // The ability button follows the pending vehicle, not the committed one.
-      // Otherwise a child choosing the fire truck watches the hose button keep
-      // offering the previous truck's trick until the model lands. It is not
-      // rewound on withdrawal: the commit that follows sets it again, and a
-      // failed switch leaves the previous vehicle's trick, which is the truth.
-      if (id !== undefined) {
-        setAbility(id);
-      }
+      // Repainted on withdrawal as well as on raise, which is what returns the
+      // button to the car that is actually driving once a switch settles.
+      paintAbility();
     },
     setMuted(next): void {
       muted = next;
