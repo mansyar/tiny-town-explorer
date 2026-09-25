@@ -122,10 +122,11 @@
   - [x] Confirm actors do not become snap targets, mission targets, or required interactions.
   - **Feedback result:** The motor's existing bounce is asserted at contact, `game.ts` emits the existing `bonk` cue, and the input-parity suite confirms all six IDs remain non-snappable and outside the mission ID set.
 
-- [ ] **Task: Run the full logic regression suite**
-  - [ ] Announce the exact command: `CI=true pnpm test`.
-  - [ ] Run the complete test suite and investigate any regressions.
-  - [ ] Run coverage for the new/changed logic modules and confirm the project’s >80% target.
+- [x] **Task: Run the full logic regression suite**
+  - [x] Announce the exact command: `CI=true pnpm test` (PowerShell: `$env:CI='true'; pnpm test`).
+  - [x] Run the complete test suite and investigate any regressions.
+  - [x] Run coverage for the new/changed logic modules and confirm the project’s >80% target.
+  - **Regression result:** 67 test files and 869 tests passed. Coverage is 88.69% statements / 85.95% branches / 92.02% functions / 88.49% lines overall. Changed logic remains above 80%: `trafficSystem.ts` 98.48% statements, `trafficBrain.ts` 94.54%, `trafficShadows.ts` 97.67%, and `vehicleMotor.ts` 100%; `trafficActors.ts` is scene-only visual code and remains covered by the manual visual gate.
 
 - [ ] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [ ] Perform a manual free-play and mission coexistence pass.
