@@ -52,10 +52,10 @@
 
 ## Phase 4 - Frame, thinning, freeze proof and docs (mixed)
 
-- [~] Task: The frame and the camera order (FR5, AC5)
-  - [ ] Write failing tests in `game.test.ts`: the camera target is set inside the vehicle frame and the rig update runs *after* the game frame; `followSun` keeps its slot so the shadow map stays texel-still and the camera never lags a frame; the HUD ability-busy edge (the `fleet.isBursting()` comparison) fires exactly as today; the render loop starts before mounting resolves so the sky is on screen while the models stream in (red first)
-  - [ ] Move `advance`, `tickMissions` and `tickVehicle` into `game.ts`, and close `createGame()`'s API to `{ advance, tapAt, honk, noteActivity }` — dropping the temporary `world` and rule handles
-  - [ ] Refactor + coverage
+- [x] Task: The frame and the camera order (FR5, AC5) `8dc889c`
+  - [x] Write failing tests in `game.test.ts`: the camera target is set inside the vehicle frame and the rig update runs *after* the game frame; `followSun` keeps its slot so the shadow map stays texel-still and the camera never lags a frame; the HUD ability-busy edge (the `fleet.isBursting()` comparison) fires exactly as today; the render loop starts before mounting resolves so the sky is on screen while the models stream in (red first)
+  - [x] Move `advance`, `tickMissions` and `tickVehicle` into `game.ts`, and close `createGame()`'s API — `main.ts` now reaches the controller through `{ advance, tapAt, honk, noteActivity, selectVehicle, pressAbility, carPosition, activeVehicle, setHelperEnabled, ready, driven }` and nothing else (six entries beyond the plan's four are provably required: the router's car position, the HUD's opening vehicle and its two handler callbacks, and the parent panel's helper toggle). The `world` handle and the rule handles stay on the returned object purely as `game.test.ts`'s observation surface, which is what AC3's "every case still passes with no edit" needs
+  - [x] Refactor + coverage (94.76% stmts / 86.6% branches / 89.55% funcs on `game.ts`)
 - [ ] Task: Thin `main.ts` and move env reads to the edge (FR8, FR9)
   - [ ] Leave only container lookup, renderer creation, `createScene()`, `createTownGrid()`, camera rig and ResizeObserver, parent panel, hold gate and install hint, input router and DOM listeners, audio construction and first-gesture unlock, and the wiring between them. `import.meta.env.DEV` and `window.location.search` stay here, with `calmGapOverride()` resolved and passed in as data (manual-verify: `?calmGap=2` still shortens the gap in dev)
   - [ ] Confirm `main.ts` lands at roughly 200 lines or fewer and that a search in it for `absorb`, `serveArmedNow`, `deliverPuppy`, `onSirenCast`, `swapVehicle`, `tickPacers`, `tickMissions` returns nothing (AC1)
