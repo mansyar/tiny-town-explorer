@@ -85,12 +85,12 @@
   - [x] Run `CI=true pnpm test -- src/game/game.test.ts`.
   - [x] Run targeted coverage for touched controller logic and confirm the project’s >80% logic threshold.
   - [x] Refactor only to remove duplication exposed by the green tests; do not broaden scope.
-  - [ ] **Commit:** `fix(game): arbitrate async vehicle and route intent`
+  - [x] **Commit:** `fix(game): arbitrate async vehicle and route intent`
 
-- [~] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
+- [x] **Task: Phase Verification & Checkpoint (Refer to `workflow.md`)**
   - [x] Identify all changed production/test files and their corresponding tests.
   - [x] Run the exact targeted test and quality commands.
-  - [ ] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
+  - [x] Present the results, commit SHA, and detailed verification report; wait for explicit checkpoint confirmation.
 
 ### Phase 2 implementation record (2026-09-25)
 
@@ -99,11 +99,12 @@
 - Actor replacement builds first, removes/adds exactly at commit, commits fleet/HUD state only after readiness, and retains the last known-good actor on load or commit failure.
 - Immediate tap ring/audio remains synchronous; stale or failed mission morphs never call `setPath`.
 - Automated results: `pnpm check`, `pnpm typecheck`, `CI=true pnpm test` (**862 tests across 67 files**), `pnpm test:coverage` (overall 91.3% statements / 87.7% branches; `game.ts` 93.24% / 84.36%), and `pnpm build` all pass. The known Vite chunk-size warning remains unchanged and out of scope.
-- Remaining checkpoint action: commit the implementation and plan update, attach the detailed Git note, then obtain explicit checkpoint confirmation before integration/device verification.
+- Checkpoint commit: `fb725d7` (`fix(game): arbitrate async vehicle and route intent`), with a detailed Git note attached.
+- Checkpoint confirmation: the user approved proceeding to Phase 3 integration and device verification.
 
 ## Phase 3 — Integration and regression verification
 
-- [ ] **Task: Run the full automated gates**
+- [~] **Task: Run the full automated gates**
   - [ ] Run `pnpm check`.
   - [ ] Run `pnpm typecheck`.
   - [ ] Run `CI=true pnpm test`.
