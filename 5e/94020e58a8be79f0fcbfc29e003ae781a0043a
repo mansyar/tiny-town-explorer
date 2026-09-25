@@ -148,3 +148,45 @@ Supplementary automated evidence:
 - These emulated checks support, but do not replace, the physical-device result above.
 
 Verdict: iPad 9th-generation pass accepted; proceed to the final technical record and phase checkpoint.
+
+Phase 3 final verification — render-budget-recovery_20260925
+Date: 2026-09-25
+Functional commit under review: 5e94020 (perf(render): Reduce town shadow work)
+Technical-record commit: 2f5b200 (docs(record): Finalize render budget verification)
+
+Scope and acceptance
+- Preserved the six parked cars, three wanderers, four playable vehicles, town art, all four missions, traffic, markers, pond effects, camera/input/collision behavior, and offline PWA behavior.
+- Roads and non-car props no longer enter the real shadow-map pass; hero vehicle actors opt out; SUN_SHADOW_EXTENT is 5.5 (from 8). Houses retain real shadows; parked and wandering cars retain blob shadows.
+- No new missions, district, persistence, sticker board, runtime dependency, or asset pack was added.
+
+Automated gates
+Exact command: pnpm check; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pnpm typecheck; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; $env:CI="true"; pnpm test; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pnpm build
+- Biome checked 154 files successfully.
+- TypeScript --noEmit passed.
+- Vitest: 851 tests across 67 files passed.
+- Production build passed. PWA generated 49 precache entries / 4,238.99 KiB.
+- Existing JavaScript chunk-size warning remains unchanged and out of scope.
+
+Controlled performance evidence
+- Method: dev-only post-render window.__tteRenderMetrics at 1280x720, DPR 1, with shadow pass included; fresh window measured after authored town and seeded traffic settled.
+- Controlled fresh spawn: 48,463 triangles / 180 draw calls.
+- Transit: 46,477 / 176.
+- Settled junction: 45,797 / 154.
+- Dev-paced mission-active (?calmGap=2, development-only): 49,080 / 203.
+- Independent Chromium replay reproduced 48,463 / 180. Real road-route windows measured 48,709 / 199, 48,343 / 198, 46,473 / 174, and 41,829 / 132.
+- The target is met without a draw-call regression. The development probe is absent from production.
+
+Desktop manual verification
+- Verified first load, both districts, fresh spawn, transit, settled junction, camera edges, traffic, parked cars, pond effects, target rings, bonks, newest-tap routing, all four vehicle selections and abilities, all four mission types, house/vehicle shadows, intact geometry, and the three-second parent hold gate.
+- Browser console had no application errors; screenshots and visual review found no clipping or missing content.
+- Production preview loaded the complete app with no console errors. The service worker registered, activated, controlled the page, and served the built document, manifest, JavaScript, audio, and model assets. After stopping the preview origin, reload still started the cached complete app; this verifies browser cache-backed offline startup.
+- Supplementary 810x1080 CSS / DPR 2 smoke pass kept the canvas and HUD controls within the viewport.
+- Owner explicit confirmation: “Yes, confirm”. No missing markers, shadows, pond/traffic content, clipping, or gameplay regression was observed.
+
+Physical iPad 9th-generation verification
+- Owner completed first load and audio unlock, both districts, all four missions, traffic and parked cars, busiest spawn/transit moments, rotation and safe areas, HUD placement, camera framing, and airplane-mode offline reopen.
+- Gameplay remained calm and responsive; no observed stutter, missing content, shadow/marker/pond disappearance, clipping, or touch-friction issue.
+- Owner explicit confirmation: “Yes, confirm”.
+
+Conclusion
+- Phase 3 verification passes. Technical ledger, track measurements, and docs/playtest.md were synchronized in 2f5b200. The track is ready for the Conductor handoff/review flow.
