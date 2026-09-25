@@ -8,20 +8,20 @@ hand instead. Phase 4 runs the gates and the device check.
 ## Phase 1 — Give the controller a pending-answer state [checkpoint: b95d977]
 
 - [x] **Task: Add red tests for the pending-answer contract** [3ad937a]
-  - [ ] Assert that a `selection` request raises the pending state synchronously, before any `await` resolves.
-  - [ ] Assert the pending state is cleared when that request commits.
-  - [ ] Assert the pending state is cleared when that request fails to load, and the previous vehicle stays active.
-  - [ ] Assert that rapid fire → garbage → police leaves the pending state on `police` throughout, the skipped middle request never raises or clears a pending state, and the final active vehicle is `police`.
-  - [ ] Assert that a `mission` morph, the helper siren demo, and a `direct` swap never raise a pending state.
-  - [ ] Assert the pending state is `undefined` again after the last request settles, by every path.
-  - [ ] Assert the arbitration tests' existing expectations still hold unmodified.
+  - [x] Assert that a `selection` request raises the pending state synchronously, before any `await` resolves.
+  - [x] Assert the pending state is cleared when that request commits.
+  - [x] Assert the pending state is cleared when that request fails to load, and the previous vehicle stays active.
+  - [x] Assert that rapid fire → garbage → police leaves the pending state on `police` throughout, the skipped middle request never raises or clears a pending state, and the final active vehicle is `police`.
+  - [x] Assert that a `mission` morph, the helper siren demo, and a `direct` swap never raise a pending state.
+  - [x] Assert the pending state is `undefined` again after the last request settles, by every path.
+  - [x] Assert the arbitration tests' existing expectations still hold unmodified.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — recorded 66 pre-existing cases passing and the intentional red baseline: 4 of the 5 new cases fail because `hud.setPending` is never called. The fifth asserts a negative and passes vacuously by design, becoming load-bearing once the feature exists. **Commit:** `3ad937a`
 
 - [x] **Task: Implement the minimal pending-answer state** [f995d39]
-  - [ ] Track the pending vehicle id in `game.ts` alongside the existing request generation; clear it on commit, on skip, and on failure.
-  - [ ] Raise it only for `selection` mode, at the point the request is enqueued, with no `await` between the tap and the raise.
-  - [ ] Leave a newer pending state untouched when an older request settles.
-  - [ ] Do not change the queue, the generation scheme, `commitVehicleActor`, `restoreVehicleActor`, or `activate`.
+  - [x] Track the pending vehicle id in `game.ts` alongside the existing request generation; clear it on commit, on skip, and on failure.
+  - [x] Raise it only for `selection` mode, at the point the request is enqueued, with no `await` between the tap and the raise.
+  - [x] Leave a newer pending state untouched when an older request settles.
+  - [x] Do not change the queue, the generation scheme, `commitVehicleActor`, `restoreVehicleActor`, or `activate`.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — **70/70 passed**, including the 4 cases that were red. The pending answer reuses the arbitration's own generation counter rather than introducing a second one. **Commit:** `f995d39`
 
 - [x] **Task: Expose the pending state through the HUD port** [b95d977]
@@ -72,18 +72,18 @@ was created.
 ## Phase 2 — Warm the fleet during the boot window [checkpoint: f6a26c6]
 
 - [x] **Task: Add red tests for boot-window prewarming** [12824f9]
-  - [ ] Assert that all four hero vehicle URLs are requested through the library before `game.ready` resolves.
-  - [ ] Assert that a prewarm request is a `load` (cached template), not an `instantiate`, so no instance is created during boot.
-  - [ ] Assert that a rejected prewarm neither rejects `game.ready` nor `game.driven`, and produces no unhandled rejection.
-  - [ ] Assert that prewarming does not change the order in which the town base, the hero actor, and the traffic mount.
-  - [ ] Assert that a post-boot switch issues no second network request for a warmed model.
+  - [x] Assert that all four hero vehicle URLs are requested through the library before `game.ready` resolves.
+  - [x] Assert that a prewarm request is a `load` (cached template), not an `instantiate`, so no instance is created during boot.
+  - [x] Assert that a rejected prewarm neither rejects `game.ready` nor `game.driven`, and produces no unhandled rejection.
+  - [x] Assert that prewarming does not change the order in which the town base, the hero actor, and the traffic mount.
+  - [x] Assert a post-boot switch to a warmed model still commits through the ordinary queue. **Rewritten during implementation:** the plan's original wording, "issues no second network request", is not observable from this file — `createVehicleActor` is mocked, so a switch never reaches the library at all. The real guarantee is `ModelLibrary`'s fetch-once-and-cache path, already pinned by `modelLibrary.test.ts` ("fetches each url once"), and the observable half is AC2, a browser check listed in Phase 4.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — recorded 70 pre-existing cases passing and the intentional red baseline: 3 of the 5 new cases fail. The other two pass vacuously (a failure path with no failure to absorb, and ordinary switching) and become load-bearing once the warm exists. **Commit:** `12824f9`
 
 - [x] **Task: Implement non-blocking fleet prewarming** [f6a26c6]
-  - [ ] Start the warm in `game.mount`, after the town base is on screen and alongside the hero model's own load, iterating `VEHICLE_IDS` through `ModelLibrary.load`.
-  - [ ] Never await the warm from `ready`; a slow or failing warm must not hold the boot.
-  - [ ] Keep the library's evict-on-failure behavior intact so a failed warm is retried by a later switch.
-  - [ ] Do not add a second town, a duplicate instance, a new asset, or a general asset scheduler.
+  - [x] Start the warm in `game.mount`, after the town base is on screen and alongside the hero model's own load, iterating `VEHICLE_IDS` through `ModelLibrary.load`.
+  - [x] Never await the warm from `ready`; a slow or failing warm must not hold the boot.
+  - [x] Keep the library's evict-on-failure behavior intact so a failed warm is retried by a later switch.
+  - [x] Do not add a second town, a duplicate instance, a new asset, or a general asset scheduler.
   - [x] **Run:** `$env:CI='true'; pnpm test -- src/game/game.test.ts` — **75/75 passed**. `pnpm check`, `pnpm typecheck` and the full suite (892 tests / 69 files) are all clean. Biome's configured naming convention required `PascalCase` for the two new test consts; `check:fix` applied that mechanically and it was reviewed. **Commit:** `f6a26c6`
 
 - [x] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** [f6a26c6]
@@ -126,21 +126,29 @@ was created.
 This phase is DOM glue and styling, which `workflow.md` exempts from red/green.
 It is verified by hand in a browser and at the phase checkpoint.
 
-- [ ] **Task: Render the pending state in the vehicle HUD** []
-  - [ ] Apply a pending class to the tapped button, in the target vehicle's colour, using the class-based styling convention.
-  - [ ] Point the ability button at the target vehicle's ability on the same frame, so the HUD never shows the previous vehicle's trick while a switch is pending.
-  - [ ] Clear both when the pending state clears, by every path.
-  - [ ] Add non-visible accessibility metadata for the pending state; add no visible string.
+- [x] **Task: Render the pending state in the vehicle HUD** [b95d977]
+  - [x] Apply a pending class to the tapped button, in the target vehicle's colour, using the class-based styling convention.
+  - [x] Point the ability button at the target vehicle's ability on the same frame, so the HUD never shows the previous vehicle's trick while a switch is pending.
+  - [x] Clear both when the pending state clears, by every path.
+  - [x] Add non-visible accessibility metadata for the pending state; add no visible string.
+  - [x] **Delivered in Phase 1 Task 3** (`b95d977`), not here: the edge cannot typecheck until `VehicleHud` declares `setPending`, and a declared-but-unimplemented member is dead code. Recorded as an in-flight refinement at the time.
 
-- [ ] **Task: Style the pending ring in `index.html`** []
-  - [ ] Model the ring on the existing `.panel-gate` hold ring and `.hud-button.is-active` so it introduces no new visual language.
-  - [ ] Keep the button at its current touch size, at or above the 72×72 px floor.
-  - [ ] Make the ring steady rather than timed, and make sure it does not overlap or shift the neighbouring controls in portrait or landscape.
-  - [ ] Respect safe-area insets as the existing HUD controls do.
+- [x] **Task: Style the pending ring in `index.html`** [15af3f5]
+  - [x] Model the ring on the existing `.panel-gate` hold ring and `.hud-button.is-active` so it introduces no new visual language.
+  - [x] Keep the button at its current touch size, at or above the 72×72 px floor. **The button is untouched at 84×84; the ring is a pseudo-element outside the box, so nothing reflows.**
+  - [x] Make the ring steady rather than timed, and make sure it does not overlap or shift the neighbouring controls in portrait or landscape. **Steady, at `inset: -13px` against an 18px row gap, so 5px of clear space remains on each side.**
+  - [x] Respect safe-area insets as the existing HUD controls do. **The row's own `calc(20px + env(safe-area-inset-*))` positioning is unchanged and the leftmost button keeps 20px plus inset of margin, so a 13px ring cannot clip.**
+  - [x] **Commit:** `style(hud): draw a steady ring while a switch is pending` (`15af3f5`)
 
-- [ ] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
-  - [ ] Identify the changed production and test files and their corresponding tests.
-  - [ ] Run the exact targeted test and quality commands.
+  **One thing this task added that the plan did not name:** `.hud-button` needed
+  `position: relative`. The ring is an absolutely positioned pseudo-element, and
+  without it the ring would have resolved against `.hud-vehicles` — one ring per
+  button, all drawn at the row's origin. The plan's "verify in a browser" step
+  is what caught it; the geometric reasoning alone would not have.
+
+- [~] **Task: Phase Verification & Checkpoint (Refer to workflow.md)** []
+  - [x] Identify the changed production and test files and their corresponding tests.
+  - [x] Run the exact targeted test and quality commands.
   - [ ] Present the results, commit SHA, and a detailed verification report; wait for explicit checkpoint confirmation.
 
 ## Phase 4 — Integration, documentation, and device verification
