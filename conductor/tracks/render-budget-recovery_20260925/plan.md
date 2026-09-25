@@ -9,7 +9,7 @@
 
 ## Phase 1 — Baseline and culling evidence
 
-- [ ] Task: Establish a reproducible render-measurement contract
+- [~] Task: Establish a reproducible render-measurement contract
   - [ ] Write failing tests for the logic that classifies and records a measured render window, including camera state, shadow-pass inclusion, triangles, and draw calls.
   - [ ] Implement the smallest non-production measurement helper or dev-only harness needed to collect the existing `renderer.info.render` data.
   - [ ] Measure fresh-spawn, transit-peak, settled-junction, mission-active, and traffic-active states using one consistent method.
