@@ -8,14 +8,17 @@
  * (Phase 5) can bob it from its own base. Named meshes, no textures: the
  * whole point of primitives is that they cost nothing and never 404.
  *
- * Scene/visual code — manual-verify per the workflow's Guiding Principle, no
- * red/green here.
+ * The primitives are scene/visual code — manual-verify per the workflow's
+ * Guiding Principle. The disposal contract (FR7) is the one logic-bearing rule
+ * in here, and it is red/green in `parkLitterFx.test.ts`.
  */
 
 import {
+  type BufferGeometry,
   ConeGeometry,
   Group,
   IcosahedronGeometry,
+  type Material,
   Mesh,
   MeshLambertMaterial,
   SphereGeometry,
@@ -89,16 +92,40 @@ export interface LitterField {
   remove(id: string): void;
   /** Advances every remaining piece's bounce. */
   update(deltaSeconds: number): void;
+  /**
+   * Releases every geometry and material the field allocated (FR7). The field
+   * is rebuilt each round, so without this what it left behind stays on the
+   * GPU for the rest of the session.
+   */
+  dispose(): void;
 }
 
 export function createLitterField(pieces: readonly LitterPiece[]): LitterField {
   const object = new Group();
   object.name = 'parkLitterField';
 
+  // What this field put on the GPU, claimed as each piece is built so the
+  // teardown can free all of it — including a piece `remove()` already took
+  // out of the bounce set. A tied bag shares one material across its two
+  // meshes, so the claim is per resource, not per mesh.
+  const ownedGeometries = new Set<BufferGeometry>();
+  const ownedMaterials = new Set<Material>();
+
   const active = new Map<string, FieldEntry>();
   pieces.forEach((piece, index) => {
     const node = index % 2 === 0 ? createTiedBag() : createCrumpledPaper();
     node.position.set(piece.position.x, LITTER_SURFACE_HEIGHT, piece.position.z);
+    node.traverse((child) => {
+      if (!(child instanceof Mesh)) {
+        return;
+      }
+      ownedGeometries.add(child.geometry);
+      for (const material of Array.isArray(child.material)
+        ? child.material
+        : [child.material]) {
+        ownedMaterials.add(material);
+      }
+    });
     object.add(node);
     active.set(piece.id, {
       node,
@@ -129,6 +156,20 @@ export function createLitterField(pieces: readonly LitterPiece[]): LitterField {
         entry.node.position.y =
           entry.base + FIELD_BOUNCE_HEIGHT * (0.5 - 0.5 * Math.cos(cycle * Math.PI * 2));
       }
+    },
+
+    dispose(): void {
+      // Every allocation the field made, freed once each — and the bounce set
+      // cleared, so nothing of a disposed field keeps animating (FR7).
+      for (const geometry of ownedGeometries) {
+        geometry.dispose();
+      }
+      for (const material of ownedMaterials) {
+        material.dispose();
+      }
+      ownedGeometries.clear();
+      ownedMaterials.clear();
+      active.clear();
     },
   };
 }

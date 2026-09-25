@@ -46,6 +46,32 @@
   fade, so the re-measured scene above is the whole delta. The framework runs entirely in the simulation step: one FSM with
   guarded transitions and a completion linger, one marker layer, one
   celebration table.
+- **Game controller extraction (added 2026-09-25):** the layer above the
+  mission framework is now `src/game/game.ts` — `createGame()` owns the model
+  library, the town mount, the motor and the actor lifecycle (including
+  `swapVehicle`), the traffic system and its actors, the pond, and every mission
+  subsystem and feedback object, together with the session rules they close
+  over (`absorb`, `serveArmedNow`, `pressAbility`, `onSirenCast`, `activate`,
+  `deliverPuppy`, `startPark`/`startPuppy`, `lightFire`/`lightOrder`,
+  `tickHelperHand`, `demoSiren`, the pacers and the four per-mission ticks). It
+  reaches the page through four grouped narrow ports — `GameAudio`, `GameHud`,
+  `GameScene` (object `add`/`remove` only) and `GameCamera` — so the controller
+  is unit-testable with fakes and no WebGL, Web Audio or DOM. `main.ts` is the
+  edge alone: renderer, camera rig, parent panel, hold gate, install hint,
+  input router, audio construction and first-gesture unlock, plus the wiring;
+  it went from 1,253 lines to 236, and `import.meta.env.DEV` and
+  `window.location.search` stay there (FR9), with the dev calm-gap override
+  passed in as data. The edge's whole surface is
+  `{ advance, tapAt, honk, noteActivity, selectVehicle, pressAbility,
+  carPosition, activeVehicle, setHelperEnabled, ready, driven }` — two entries
+  beyond the plan's four were provably required, because the input router and
+  the vehicle HUD both stay at the edge. `GameCamera` is the one port that grew
+  with the frame: it now carries `setTarget` and `followSun` alongside its
+  `facing` slice, and deliberately has no `update`, so the rig's easing stays
+  at the edge and the camera can never lag a frame behind the car. Costs
+  nothing at runtime: the same objects, the same calls in the same frame order,
+  and `game.ts` measures 94.5% statements / 86.6% branches against the 794-test
+  suite the track started from, plus 48 new controller cases (842 total).
 - **Park clean-up and lost puppy (added 2026-09-22):** primitives plus one
   newly mounted vendored GLB — measured from the geometries, not estimated.
   Litter is eight pieces of tied bag (90 triangles each) or crumpled paper
