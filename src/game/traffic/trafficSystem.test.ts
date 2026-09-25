@@ -57,7 +57,14 @@ describe('a self-contained traffic system (FR9)', () => {
     expect(poses).toHaveLength(6);
     expect(footprints).toHaveLength(poses.length);
     expect(new Set(poses.map((pose) => pose.kind))).toEqual(
-      new Set(['parkedSedan', 'parkedHatchback', 'parkedVan', 'parkedSuv', 'cat', 'rabbit']),
+      new Set([
+        'parkedSedan',
+        'parkedHatchback',
+        'parkedVan',
+        'parkedSuv',
+        'cat',
+        'rabbit',
+      ]),
     );
 
     for (const [index, pose] of poses.entries()) {
@@ -148,7 +155,14 @@ describe('a self-contained traffic system (FR9)', () => {
       const footprints = traffic.footprints();
       traffic.poses().forEach((pose, index) => {
         expect(footprints[index]?.id).toBe(pose.id);
-        expect(['parkedSedan', 'parkedHatchback', 'parkedVan', 'parkedSuv', 'cat', 'rabbit']).toContain(pose.kind);
+        expect([
+          'parkedSedan',
+          'parkedHatchback',
+          'parkedVan',
+          'parkedSuv',
+          'cat',
+          'rabbit',
+        ]).toContain(pose.kind);
         const box = footprints[index]?.shape;
         if (box?.kind !== 'box') {
           throw new Error('expected a box footprint');

@@ -110,16 +110,18 @@ export function facingOf(heading: number): Vec2 {
 /**
  * The two circle centres of a car's capsule: the shape collision sweeps.
  *
- * Both sit on the centre line at `CAR_HALF_LENGTH - radius` from the middle, so
+ * Both sit on the centre line at `halfLength - radius` from the middle, so
  * the capsule reaches as far forward as the body's nose and as far back as its
- * tail.
+ * tail. The default half-length is {@link CAR_HALF_LENGTH}; smaller ambient
+ * creatures pass their own fitted length here.
  */
 export function capsuleCentres(
   at: Vec2,
   heading: number,
   radius = CAR_RADIUS,
+  halfLength = CAR_HALF_LENGTH,
 ): readonly Vec2[] {
-  const offset = Math.max(0, CAR_HALF_LENGTH - radius);
+  const offset = Math.max(0, halfLength - radius);
   const facing = facingOf(heading);
   return [
     { x: at.x + facing.x * offset, z: at.z + facing.z * offset },
@@ -141,6 +143,8 @@ export interface VehicleMotorOptions {
   readonly dynamicObstacles?: () => readonly Obstacle[];
   /** Radius of each capsule circle, defaulting to {@link CAR_RADIUS}. */
   readonly radius?: number;
+  /** Half-length of the capsule, defaulting to {@link CAR_HALF_LENGTH}. */
+  readonly halfLength?: number;
   /** Driving pace in world units per second; defaults to {@link DRIVE_SPEED}. */
   readonly speed?: number;
   /** Turn rate in radians per second; defaults to {@link TURN_RATE}. */
@@ -185,6 +189,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
   const obstacles = options.obstacles ?? [];
   const dynamicObstacles = options.dynamicObstacles;
   const radius = options.radius ?? CAR_RADIUS;
+  const halfLength = options.halfLength ?? CAR_HALF_LENGTH;
   const speed = options.speed ?? DRIVE_SPEED;
   const turnRate = options.turnRate ?? TURN_RATE;
   /** Crashable obstacles already dealt with on this route, by id. */
@@ -231,7 +236,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
 
   const clearSolids = (centre: Vec2): Vec2 => {
     let deepest: Depenetration | undefined;
-    for (const circle of capsuleCentres(centre, heading, radius)) {
+    for (const circle of capsuleCentres(centre, heading, radius, halfLength)) {
       const overlap = deepestSolidOverlap(circle);
       if (
         overlap !== undefined &&
@@ -281,7 +286,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
     // ordinary head-on bonk, the tail when the car was already embedded.
     let furthest = 0;
     let clear: Vec2 = centre;
-    for (const circle of capsuleCentres(centre, heading, radius)) {
+    for (const circle of capsuleCentres(centre, heading, radius, halfLength)) {
       const overlap = depenetration(impact.obstacle.shape, circle, radius);
       if (overlap === undefined) {
         continue;
@@ -322,7 +327,7 @@ export function createVehicleMotor(options: VehicleMotorOptions = {}): VehicleMo
     // everybody stood this frame.
     const world = liveObstacles();
     let best: { readonly impact: Impact; readonly centre: Vec2 } | undefined;
-    for (const circle of capsuleCentres(position, heading, radius)) {
+    for (const circle of capsuleCentres(position, heading, radius, halfLength)) {
       const dx = circle.x - position.x;
       const dz = circle.z - position.z;
       const impact = sweepObstacles(

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { SUN_POSITION, sunGroundOffset } from '../scene';
 import { createTownGrid } from '../town/townGrid';
 import { TOWN_MAP } from '../town/townMap';
-import { parkedCarFittedHeight } from '../town/townTypes';
 import { ROAD_SURFACE_HEIGHT } from '../vehicle/vehicleActor';
 import {
   mountTrafficShadows,
@@ -11,7 +10,11 @@ import {
   TRAFFIC_SHADOW_OPACITY,
   trafficShadowQuads,
 } from './trafficShadows';
-import { createTrafficSystem, type TrafficSystem } from './trafficSystem';
+import {
+  createTrafficSystem,
+  type TrafficSystem,
+  trafficActorFittedHeight,
+} from './trafficSystem';
 
 const grid = createTownGrid(TOWN_MAP);
 
@@ -30,11 +33,11 @@ function boxOf(traffic: TrafficSystem, index: number) {
 }
 
 /** The sun offset this mover's blob is thrown by. */
-function offsetFor(kind: Parameters<typeof parkedCarFittedHeight>[0]): {
+function offsetFor(kind: Parameters<typeof trafficActorFittedHeight>[0]): {
   x: number;
   z: number;
 } {
-  return sunGroundOffset(grid.tileSize * parkedCarFittedHeight(kind));
+  return sunGroundOffset(grid.tileSize * trafficActorFittedHeight(kind));
 }
 
 describe('the wanderers’ following blob shadows (FR8)', () => {
@@ -61,7 +64,7 @@ describe('the wanderers’ following blob shadows (FR8)', () => {
 
   it('throws every blob away from the sun', () => {
     for (const pose of town().poses()) {
-      const height = grid.tileSize * parkedCarFittedHeight(pose.kind);
+      const height = grid.tileSize * trafficActorFittedHeight(pose.kind);
       const offset = sunGroundOffset(height);
       // The sign convention both shadow modules share: the blob slides to the
       // dark side of its car.

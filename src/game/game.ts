@@ -1582,7 +1582,7 @@ export function createGame(deps: GameDeps): Game {
   function advance(deltaSeconds: number): void {
     // The wanderers go first, so the kid's sweep meets where they now stand.
     traffic?.update(deltaSeconds);
-    trafficActors?.sync();
+    trafficActors?.sync(deltaSeconds);
     trafficShadows?.sync();
     motor?.update(deltaSeconds);
     actor?.sync();

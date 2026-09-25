@@ -1,6 +1,10 @@
 import type { Obstacle } from '../collision/collision';
 import type { TownGrid } from '../town/townGrid';
-import { parkedCarHalfExtents, type TileCoord } from '../town/townTypes';
+import {
+  parkedCarFittedHeight,
+  parkedCarHalfExtents,
+  type TileCoord,
+} from '../town/townTypes';
 import { createVehicleMotor } from '../vehicle/vehicleMotor';
 import { createTrafficBrain, type TrafficBrain } from './trafficBrain';
 
@@ -20,11 +24,14 @@ import { createTrafficBrain, type TrafficBrain } from './trafficBrain';
 
 type MoverKind = Parameters<typeof parkedCarHalfExtents>[0];
 
+/** The bounded visual and collision kinds the ambient traffic seam can mount. */
+export type TrafficActorKind = MoverKind | 'cat' | 'rabbit';
+
 interface MoverSpec {
   /** Stable identity, published on every footprint. */
   readonly id: string;
-  /** Which civilian model's fitted box this mover occupies. */
-  readonly kind: MoverKind;
+  /** Which fitted actor body or civilian model stands here. */
+  readonly kind: TrafficActorKind;
   /** Which side of the street to hold; the roster alternates sides (FR3). */
   readonly side: 1 | -1;
   /** Cruise pace in world units per second — slower than the kid's 1.6. */
@@ -39,7 +46,39 @@ const MOVERS: readonly MoverSpec[] = [
   // lanes pass clean under FR3's contract; same-lane meets are comedy, never
   // walls.
   { id: 'traffic-2', kind: 'parkedVan', side: 1, speed: 0.9 },
+  { id: 'traffic-3', kind: 'parkedSuv', side: -1, speed: 0.85 },
+  { id: 'creature-cat-0', kind: 'cat', side: 1, speed: 0.45 },
+  { id: 'creature-rabbit-0', kind: 'rabbit', side: -1, speed: 0.35 },
 ];
+
+export interface TrafficActorExtents {
+  readonly halfLength: number;
+  readonly halfWidth: number;
+}
+
+const CREATURE_EXTENTS: Readonly<Record<'cat' | 'rabbit', TrafficActorExtents>> = {
+  cat: { halfLength: 0.14, halfWidth: 0.11 },
+  rabbit: { halfLength: 0.12, halfWidth: 0.1 },
+};
+
+/** The fitted world footprint for one ambient actor profile. */
+export function trafficActorHalfExtents(kind: TrafficActorKind): TrafficActorExtents {
+  if (kind === 'cat' || kind === 'rabbit') {
+    return CREATURE_EXTENTS[kind];
+  }
+  return parkedCarHalfExtents(kind);
+}
+
+/** The blob-shadow height for one ambient actor profile. */
+export function trafficActorFittedHeight(kind: TrafficActorKind): number {
+  if (kind === 'cat') {
+    return 0.22;
+  }
+  if (kind === 'rabbit') {
+    return 0.28;
+  }
+  return parkedCarFittedHeight(kind);
+}
 
 export interface TrafficSystemOptions {
   /** The road network to wander. */
@@ -57,8 +96,8 @@ export interface TrafficSystemOptions {
 export interface TrafficPose {
   /** Which mover; the same identity its footprint publishes. */
   readonly id: string;
-  /** Which civilian model stands here — the kind decides the mounted art. */
-  readonly kind: MoverKind;
+  /** Which fitted actor stands here — the kind decides the mounted art. */
+  readonly kind: TrafficActorKind;
   /** Live world position; follows the car as it drives. */
   readonly position: { readonly x: number; readonly z: number };
   /** Where the nose points, in the town's yaw convention. */
@@ -83,7 +122,7 @@ interface Carriage {
   readonly spec: MoverSpec;
   readonly motor: ReturnType<typeof createVehicleMotor>;
   readonly brain: TrafficBrain;
-  readonly extents: ReturnType<typeof parkedCarHalfExtents>;
+  readonly extents: TrafficActorExtents;
   readonly pose: TrafficPose;
 }
 
@@ -126,7 +165,7 @@ function buildCarriage(options: {
   random: () => number;
   others: () => readonly Obstacle[];
 }): Carriage {
-  const extents = parkedCarHalfExtents(options.spec.kind);
+  const extents = trafficActorHalfExtents(options.spec.kind);
   const brain = createTrafficBrain({
     grid: options.grid,
     random: options.random,
@@ -143,6 +182,7 @@ function buildCarriage(options: {
     // The sweep radius is the car's own fitted half-width, so the capsule
     // matches the footprint box exactly.
     radius: extents.halfWidth,
+    halfLength: extents.halfLength,
     speed: options.spec.speed,
     dynamicObstacles: options.others,
   });

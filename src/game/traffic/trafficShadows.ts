@@ -7,9 +7,8 @@ import {
 } from 'three';
 import { sunGroundOffset } from '../scene';
 import type { TownGrid } from '../town/townGrid';
-import { parkedCarFittedHeight } from '../town/townTypes';
 import { ROAD_SURFACE_HEIGHT } from '../vehicle/vehicleActor';
-import type { TrafficSystem } from './trafficSystem';
+import { type TrafficSystem, trafficActorFittedHeight } from './trafficSystem';
 
 /**
  * Following blob shadows for the two wanderers (FR8).
@@ -76,7 +75,7 @@ export function trafficShadowQuads(
       // Footprints and poses publish as a pair; anything else is noise.
       return;
     }
-    const offset = sunGroundOffset(grid.tileSize * parkedCarFittedHeight(pose.kind));
+    const offset = sunGroundOffset(grid.tileSize * trafficActorFittedHeight(pose.kind));
     quads.push({
       center: {
         x: shape.centre.x + offset.x / 2,
