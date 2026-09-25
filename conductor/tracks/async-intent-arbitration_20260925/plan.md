@@ -157,8 +157,8 @@
 
 ## Phase 4 — Review handoff and closeout
 
-- [ ] **Task: Conduct the principal-engineer review**
-  - [ ] Review the diff against the approved specification, product pillars, and workflow.
+- [~] **Task: Conduct the principal-engineer review**
+  - [~] Review the diff against the approved specification, product pillars, and workflow.
   - [ ] Check for stale API surfaces, unnecessary abstractions, error-path leaks, and accidental scope expansion.
   - [ ] Add focused review fixes and regression tests only when a finding is real.
   - [ ] **Commit:** `fix(conductor): address async arbitration review findings`
