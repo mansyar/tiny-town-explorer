@@ -26,6 +26,7 @@ export default defineConfig({
         'src/game/renderProbe.ts',
         'src/game/hud/parentPanel.ts',
         'src/game/hud/vehicleHud.ts',
+        'src/game/hud/bootOverlay.ts',
       ],
     },
   },
