@@ -244,6 +244,9 @@ export function planTown(grid: TownGrid): TownPlan {
         url: road.url,
         position: centre,
         yaw: road.yaw,
+        // The road surface is already grounded by the shared ground plane;
+        // its low kerb detail does not need a second shadow-map pass.
+        castsShadow: false,
       });
     }
   }
@@ -275,6 +278,11 @@ export function planTown(grid: TownGrid): TownPlan {
       // placement authored, so it lies along its own street; upright props stay
       // axis-aligned.
       yaw: prop.yaw ?? (prop.kind === 'tree' ? (index % 4) * QUARTER_TURN : 0),
+      // Static props stay out of the shadow map. Parked cars already carry a
+      // merged blob shadow; the other small props do not need a second pass
+      // through the 1024 map, and their silhouettes remain readable in the
+      // scene's normal lighting.
+      castsShadow: false,
       // A parked car is fitted to the same cap its footprint was derived from,
       // so the art the kid sees is the box collision sweeps (FR2, FR9), and
       // seats on the kerb top rather than the ground. Not a building: it
@@ -283,10 +291,6 @@ export function planTown(grid: TownGrid): TownPlan {
         ? {
             fitWithin: grid.tileSize * PARKED_CAR_FIT,
             seatHeight: grid.tileSize * PARKED_CAR_SEAT_HEIGHT,
-            // Six more casters means re-rendering the town per frame into the
-            // 1024 map; the blob shadow is what a car has instead (FR7), and
-            // with a real shadow underneath it would double-darken the ground.
-            castsShadow: false,
           }
         : {}),
     });

@@ -26,6 +26,16 @@ function hangingModel(): Group {
   return group;
 }
 
+function shadowCastingModel(): Group {
+  const group = standingModel();
+  group.traverse((node) => {
+    if (node instanceof Mesh) {
+      node.castShadow = true;
+    }
+  });
+  return group;
+}
+
 const library = (make: () => Group): ModelLibrary => ({
   load: async () => make(),
   instantiate: async () => make(),
@@ -54,6 +64,21 @@ describe('createVehicleActor', () => {
     expect(baseHeight(standing)).toBeCloseTo(ROAD_SURFACE_HEIGHT, 6);
     // A model hanging 1.25 units below its origin gets lifted, not buried.
     expect(baseHeight(hanging)).toBeCloseTo(ROAD_SURFACE_HEIGHT, 6);
+  });
+
+  it('can keep the hero model out of the shadow-map pass', async () => {
+    const actor = await createVehicleActor(
+      library(shadowCastingModel),
+      'car.glb',
+      createVehicleMotor(),
+      { castsShadow: false },
+    );
+
+    actor.object.traverse((node) => {
+      if (node instanceof Mesh) {
+        expect(node.castShadow).toBe(false);
+      }
+    });
   });
 
   it('turns the kit’s rear-facing model around to face the car’s nose', async () => {

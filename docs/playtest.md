@@ -548,3 +548,89 @@ One sitting on the iPad 9th-gen floor device (2026-09-24) — all verdicts pass:
 - Street life holds: six parked cars on measured kerbs, three wanderers
   squashing past as comedy, and neither litter nor puppy ever inside a car.
 - Offline reload works from the precache (49 entries).
+
+## Render budget recovery (track `render-budget-recovery_20260925`)
+
+This is the current performance and device record for the render-budget track.
+The older sections above remain useful historical records for their own
+tracks; where their figures differ, this section is authoritative for the
+current build.
+
+### Outcome
+
+The optimization keeps the six parked cars, three wanderers, four playable
+vehicles, all town art, missions, traffic, markers, pond, and the established
+shadow language. It removes roads and non-car props from the real shadow-map
+pass, opts the hero vehicle out of its real shadow pass, and narrows the
+car-following sun shadow extent from 8 to 5.5 world units. Houses still cast
+real shadows; parked and wandering cars keep their blob shadows. No visible
+content was deleted.
+
+### Controlled desktop performance
+
+Measurements use the dev-only post-render probe at 1280×720, DPR 1, with the
+shadow pass included. The fresh window is recorded after the authored town and
+seeded traffic have settled, matching the controlled method in
+`measurements.md`.
+
+| Window | Triangles | Draw calls |
+| --- | ---: | ---: |
+| Controlled fresh spawn | **48,463** | **180** |
+| Transit peak | **46,477** | **176** |
+| Settled junction | **45,797** | **154** |
+| Dev-paced mission-active | **49,080** | **203** |
+
+The controlled fresh-spawn result is below the 50,000-triangle target, and no
+window increases draw calls against the recorded baseline. The dev probe is
+not present in production. `?calmGap=2` was used only to reach mission states
+during verification; production pacing is unchanged.
+
+### Desktop verification — 2026-09-25
+
+The desktop pass used the real browser render loop and actual pointer/HUD
+inputs. It checked:
+
+- fresh load, both districts, spawn-to-junction transit, and camera edges;
+- traffic, parked cars, pond effects, target rings, bonks, and newest-tap
+  routing;
+- all four vehicle selections and abilities;
+- fire, ice-cream/order, park/litter, and puppy missions;
+- house/vehicle shadows and intact town geometry; and
+- the three-second parent hold gate.
+
+A controlled Chromium pass reproduced **48,463 / 180** at the settled fresh
+window. Real road-route windows remained below the budget. The owner reviewed
+the visual pass and replied **“Yes, confirm”**: no missing markers, shadows,
+pond/traffic content, clipping, or gameplay regression was observed.
+
+### Production and offline verification
+
+The production build passed `pnpm check`, `pnpm typecheck`, `CI=true pnpm test`
+(**852 tests across 67 files**), and `pnpm build`. The PWA generated **49
+precache entries / 4,238.99 KiB**. The preview service worker registered,
+activated, controlled the page, and served the built document, manifest,
+JavaScript, audio, and model assets. With the preview origin stopped, a reload
+still started the complete cached app with no console errors. This verifies
+the cache-backed offline path in the browser; the physical-device result below
+is the acceptance evidence for airplane mode.
+
+### iPad 9th-generation pass — 2026-09-25
+
+The owner completed the physical iPad 9th-generation pass and replied **“Yes,
+confirm”**. The check covered first load and audio unlock, both districts, all
+four missions, traffic and parked cars, the busiest spawn/transit moments,
+rotation and safe areas, HUD placement, camera framing, and airplane-mode
+offline reopen. The game remained calm and responsive, with no observed
+stutter, missing content, shadow/marker/pond disappearance, clipping, or touch
+friction issue.
+
+A supplementary 810×1080 CSS / DPR 2 browser smoke pass kept the canvas and all
+HUD controls within the viewport. It supports the physical result but does not
+replace it.
+
+### Release verdict
+
+**Pass.** The render budget, draw-call, visual-preservation, quality-gate,
+production PWA, desktop, and physical iPad 9th-generation criteria are all
+satisfied. The existing JavaScript chunk-size warning remains outside this
+performance track.

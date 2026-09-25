@@ -652,6 +652,7 @@ export function createGame(deps: GameDeps): Game {
     const next = await createVehicleActor(library, spec.model, motor, {
       facingYaw: spec.facingYaw,
       fitLength: spec.fitLength,
+      castsShadow: false,
     });
     // The replacement is built before the old one goes, so no frame is empty.
     if (actor !== undefined) {
@@ -1323,6 +1324,7 @@ export function createGame(deps: GameDeps): Game {
     const car = await createVehicleActor(library, spec.model, vehicle, {
       facingYaw: spec.facingYaw,
       fitLength: spec.fitLength,
+      castsShadow: false,
     });
     scene.add(car.object);
     actor = car;
