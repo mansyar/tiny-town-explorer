@@ -104,13 +104,24 @@
 
 ## Phase 3 — Integration and regression verification
 
-- [~] **Task: Run the full automated gates**
-  - [ ] Run `pnpm check`.
-  - [ ] Run `pnpm typecheck`.
-  - [ ] Run `CI=true pnpm test`.
-  - [ ] Run `CI=true pnpm test:coverage`.
-  - [ ] Run `pnpm build`.
-  - [ ] **Commit:** `chore(conductor): record async arbitration quality gates`
+- [x] **Task: Run the full automated gates**
+  - [x] Run `pnpm check`.
+  - [x] Run `pnpm typecheck`.
+  - [x] Run `CI=true pnpm test`.
+  - [x] Run `CI=true pnpm test:coverage`.
+  - [x] Run `pnpm build`.
+  - [x] **Commit:** `chore(conductor): record async arbitration quality gates`
+
+### Phase 3 automated gate record (2026-09-25)
+
+- `pnpm check` — passed; 155 files checked.
+- `pnpm typecheck` — passed.
+- `CI=true pnpm test` — passed; **862 tests across 67 files**.
+- `CI=true pnpm test:coverage` — passed; overall **91.3% statements / 87.7% branches / 92.75% functions / 91.16% lines**; `game.ts` **93.24% statements / 84.36% branches**.
+- `pnpm build` — passed; Vite transformed 112 modules, generated 49 PWA precache entries totaling approximately **4,239.87 KiB**.
+- The pre-existing JavaScript chunk-size warning remains unchanged and out of scope.
+
+- [~] **Task: Perform browser interaction verification**
 
 - [ ] **Task: Perform browser interaction verification**
   - [ ] Run the development server with `?calmGap=2` so each mission can be exercised quickly.
