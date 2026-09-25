@@ -25,7 +25,7 @@
   - [x] Update `conductor/tech-stack.md` before implementation if the chosen design changes the recorded rendering approach.
   - [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: `5e94020`]
 
-## Phase 2 — Minimal behavior-preserving optimization
+## Phase 2 — Minimal behavior-preserving optimization [checkpoint: 5e94020]
 
 - [x] Task: TDD the chosen optimization contract `5e94020`
   - [x] Write failing tests for any logic-bearing visibility, grouping, merge, shadow-caster, or draw-work rules.
@@ -37,11 +37,11 @@
   - [x] Preserve camera follow/frame ordering, input routing, collision, traffic, mission, and audio behavior.
   - [x] Verify resource ownership, cloning, teardown, and disposal for any changed scene objects.
   - [x] Re-measure all representative windows; confirm the worst fresh-spawn window is at or below 50,000 triangles and draw calls do not increase.
-- [~] Task: Phase Verification & Checkpoint (Refer to `workflow.md`)
-  - [ ] List changed code files and verify required test coverage for each.
-  - [ ] Announce and run the exact automated test command.
-  - [ ] Present the detailed desktop manual-verification plan and wait for explicit user feedback.
-  - [ ] Attach the verification report to the final functional commit with Git notes.
+- [x] Task: Phase Verification & Checkpoint (Refer to `workflow.md`) [checkpoint: `5e94020`]
+  - [x] List changed code files and verify required test coverage for each.
+  - [x] Announce and run the exact automated test command.
+  - [x] Present the detailed desktop manual-verification plan and wait for explicit user feedback.
+  - [x] Attach the verification report to the final functional commit with Git notes.
 
 ## Phase 3 — Full player and release verification
 
