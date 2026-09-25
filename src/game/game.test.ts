@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createGame, type GameDeps } from './game';
+import { findPath } from './path/pathfinder';
 import { mountParkedShadows } from './town/parkedShadows';
 import { createTownGrid } from './town/townGrid';
 import { mountTrafficShadows } from './traffic/trafficShadows';
@@ -29,6 +30,12 @@ vi.mock('./vehicle/vehicleActor', async (importOriginal) => ({
   ...((await importOriginal()) as Record<string, unknown>),
   createVehicleActor: vi.fn(async () => ({ object: {}, sync: vi.fn() })),
 }));
+// The real pathfinder, spied: a town that cannot route anywhere is a branch
+// the happy path never reaches.
+vi.mock('./path/pathfinder', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./path/pathfinder')>();
+  return { ...actual, findPath: vi.fn(actual.findPath) };
+});
 vi.mock('./town/parkedShadows', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./town/parkedShadows')>();
   return { ...actual, mountParkedShadows: vi.fn(actual.mountParkedShadows) };
@@ -619,5 +626,428 @@ describe('session rules: the closures Phase 3 had to bring with them', () => {
     game.missionsTick(0.4, spot.position);
     expect(game.world.spotPup.position.x).toBeCloseTo(owner.position.x, 5);
     expect(game.world.spotPup.visible).toBe(true);
+  });
+});
+
+describe('ability, siren, helper hand and the tap surface (Phase 3)', () => {
+  it("dispatches each vehicle's cast from one press", async () => {
+    const { game, attached } = await booted();
+    const playAbility = attached.audio.playAbility as ReturnType<typeof vi.fn>;
+    const onBurst = vi.spyOn(game.world.fx, 'burst');
+    const onFlash = vi.spyOn(game.world.fx, 'flash');
+
+    game.activate('fire');
+    game.pressAbility();
+    expect(playAbility).toHaveBeenCalledWith([
+      expect.objectContaining({ kind: 'spray' }),
+    ]);
+    expect(onBurst).toHaveBeenCalledWith('spray', expect.anything(), 0);
+    game.world.fleet.update(2);
+
+    game.activate('iceCream');
+    game.pressAbility();
+    expect(playAbility).toHaveBeenCalledWith([
+      expect.objectContaining({ kind: 'jingle' }),
+      expect.objectContaining({ kind: 'cones' }),
+    ]);
+    expect(onBurst).toHaveBeenCalledWith('cones', expect.anything(), 0);
+
+    game.activate('garbage');
+    game.pressAbility();
+    expect(onBurst).toHaveBeenCalledWith('gulp', expect.anything(), 0);
+
+    game.activate('police');
+    game.pressAbility();
+    expect(onFlash).toHaveBeenCalled();
+  });
+
+  it('counts a hose burst only while the hose is in reach', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    if (house === undefined || motor === undefined) {
+      throw new Error('The town or the car is missing');
+    }
+    game.lightFire(house.id);
+    game.activate('fire');
+    // The fire answers the house tap before the hose is ever in reach.
+    expect(game.world.mission.respond()).toBe(true);
+    const before = game.world.mission.snapshot().burstsLeft;
+
+    // Parked on the burning house: the hose arrives with proximity, and the
+    // spray is the rescue.
+    motor.snapTo(house.position);
+    for (let step = 0; step < 3; step += 1) {
+      game.missionsTick(0.016, motor.position);
+    }
+    expect(game.world.mission.isHoseReady(game.distanceToFire(motor.position))).toBe(
+      true,
+    );
+    game.pressAbility();
+    expect(game.world.mission.snapshot().burstsLeft).toBe(before - 1);
+
+    // Away from it, the same cast is a trick and the fire is untouched.
+    game.world.fleet.update(2);
+    const afterFirst = game.world.mission.snapshot().burstsLeft;
+    motor.snapTo({ x: house.position.x + 8, z: house.position.z + 8 });
+    for (let step = 0; step < 3; step += 1) {
+      game.missionsTick(0.016, motor.position);
+    }
+    game.pressAbility();
+    expect(game.world.mission.snapshot().burstsLeft).toBe(afterFirst);
+  });
+
+  it('latches the pup answer exactly once, on the siren', async () => {
+    const { game, attached } = await booted();
+    const play = attached.audio.play as ReturnType<typeof vi.fn>;
+    const onShow = vi.spyOn(game.world.pawMarker, 'show');
+
+    game.startPuppy();
+    game.activate('police');
+    game.pressAbility();
+
+    expect(game.world.puppyPending).toBe(false);
+    expect(onShow).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledWith('bark');
+
+    // A second siren has no pending pup left to answer.
+    play.mockClear();
+    onShow.mockClear();
+    game.pressAbility();
+    expect(onShow).not.toHaveBeenCalled();
+    expect(play).not.toHaveBeenCalledWith('bark');
+  });
+
+  it('points the hand at the siren button while the pup is waiting', async () => {
+    const { game } = await booted();
+    const onFlash = vi.spyOn(game.world.fx, 'flash');
+
+    game.startPuppy();
+    game.tickHelperHand(11, game.world.spawn);
+
+    // The hand demos the siren itself: be the police, then press.
+    await settle();
+    expect(game.world.fleet.activeId()).toBe('police');
+    expect(onFlash).toHaveBeenCalled();
+  });
+
+  it('demos exactly one tap, then cools down', async () => {
+    const { game, attached } = await booted();
+    const onSetPath = vi.spyOn(
+      game.world.motor as NonNullable<typeof game.world.motor>,
+      'setPath',
+    );
+    const onShow = vi.spyOn(game.world.helperTrace, 'show');
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses');
+    }
+    // A burning house is something the kid still has to answer, so the hand
+    // has a reason to point.
+    game.lightFire(house.id);
+
+    game.tickHelperHand(11, game.world.spawn);
+    expect(onShow).toHaveBeenCalledTimes(1);
+
+    // The trace finishes, and the demo tap it announced is made exactly once.
+    // The tap answers the fire first (which morphs the car) and only then
+    // routes, so it settles across microtasks.
+    vi.spyOn(game.world.helperTrace, 'isDone').mockReturnValue(true);
+    game.tickHelperHand(0.016, game.world.spawn);
+    await settle();
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+
+    // The hand's patience has reset: no second demo on the very next frame.
+    game.tickHelperHand(0.016, game.world.spawn);
+    expect(onSetPath).toHaveBeenCalledTimes(1);
+  });
+
+  it('answers missions against the aim while the car drives to the target', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const prop = attached.grid.props[0];
+    const motor = game.world.motor;
+    if (house === undefined || prop === undefined || motor === undefined) {
+      throw new Error('The town or the car is missing');
+    }
+    game.lightFire(house.id);
+    game.activate('fire');
+    motor.snapTo({ x: house.position.x + 6, z: house.position.z + 6 });
+    game.missionsTick(0.016, motor.position);
+
+    // The finger landed on a prop beside the burning house, and the tap was
+    // sent to the house: a hydrant beside a fire may not steal the hose.
+    await game.tapAt(house.position, prop.position);
+    expect(game.world.mission.snapshot().state).toBe('spawned');
+    expect(motor.isDriving()).toBe(true);
+  });
+
+  it('lets a cone beside an ordered house not steal the serve', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const prop = attached.grid.props[0];
+    const motor = game.world.motor;
+    if (house === undefined || prop === undefined || motor === undefined) {
+      throw new Error('The town or the car is missing');
+    }
+    game.lightOrder(house.id);
+    game.activate('iceCream');
+    // The order answers to the house tap first, then the truck arriving is
+    // what arms the serve — and the jingle is the key that keeps it armed.
+    expect(game.world.orders.respond()).toBe(true);
+    motor.snapTo(house.position);
+    game.missionsTick(0.016, motor.position);
+    expect(game.serveArmedNow()).toBe(false);
+    game.pressAbility();
+    expect(game.serveArmedNow()).toBe(true);
+
+    // Aimed at a cone, not the house: the order stays open and the car drives
+    // to the tapped point instead.
+    await game.tapAt(prop.position, prop.position);
+    expect(game.world.orders.snapshot().state).not.toBe('complete');
+
+    // Aimed squarely at the house: the one cone changes hands.
+    await game.tapAt(house.position, house.position);
+    expect(game.world.orders.snapshot().state).toBe('complete');
+  });
+
+  it('drops the demo when the town stops needing the kid', async () => {
+    const { game, attached } = await booted();
+    const onHide = vi.spyOn(game.world.helperTrace, 'hide');
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses');
+    }
+    game.lightFire(house.id);
+    game.tickHelperHand(11, game.world.spawn);
+    onHide.mockClear();
+
+    // The errand is over (the town's quiet again), so the trace is dropped and
+    // the announced demo never happens.
+    game.world.mission.abort();
+    game.tickHelperHand(0.016, game.world.spawn);
+    expect(onHide).toHaveBeenCalled();
+    expect(game.world.helperTrace.isDone()).toBe(false);
+  });
+});
+
+describe('the rest of the tap surface and the round edges', () => {
+  it('claims the fire without morphing when that truck is already driving', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    if (house === undefined || motor === undefined) {
+      throw new Error('The town or the car is missing');
+    }
+    game.lightFire(house.id);
+    game.activate('fire');
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    motor.snapTo({ x: house.position.x + 6, z: house.position.z + 6 });
+
+    await game.tapAt(house.position, house.position);
+
+    // The errand is answered and the car drives, with no second morph.
+    expect(game.world.mission.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('fire');
+    expect(onSetPath).toHaveBeenCalled();
+  });
+
+  it('answers an order without morphing when the truck is already out', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    if (house === undefined || motor === undefined) {
+      throw new Error('The town or the car is missing');
+    }
+    game.lightOrder(house.id);
+    game.activate('iceCream');
+    motor.snapTo({ x: house.position.x + 6, z: house.position.z + 6 });
+
+    await game.tapAt(house.position, house.position);
+    expect(game.world.orders.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('iceCream');
+  });
+
+  it('lets a tap past every mission that is not waiting', async () => {
+    const { game, attached } = await booted();
+    const motor = game.world.motor;
+    const onSetPath = vi.spyOn(motor as NonNullable<typeof game.world.motor>, 'setPath');
+    const road = attached.grid.spawnPoints[0];
+    if (motor === undefined || road === undefined) {
+      throw new Error('The car or the road is missing');
+    }
+
+    // Nothing is spawned and no pup is carried, so every mission ignores it
+    // and the tap stays a drive.
+    await game.tapAt(road, road);
+    expect(onSetPath).toHaveBeenCalled();
+    expect(game.world.park.snapshot().state).toBe('idle');
+    expect(game.world.puppy.snapshot().state).toBe('idle');
+  });
+
+  it('answers the park errand on a piece and drives to the tap', async () => {
+    const { game } = await booted();
+    game.startPark();
+    const piece = game.world.litter[0];
+    if (piece === undefined) {
+      throw new Error('The park round laid no litter');
+    }
+
+    await game.tapAt(piece.position, piece.position);
+    await settle();
+
+    expect(game.world.park.snapshot().state).not.toBe('spawned');
+    expect(game.world.fleet.activeId()).toBe('garbage');
+  });
+
+  it('does nothing for an empty pickup or a ghosted dog deliver', async () => {
+    const { game } = await booted();
+    const onBurst = vi.spyOn(game.world.fx, 'burst');
+
+    game.absorb({ collected: [], gulp: true, complete: true }, true);
+    expect(onBurst).not.toHaveBeenCalled();
+
+    // The pup is not carrying, so the door run never starts.
+    game.deliverPuppy({ x: 1, z: 1 });
+    expect(game.world.spotPup.visible).toBe(false);
+    expect(game.world.doorRun).toBeUndefined();
+  });
+
+  it('ignores a press while the one-shot is still in flight', async () => {
+    const { game, attached } = await booted();
+    const playAbility = attached.audio.playAbility as ReturnType<typeof vi.fn>;
+
+    game.activate('fire');
+    game.pressAbility();
+    playAbility.mockClear();
+    game.pressAbility();
+
+    expect(playAbility).not.toHaveBeenCalled();
+  });
+
+  it('stays put when the road network cannot reach the tap', async () => {
+    const { game } = await booted();
+    const motor = game.world.motor;
+    if (motor === undefined) {
+      throw new Error('The car is missing');
+    }
+    const onSetPath = vi.spyOn(motor, 'setPath');
+    const onShow = vi.spyOn(game.world.ring, 'show');
+    vi.mocked(findPath).mockReturnValueOnce(undefined);
+
+    // The ring still answers the tap, even where the road network gives up.
+    await game.tapAt({ x: 500, z: 500 });
+    expect(onShow).toHaveBeenCalledWith({ x: 500, z: 500 });
+    expect(onSetPath).not.toHaveBeenCalled();
+  });
+
+  it('replaces a live litter field when a new round opens', async () => {
+    const { game } = await booted();
+    game.startPark();
+    const first = game.world.litterField;
+    if (first === undefined) {
+      throw new Error('The park round laid no field');
+    }
+
+    // Tear the errand down, then open a fresh one: the outgoing field is
+    // unmounted and released, never left on the stage.
+    game.world.park.abort();
+    game.startPark();
+
+    expect(game.world.litterField).not.toBe(first);
+    expect(game.world.park.snapshot().state).toBe('spawned');
+  });
+
+  it('refuses a second fire or order while one is already open', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses');
+    }
+
+    expect(game.lightFire(house.id)).toBe(true);
+    expect(game.lightFire(house.id)).toBe(false);
+
+    expect(game.lightOrder(house.id)).toBe(true);
+    expect(game.lightOrder(house.id)).toBe(false);
+  });
+
+  it('runs the litter frame and clears the pup stage after the cheer', async () => {
+    const { game } = await booted();
+    const onHide = vi.spyOn(game.world.pawMarker, 'hide');
+    const onBurst = vi.spyOn(game.world.fx, 'burst');
+
+    // The park frame: the field bounces and the wheels collect.
+    game.startPark();
+    const piece = game.world.litter[0];
+    if (piece === undefined) {
+      throw new Error('The park round laid no litter');
+    }
+    game.world.motor?.snapTo(piece.position);
+    game.missionsTick(0.05, piece.position);
+    expect(onBurst).toHaveBeenCalledWith('poof', piece.position, 0);
+
+    // The pup stage: once the errand is over, the street is clear again.
+    game.startPuppy();
+    const spot = game.world.puppySpot;
+    if (spot === undefined) {
+      throw new Error('The pup round drew nothing');
+    }
+    game.world.puppy.siren();
+    game.world.puppyPending = false;
+    game.missionsTick(0.016, spot.position);
+    game.deliverPuppy(spot.position);
+    onHide.mockClear();
+    for (let step = 0; step < 200; step += 1) {
+      game.missionsTick(0.05, spot.position);
+    }
+    expect(game.world.puppy.snapshot().state).toBe('idle');
+    expect(game.world.spotPup.visible).toBe(false);
+    expect(game.world.riderPup.visible).toBe(false);
+    expect(onHide).toHaveBeenCalled();
+  });
+
+  it('celebrates a finished fire and a served order exactly once each', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    const motor = game.world.motor;
+    if (house === undefined || motor === undefined) {
+      throw new Error('The town or the car is missing');
+    }
+    const onBurst = vi.spyOn(game.world.fx, 'burst');
+    const confetti = (): number =>
+      onBurst.mock.calls.filter((call) => call[0] === 'confetti').length;
+
+    // The fire: hose it down until the errand is done.
+    game.lightFire(house.id);
+    game.world.mission.respond();
+    game.activate('fire');
+    motor.snapTo(house.position);
+    for (let press = 0; press < 6; press += 1) {
+      for (let step = 0; step < 3; step += 1) {
+        game.missionsTick(0.016, motor.position);
+      }
+      game.world.fleet.update(2);
+      game.pressAbility();
+      game.missionsTick(0.016, motor.position);
+    }
+    expect(game.world.mission.snapshot().state).toBe('complete');
+    const afterFire = confetti();
+    expect(afterFire).toBeGreaterThan(0);
+    game.missionsTick(0.016, motor.position);
+    expect(confetti()).toBe(afterFire);
+
+    // The order: answer it, arrive, and the cone changes hands.
+    game.world.mission.abort();
+    game.lightOrder(house.id);
+    game.activate('iceCream');
+    game.world.orders.respond();
+    motor.snapTo(house.position);
+    game.missionsTick(0.016, motor.position);
+    game.pressAbility();
+    await game.tapAt(house.position, house.position);
+    game.missionsTick(0.016, motor.position);
+    expect(game.world.orders.snapshot().state).toBe('complete');
+    expect(confetti()).toBeGreaterThan(afterFire);
   });
 });

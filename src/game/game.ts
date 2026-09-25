@@ -52,6 +52,7 @@ import {
 import { createPuppySpots, type PuppySpot } from './mission/puppySpots';
 import { createServeGate } from './mission/serveGate';
 import { createSunFx, type SunFacing } from './mission/sunFx';
+import { findPath } from './path/pathfinder';
 import { mountParkedShadows } from './town/parkedShadows';
 import { createPondDucks } from './town/pondDucks';
 import type { TownGrid } from './town/townGrid';
@@ -62,7 +63,11 @@ import { mountTrafficShadows } from './traffic/trafficShadows';
 import { createTrafficSystem } from './traffic/trafficSystem';
 import { createVehicleActor } from './vehicle/vehicleActor';
 import { createVehicleMotor } from './vehicle/vehicleMotor';
-import { createVehicleSystem, type VehicleId } from './vehicle/vehicleSystem';
+import {
+  type AbilityEvent,
+  createVehicleSystem,
+  type VehicleId,
+} from './vehicle/vehicleSystem';
 
 /** How high the carried pup rides, on the roof of whichever car drives. */
 const RIDE_HEIGHT = 0.28;
@@ -228,6 +233,23 @@ export interface Game {
   absorb(result: PickupResult, voiceGulp: boolean): void;
   /** How far the car is from whatever is burning; infinity if nothing is. */
   distanceToFire(from: Vec2): number;
+  /**
+   * The ability button — also the helper hand's siren demo (FR12), so one
+   * code path presses it whoever pressed.
+   */
+  pressAbility(): void;
+  /**
+   * The one place a destination tap is answered, whether the finger was a
+   * child's or the helper hand's demo. `point` is where the car is being sent;
+   * `aim` is where the finger landed, and every mission decision is made
+   * against the aim.
+   */
+  tapAt(point: Vec2, aim?: Vec2): Promise<void>;
+  /**
+   * The hand's frame: what it points at, the trace it draws, the one demo tap
+   * it owes, and dropping both when the town stops needing the kid.
+   */
+  tickHelperHand(deltaSeconds: number, carPosition: Vec2): void;
   /** Opens a clean-up: a fresh field, a reset collector, the town's chime. */
   startPark(): void;
   /** Draws the pup's round: hiding spot, owner house, whine and police ask. */
@@ -391,6 +413,8 @@ export function createGame(deps: GameDeps): Game {
   let fireTotal = 0;
   let abilityVisible = true;
   let serveArmed = false;
+  // The demo tap the hand owes, once its trace has finished drawing.
+  let pendingDemo: Vec2 | undefined;
 
   // The seam that lets new missions join without a new tick/tap block here
   // (spec FR13): every mission contributes, the registry owns order, and
@@ -1007,6 +1031,197 @@ export function createGame(deps: GameDeps): Game {
     missions.tick(delta);
   }
 
+  /**
+   * The ability button — also the helper hand's siren demo (FR12), so one
+   * code path presses it whoever pressed. Each cast sounds and shows itself
+   * through the events below; the siren event's second job is answering the
+   * pup (FR7), while with no pup waiting it is exactly today's free-play
+   * siren. The cast is the active vehicle's, so only the police car's press
+   * can be an answer — the vehicle gate lives in the fleet itself.
+   */
+  function pressAbility(): void {
+    const events = fleet.requestAbility();
+    if (events.length === 0) {
+      return;
+    }
+    audio.playAbility(events);
+    // The jingle is the key that arms serve: remember it until the kid
+    // morphs away or the order closes.
+    if (events.some((event) => event.kind === 'jingle')) {
+      serveGate.noteJingle();
+    }
+    for (const event of events) {
+      applyAbilityEvent(event);
+    }
+    // Water on a live fire is the rescue, not just the trick: the press that
+    // sprays is also the press that counts a burst off the fire.
+    if (
+      events.some((event) => event.kind === 'spray') &&
+      mission.isHoseReady(distanceToFire(carPosition()))
+    ) {
+      mission.spray();
+    }
+  }
+
+  /**
+   * One cast event, seen and heard: the bursts every vehicle has always had,
+   * the garbage truck's sweep (FR4), and the siren's second job (FR7).
+   */
+  function applyAbilityEvent(event: AbilityEvent): void {
+    switch (event.kind) {
+      case 'spray':
+      case 'cones':
+        fx.burst(event.kind, carPosition(), motor?.heading() ?? 0);
+        break;
+      case 'gulp':
+        fx.burst('gulp', carPosition(), motor?.heading() ?? 0);
+        // FR4: the same press also sweeps a nearby cluster — the cast's one
+        // gulp voices the group, each piece poofing on its own way out.
+        if (world.litter.length > 0) {
+          absorb(parkPickup.sweep(carPosition(), world.litter), false);
+        }
+        break;
+      case 'siren':
+        onSirenCast();
+        break;
+      default:
+        // The ice-cream jingle is heard rather than seen; its cones are
+        // their own event and burst above.
+        break;
+    }
+  }
+
+  /**
+   * The police car's siren (FR7): the flash is the free-play siren it has
+   * always been. If the town is waiting on a drawn pup, the press is also the
+   * answer — it latches once, blooms the paw over the spot, and the yip says
+   * the puppy heard you.
+   */
+  function onSirenCast(): void {
+    fx.flash(carPosition());
+    if (!world.puppyPending || !puppy.siren()) {
+      return;
+    }
+    world.puppyPending = false;
+    hud.setPolicePulse(false);
+    const spot = world.puppySpot;
+    if (spot !== undefined) {
+      pawMarker.place(spot.position);
+    }
+    pawMarker.show();
+    audio.play('bark');
+  }
+
+  /**
+   * The one place a destination tap is answered, whether the finger was a
+   * child's or the helper hand's demo.
+   *
+   * Answering the alarm is the same gesture as driving somewhere: tap the
+   * burning house and the car becomes the fire truck and heads over. That is
+   * also how the camera reaches the fire - it follows the car, so the car going
+   * there *is* the pan, with no separate camera state to get stuck in.
+   *
+   * An ice-cream order answers to the same gesture with one tap doing two jobs:
+   * tap the ordering house and the car becomes the truck and heads over, tap it
+   * again once serve is armed and one cone changes hands.
+   *
+   * `point` is where the car is being sent; `aim` is where the finger landed.
+   * They differ when the router snapped the tap onto a prop, and every mission
+   * decision is made against the aim - a cone beside an ordered house must not
+   * be able to steal the serve, nor a hydrant beside a burning one the hose.
+   */
+  async function tapAt(point: Vec2, aim: Vec2 = point): Promise<void> {
+    const vehicle = motor;
+    if (vehicle === undefined) {
+      return;
+    }
+    // Ring before routing: a tap is answered within a frame even on the way to
+    // a destination the road network cannot reach.
+    ring.show(point);
+    audio.play('tap');
+
+    await answerMissions(aim);
+
+    const route = findPath(grid, vehicle.position, point);
+    if (route === undefined) {
+      return;
+    }
+    // A fresh destination is the child driving off, so any ability still in
+    // flight ends where it is rather than playing out behind a departing car.
+    fleet.interruptBurst();
+    vehicle.setPath(route);
+  }
+
+  /**
+   * Whether that tap also answers a mission, before it becomes a destination.
+   *
+   * Each mission claims taps through the registry in registration order: fire
+   * answers the burning house, ice-cream the ordering house (or serves a cone
+   * when armed). The first claim wins; later missions never see that aim.
+   */
+  async function answerMissions(aim: Vec2): Promise<void> {
+    await missions.tap(aim);
+  }
+
+  /**
+   * The hand helps while a mission is still waiting on the kid; once the hose
+   * (or the serve) is in reach the kid has arrived and needs no help. Its trace
+   * runs first and the poke at the end is the demo tap itself, which is the same
+   * destination tap a finger would have made - so the demo answers whichever
+   * mission is waiting.
+   */
+  function tickHelperHand(delta: number, carPosition: Vec2): void {
+    // Whichever mission is still waiting on the kid is what the hand points
+    // at; `missionFocus` is the registry's resolver, so this is the one
+    // four-mission answer (FR12) — the siren marker included.
+    const focus = missions.focus(carPosition);
+    // The hand is ticked even when the town is quiet, with nothing to point at:
+    // between missions its patience resets, so a new one always gets the full
+    // ten seconds rather than inheriting a count from an empty street.
+    const tap = hand.update(delta, {
+      missionActive: focus.awaiting,
+      destination: focus.destination,
+    });
+    if (tap !== undefined) {
+      // The siren button lives on the HUD, not in the world: the demo makes the
+      // press itself — into the police car first, so the cast is a siren.
+      if (focus.target === 'siren') {
+        void demoSiren();
+      } else {
+        const route = findPath(grid, carPosition, tap);
+        helperTrace.show(
+          route === undefined
+            ? [carPosition, tap]
+            : [...route.waypoints, route.destination],
+        );
+        pendingDemo = tap;
+      }
+    }
+
+    // A trace, and the demo tap it announced, belong only to a mission that
+    // still needs the kid; when the town goes quiet, both are dropped.
+    if (!missions.isBusy()) {
+      helperTrace.hide();
+      pendingDemo = undefined;
+    }
+
+    if (pendingDemo !== undefined && helperTrace.isDone()) {
+      const demo = pendingDemo;
+      pendingDemo = undefined;
+      helperTrace.hide();
+      void tapAt(demo);
+    }
+  }
+
+  /** The hand's demo of the siren button (FR12): be the police, then press. */
+  async function demoSiren(): Promise<void> {
+    if (fleet.activeId() !== 'police') {
+      activate('police');
+      await swapVehicle('police');
+    }
+    pressAbility();
+  }
+
   async function mount(): Promise<void> {
     library = createModelLibrary();
     world.library = library;
@@ -1117,6 +1332,9 @@ export function createGame(deps: GameDeps): Game {
     tickPacers,
     absorb,
     distanceToFire,
+    pressAbility,
+    tapAt,
+    tickHelperHand,
     startPark,
     startPuppy,
     lightFire,
