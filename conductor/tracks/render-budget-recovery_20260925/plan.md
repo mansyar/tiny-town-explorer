@@ -27,11 +27,11 @@
 
 ## Phase 2 — Minimal behavior-preserving optimization
 
-- [~] Task: TDD the chosen optimization contract
-  - [ ] Write failing tests for any logic-bearing visibility, grouping, merge, shadow-caster, or draw-work rules.
-  - [ ] Run the tests and confirm the expected red phase before implementation.
-  - [ ] Implement the minimum code needed to satisfy the approved contract.
-  - [ ] Run the focused tests green, then refactor and verify coverage remains above the project threshold.
+- [x] Task: TDD the chosen optimization contract `5e94020`
+  - [x] Write failing tests for any logic-bearing visibility, grouping, merge, shadow-caster, or draw-work rules.
+  - [x] Run the tests and confirm the expected red phase before implementation.
+  - [x] Implement the minimum code needed to satisfy the approved contract.
+  - [x] Run the focused tests green, then refactor and verify coverage remains above the project threshold.
 - [ ] Task: Integrate the optimization with the existing scene
   - [ ] Preserve the current six parked cars, three wanderers, four playable vehicles, town art, mission markers, pond, and shadows.
   - [ ] Preserve camera follow/frame ordering, input routing, collision, traffic, mission, and audio behavior.
