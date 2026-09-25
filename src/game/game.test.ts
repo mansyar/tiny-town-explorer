@@ -84,6 +84,7 @@ function deps(): GameDeps {
         setAbilityBusy: vi.fn(),
         setAbilityVisible: vi.fn(),
         setPolicePulse: vi.fn(),
+        setPending: vi.fn(),
       },
       'hud',
     ),
@@ -260,6 +261,7 @@ describe('createGame controller seam (Phase 2)', () => {
       'setAbilityBusy',
       'setAbilityVisible',
       'setActive',
+      'setPending',
       'setPolicePulse',
     ]);
     expect(Object.keys(attached.camera).sort()).toEqual([
@@ -1809,5 +1811,107 @@ describe('async intent arbitration (regression coverage)', () => {
 
     expect(onSetPath).toHaveBeenCalledTimes(1);
     expect(onSetPath.mock.calls[0]?.[0].destination).toEqual(childPoint);
+  });
+});
+
+describe('the pending answer to a switch tap', () => {
+  it('tells the HUD before the tap returns, with no await in between', async () => {
+    const { game, attached } = await booted();
+    const actor = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(actor.promise);
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+
+    const selection = game.selectVehicle('police');
+
+    // The whole point of the track: the button is already answered here, while
+    // the actor is still unresolved. No `await` stands between them.
+    expect(onSetPending).toHaveBeenCalledWith('police');
+
+    actor.resolve(testActor('police'));
+    await selection;
+
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('clears the answer when the vehicle commits', async () => {
+    const { game, attached } = await booted();
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    const onSetActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+    onSetActive.mockClear();
+
+    await game.selectVehicle('garbage');
+
+    expect(game.activeVehicle()).toBe('garbage');
+    // The ring is gone and the real active state has taken over.
+    expect(onSetActive).toHaveBeenLastCalledWith('garbage');
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('clears the answer and keeps the old car when the model fails', async () => {
+    const { game, attached } = await booted();
+    game.activate('fire');
+    vi.mocked(createVehicleActor).mockRejectedValueOnce(new Error('404'));
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+
+    await game.selectVehicle('police');
+
+    // A failed switch must not leave a permanently ringed button, and must not
+    // invent an active vehicle that never mounted.
+    expect(game.activeVehicle()).toBe('fire');
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('keeps the newest tap answered while a superseded one commits', async () => {
+    const { game, attached } = await booted();
+    const first = deferred<TestVehicleActor>();
+    vi.mocked(createVehicleActor).mockReturnValueOnce(first.promise);
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    const onSetActive = attached.hud.setActive as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+    onSetActive.mockClear();
+
+    const fireTap = game.selectVehicle('fire');
+    const garbageTap = game.selectVehicle('garbage');
+    const policeTap = game.selectVehicle('police');
+    expect(onSetPending).toHaveBeenLastCalledWith('police');
+
+    // The in-flight request commits even though it was superseded. That is the
+    // arbitration this track must not re-open, so the answer stays honest: the
+    // newer tap still owns the ring.
+    first.resolve(testActor('fire'));
+    await fireTap;
+    expect(onSetActive).toHaveBeenCalledWith('fire');
+    expect(onSetPending).toHaveBeenLastCalledWith('police');
+
+    await Promise.all([garbageTap, policeTap]);
+
+    // The skipped middle request never painted, and the newest tap won.
+    expect(onSetActive).not.toHaveBeenCalledWith('garbage');
+    expect(game.activeVehicle()).toBe('police');
+    expect(onSetPending).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('raises no answer for a morph the child did not ask for', async () => {
+    const { game, attached } = await booted();
+    const house = attached.grid.houses[0];
+    if (house === undefined) {
+      throw new Error('The town has no houses to claim');
+    }
+    const onSetPending = attached.hud.setPending as ReturnType<typeof vi.fn>;
+    onSetPending.mockClear();
+
+    game.activate('police');
+    game.lightFire(house.id);
+    await game.tapAt(house.position, house.position);
+    // A mission's own morph is not a tap, so it gets no acknowledgement ring.
+    expect(onSetPending).not.toHaveBeenCalled();
+
+    onSetPending.mockClear();
+    await game.swapVehicle('iceCream');
+    // Nor does a direct swap, which the rule suite and the helper hand use.
+    expect(onSetPending).not.toHaveBeenCalled();
   });
 });
