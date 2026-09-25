@@ -38,7 +38,7 @@
   - [x] Refactor + coverage (>80% statements and branches on `game.ts`)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `623e5ce`
 
-## Phase 3 - The session rules move in (TDD)
+## Phase 3 - The session rules move in (TDD) [checkpoint: ffea223]
 
 - [x] Task: Pickup, spawn and the mission frame (FR1) `d198848`
   - [x] Write failing tests in `game.test.ts`: `absorb` keeps its three rules — the first drive-over piece responds the park mission and morphs the fleet, a sweep voices one gulp for the group while each drive-over piece earns its own, and completion fires exactly once at the last piece; `startPark`/`startPuppy`/`lightFire`/`lightOrder` open a round atomically; the four per-mission ticks run in the registry's stable pass order; the pacers keep the shared calm gap and the never-twice rule, and a busy mission pauses every pacer (red first)
@@ -48,7 +48,7 @@
   - [x] Write failing tests in `game.test.ts`: `pressAbility` dispatches each vehicle's cast, arms serve on a jingle, and counts a hose burst only when the hose is in reach; `onSirenCast` latches the puppy's answer exactly once; `swapVehicle` builds the replacement before removing the old one so no frame is empty; `tickHelperHand` demos exactly one tap then cools down, and points at the siren button when that is the focus; `serveArmedNow` is true only for the ice-cream truck, after a jingle, inside `SERVE_RANGE`; `tapAt(target, aim)` answers missions against the **aim** and drives to the **target**, so a cone beside an ordered house cannot steal a serve nor a hydrant beside a burning one the hose; `deliverPuppy` hops out, runs to the door, then celebrates (red first)
   - [x] Move `pressAbility`, `applyAbilityEvent`, `onSirenCast`, `tickHelperHand`, `demoSiren`, `serveArmedNow`, `tapAt`, `answerMissions`, `deliverPuppy`, `advanceDoorRun`, `clearPuppyStage`, and the mission registry contributions into `game.ts` — with the pending-demo state and the two blocks that used to live in `tickMissions`, so the helper hand's whole lifecycle is one call
   - [x] Refactor + coverage (97.1% stmts / 87.06% branches / 96.66% funcs on `game.ts`; `main.ts` is 280 lines and rules-free)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `ffea223`
 
 ## Phase 4 - Frame, thinning, freeze proof and docs (mixed)
 
