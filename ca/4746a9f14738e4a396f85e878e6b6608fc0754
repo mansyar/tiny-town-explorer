@@ -1,0 +1,1 @@
+Task: Add a controller-boundary red test for progressive town attachment. The test holds mountTown open, verifies the future onBaseReady seam receives the group, and asserts scene.add(group) happens before the full mount resolves. Red baseline: CI=true pnpm test -- src/game/game.test.ts produced 64 passing existing tests and 1 intentional attachment failure.
